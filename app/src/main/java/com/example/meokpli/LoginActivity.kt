@@ -17,7 +17,7 @@ class LoginActivity : AppCompatActivity() {
     lateinit var prefs: android.content.SharedPreferences
     lateinit var api: AuthApi
 
-    val useServer = false  // 서버 연동시 true로 변경
+    val useServer = true  // 서버 연동시 true로 변경
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +26,7 @@ class LoginActivity : AppCompatActivity() {
         prefs = getSharedPreferences("meokpli_prefs", MODE_PRIVATE)
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("YOUR_WEB_CLIENT_ID") // 나중에 서버 연동 시 사용, 현재는 필요 없음
+            .requestIdToken("614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com") // 나중에 서버 연동 시 사용, 현재는 필요 없음
             .requestEmail()
             .build()
 
