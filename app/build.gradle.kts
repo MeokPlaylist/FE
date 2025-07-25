@@ -3,6 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+/* Kotlin 2.0+ 사용 시: android{} 블록 바깥! */
+kotlin {
+    jvmToolchain(21)
+}
+
 android {
     namespace = "com.example.meokpli"
     compileSdk = 35
@@ -13,7 +18,6 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -26,25 +30,35 @@ android {
             )
         }
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
+    /* ☑️ Java 21 지정 */
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlin {
-        jvmToolchain(21) // Kotlin도 21로 명시
-    }
+
+    /* ☑️ Kotlin 컴파일 타깃도 21 */
+    kotlinOptions { jvmTarget = "21" }
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    /* ✅ Google Sign-In 최신 */
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
+
+    /* Retrofit */
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 }

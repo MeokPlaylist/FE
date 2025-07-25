@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">meokpli</string>
+
+    <!-- Google Cloud Console › OAuth 2.0 클라이언트(웹 애플리케이션) ID -->
+    <string name="server_client_id">
+        614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com
+    </string>
 </resources>

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.meokpli"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
@@ -14,16 +15,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Meokpli"
         tools:targetApi="31">
+
+        <!-- Google Play Services 버전 정의 -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <!-- idToken을 요청할 경우 Web 클라이언트 ID를 여기서 매핑 -->
+        <meta-data
+            android:name="com.google.android.gms.client_id"
+            android:value="@string/server_client_id" />
+
+        <!-- 시작 액티비티(Login) -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" />
-    </application>
 
+        <!-- 로그인 성공 후 진입할 메인 액티비티 -->
+        <activity android:name=".MainActivity"/>
+    </application>
 </manifest>
