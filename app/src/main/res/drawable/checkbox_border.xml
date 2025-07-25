@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 체크된 상태 -->
+    <item android:state_checked="true" android:state_enabled="true">
+        <shape android:shape="oval">
+            <solid android:color="#C64132"/>
+            <stroke android:width="1dp" android:color="#C64132"/>
+        </shape>
+    </item>
+
+    <!-- 기본 상태 (선택 안됨) -->
+    <item android:state_enabled="true">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <stroke android:width="1dp" android:color="#000000"/>
+        </shape>
+    </item>
+</selector>

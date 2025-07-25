@@ -1,0 +1,122 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- 제목 -->
+        <TextView
+            android:id="@+id/textTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter_semibold"
+            android:gravity="center"
+            android:text="자신을 자유롭게 소개해보세요 !"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- 설명 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/inter_medium"
+            android:text="닉네임, 프로필 사진, 소개는 모든 사람에게 공개됩니다. \n(추후 설정에서 변경 가능합니다.)"
+            android:textAlignment="center"
+            android:textColor="#454545"
+            android:textSize="12sp" />
+
+        <!-- 프로필 사진 영역 (PlaceHolder) -->
+        <ImageView
+            android:id="@+id/imageProfile"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:background="@drawable/circle_background"
+            android:clipToOutline="true"
+            android:contentDescription="프로필 이미지"
+            android:src="@drawable/profile_camera" />
+
+        <!-- 닉네임 필드 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="32dp"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="닉네임"
+                android:textStyle="bold"
+                android:fontFamily="@font/inter_semibold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10글자 이내로 작성해 주세요."
+                android:textSize="10sp"
+                android:fontFamily="@font/inter_medium"
+                android:textColor="#DA1E28" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/editNickname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp" />
+        <TextView
+            android:id="@+id/textNicknameCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0/10"
+            android:textSize="10sp"
+            android:fontFamily="@font/inter_medium"
+            android:textColor="#777777"
+            android:layout_marginTop="4dp"
+            android:layout_gravity="end"/>
+
+
+
+        <!-- 소개 필드 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="소개"
+            android:fontFamily="@font/inter_semibold"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/editIntro"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:background="@drawable/edittext_background"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:padding="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="30글자 이내로 작성해 주세요."
+            android:fontFamily="@font/inter_medium"
+            android:textColor="#DA1E28"
+            android:textSize="10sp" />
+
+    </LinearLayout>
+</ScrollView>

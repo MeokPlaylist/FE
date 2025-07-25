@@ -3,48 +3,51 @@ package com.example.meokpli
 import android.content.Intent
 import android.os.Bundle
 import android.widget.*
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.auth.api.signin.*
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class LoginActivity : AppCompatActivity() {
-    lateinit var googleSignInClient: GoogleSignInClient
-    lateinit var prefs: android.content.SharedPreferences
-    lateinit var api: AuthApi
 
-    val useServer = true  // 서버 연동시 true로 변경
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var prefs: android.content.SharedPreferences
+    private lateinit var api: AuthApi
+
+    private val useServer = true // 서버 연동 시 true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        // XML에 정의된 View ID 참조
+        val emailEdit = findViewById<EditText>(R.id.editTextId)
+        val passwordEdit = findViewById<EditText>(R.id.editTextPassword)
+        val loginButton = findViewById<Button>(R.id.btnLogin)
+        val registerButton = findViewById<TextView>(R.id.tvSignUp)
+        val googleButton = findViewById<ImageView>(R.id.btnGoogle)
+
         prefs = getSharedPreferences("meokpli_prefs", MODE_PRIVATE)
 
+        // Google 로그인 설정
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com") // 나중에 서버 연동 시 사용, 현재는 필요 없음
+            .requestIdToken("614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com")
             .requestEmail()
             .build()
-
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
+        // Retrofit API 생성
         api = Retrofit.Builder()
-            .baseUrl("https://your.api.server/")  // 나중에 서버 URL로 변경
+            .baseUrl("https://your.api.server/")  // 실제 서버 주소로 변경
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApi::class.java)
 
-        val emailEdit = findViewById<EditText>(R.id.emailEdit)
-        val pwEdit = findViewById<EditText>(R.id.passwordEdit)
-
-        // 회원가입
-        findViewById<Button>(R.id.registerButton).setOnClickListener {
+        // 회원가입 버튼
+        registerButton.setOnClickListener {
             val email = emailEdit.text.toString()
-            val pw = pwEdit.text.toString()
+            val pw = passwordEdit.text.toString()
 
             if (useServer) {
                 CoroutineScope(Dispatchers.IO).launch {
@@ -61,10 +64,10 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // 자체 로그인
-        findViewById<Button>(R.id.loginButton).setOnClickListener {
+        // 로그인 버튼
+        loginButton.setOnClickListener {
             val email = emailEdit.text.toString()
-            val pw = pwEdit.text.toString()
+            val pw = passwordEdit.text.toString()
 
             if (useServer) {
                 CoroutineScope(Dispatchers.IO).launch {
@@ -85,8 +88,8 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // 구글 로그인
-        findViewById<Button>(R.id.googleButton).setOnClickListener {
+        // 구글 로그인 버튼
+        googleButton.setOnClickListener {
             val signInIntent = googleSignInClient.signInIntent
             startActivityForResult(signInIntent, 1000)
         }

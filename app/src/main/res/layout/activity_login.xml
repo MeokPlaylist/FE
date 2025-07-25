@@ -1,41 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center_horizontal">
 
-    <EditText
-        android:id="@+id/emailEdit"
-        android:hint="Email"
+    <!-- 인트로 문구 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="맛있는 순간을 저장하는 플레이리스트"
+        android:textSize="14sp"
+        android:textColor="#000000"
+        android:fontFamily="@font/inter_medium"
+        android:layout_marginTop="32dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="먹플리"
+        android:textSize="16sp"
+        android:textColor="#C64132"
+        android:textStyle="bold"
+        android:fontFamily="@font/inter_semibold"
+        android:layout_marginTop="2dp" />
+
+    <!-- 로고 이미지 -->
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_meokplaylist" />
+
+    <!-- 로그인 제목 -->
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="LOGIN"
+        android:textSize="12sp"
+        android:textColor="#000000"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/inter_medium" />
 
+    <!-- 아이디 입력 -->
     <EditText
-        android:id="@+id/passwordEdit"
-        android:hint="Password"
+        android:id="@+id/editTextId"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@drawable/edittext_background"
+        android:padding="10dp"
+        android:layout_marginTop="12dp"
+        android:fontFamily="@font/inter_medium"
+        android:textColorHint="#626262"
+        android:hint="아이디 입력" />
+
+    <!-- 비밀번호 입력 -->
+    <EditText
+        android:id="@+id/editTextPassword"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@drawable/edittext_background"
+        android:padding="10dp"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/inter_medium"
         android:inputType="textPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:textColorHint="#626262"
+        android:hint="비밀번호 입력" />
 
+    <!-- 로그인 유지 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="start">
+
+        <CheckBox
+            android:id="@+id/checkKeepLogin"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:button="@drawable/checkbox_border"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="로그인 유지"
+            android:textSize="10sp"
+            android:textColor="#626262"
+            android:fontFamily="@font/inter_medium" />
+    </LinearLayout>
+
+    <!-- 로그인 버튼 -->
     <Button
-        android:id="@+id/registerButton"
-        android:text="회원가입"
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="12dp"
+        android:text="로그인"
+        android:textColor="#ffffff"
+        android:textSize="13sp"
+        android:backgroundTint="#C64132"
+        android:fontFamily="@font/inter_semibold" />
+
+    <!-- 회원가입 + 비밀번호 찾기 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="12dp">
 
-    <Button
-        android:id="@+id/loginButton"
-        android:text="자체 로그인"
+        <TextView
+            android:id="@+id/tvSignUp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="회원가입"
+            android:textSize="10sp"
+            android:textColor="#626262"
+            android:fontFamily="@font/inter_semibold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvFindInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="비밀번호 찾기"
+            android:textSize="10sp"
+            android:textColor="#626262"
+            android:fontFamily="@font/inter_semibold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 구분선 + 간편로그인 텍스트 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="24dp">
 
-    <Button
-        android:id="@+id/googleButton"
-        android:text="구글 로그인"
-        android:layout_width="match_parent"
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:background="#969696" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  간편로그인  "
+            android:textSize="12sp"
+            android:textColor="#969696"
+            android:fontFamily="@font/inter_semibold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:background="#969696" />
+    </LinearLayout>
+
+    <!-- 간편 로그인 버튼 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/btnGoogle"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_google_logo"
+            android:layout_marginEnd="16dp" />
+
+        <ImageView
+            android:id="@+id/btnKakao"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_kakao_logo" />
+    </LinearLayout>
 </LinearLayout>
