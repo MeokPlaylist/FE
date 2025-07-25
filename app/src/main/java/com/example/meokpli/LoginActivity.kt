@@ -46,22 +46,8 @@ class LoginActivity : AppCompatActivity() {
 
         // 회원가입 버튼
         registerButton.setOnClickListener {
-            val email = emailEdit.text.toString()
-            val pw = passwordEdit.text.toString()
-
-            if (useServer) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val res = api.register(RegisterRequest(email, pw, email))
-                        goMain("서버 회원가입 성공: ${res.message}")
-                    } catch (e: Exception) {
-                        showError("회원가입 실패: ${e.message}")
-                    }
-                }
-            } else {
-                prefs.edit().putString(email, pw).apply()
-                Toast.makeText(this, "로컬 회원가입 완료", Toast.LENGTH_SHORT).show()
-            }
+            val intent = Intent(this, SignUpActivity::class.java)
+            startActivity(intent)
         }
 
         // 로그인 버튼
