@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Retrofit API 생성
         api = Retrofit.Builder()
-            .baseUrl("https://your.api.server/")  // 실제 서버 주소로 변경
+            .baseUrl("https://meokplaylist.store/")  // 실제 서버 주소로 변경
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApi::class.java)
