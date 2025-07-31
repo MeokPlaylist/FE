@@ -4,8 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
+    android:paddingStart="45dp"
+    android:paddingEnd="45dp"
+    android:paddingTop="40dp"
     android:orientation="vertical"
-    android:padding="16dp"
     android:gravity="center_horizontal">
 
     <!-- 인트로 문구 -->
@@ -22,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="먹플리"
-        android:textSize="16sp"
+        android:textSize="30sp"
         android:textColor="#C64132"
         android:textStyle="bold"
         android:fontFamily="@font/inter_semibold"
@@ -40,7 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="LOGIN"
-        android:textSize="12sp"
+        android:textSize="15sp"
         android:textColor="#000000"
         android:layout_marginTop="24dp"
         android:fontFamily="@font/inter_medium" />
@@ -55,6 +57,7 @@
         android:layout_marginTop="12dp"
         android:fontFamily="@font/inter_medium"
         android:textColorHint="#626262"
+        android:textSize="13sp"
         android:hint="아이디 입력" />
 
     <!-- 비밀번호 입력 -->
@@ -68,6 +71,7 @@
         android:fontFamily="@font/inter_medium"
         android:inputType="textPassword"
         android:textColorHint="#626262"
+        android:textSize="13sp"
         android:hint="비밀번호 입력" />
 
     <!-- 로그인 유지 -->
@@ -81,8 +85,8 @@
 
         <CheckBox
             android:id="@+id/checkKeepLogin"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:button="@drawable/checkbox_border"
             android:layout_marginEnd="6dp" />
 
@@ -96,18 +100,25 @@
     </LinearLayout>
 
     <!-- 로그인 버튼 -->
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="12dp"
-        android:text="로그인"
-        android:textColor="#ffffff"
-        android:textSize="13sp"
-        android:backgroundTint="#C64132"
-        android:fontFamily="@font/inter_semibold" />
 
     <!-- 회원가입 + 비밀번호 찾기 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="25dp"
+        android:background="@drawable/btn_basic"
+        android:fontFamily="@font/inter_semibold"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:text="로그인"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        app:backgroundTint="@null" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

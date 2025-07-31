@@ -54,7 +54,7 @@ class LoginActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         api.login(LoginRequest(email, pw))
-                        goMain()
+                        goInitProfile()
                     } catch (e: Exception) {
                         showError("로그인 실패: ${e.message}")
                     }
@@ -62,7 +62,7 @@ class LoginActivity : AppCompatActivity() {
             } else {
                 val savedPw = prefs.getString(email, null)
                 if (savedPw != null && savedPw == pw) {
-                    goMain()
+                    goInitProfile()
                 } else {
                     showError("로컬 로그인 실패")
                 }
@@ -89,13 +89,13 @@ class LoginActivity : AppCompatActivity() {
                             try {
                                 val res = api.oauthLogin(OAuthRequest("google", idToken!!))
                                 Log.d("JWT_TOKEN", "Login JWT: ${res.jwt}")
-                                goMain()
+                                goInitProfile()
                             } catch (e: Exception) {
                                 showError("구글 로그인 실패: ${e.message}")
                             }
                         }
                     } else {
-                        goMain()
+                        goInitProfile()
                     }
                 } else {
                     showError("구글 계정 정보 가져오기 실패")
@@ -106,8 +106,8 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun goMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+    private fun goInitProfile() {
+        startActivity(Intent(this, InitProfileActivity::class.java))
         finish()
     }
 

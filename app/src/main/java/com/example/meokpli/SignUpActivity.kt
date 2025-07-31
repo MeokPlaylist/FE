@@ -1,17 +1,14 @@
 package com.example.meokpli
 
-import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.MenuItem
 import android.widget.*
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import androidx.appcompat.widget.Toolbar
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -22,6 +19,8 @@ class SignUpActivity : AppCompatActivity() {
     private lateinit var birthEdit: EditText
     private lateinit var registerBtn: Button
     private lateinit var checkEmailBtn: Button
+    private lateinit var emailMsg: TextView
+    private lateinit var pwMsg: TextView
 
     private lateinit var api: AuthApi
 
@@ -29,16 +28,7 @@ class SignUpActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.signup)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
 
-        // ← 버튼 동작 추가
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowTitleEnabled(false) // 텍스트는 안 보이게 (원하면 true)
-
-        toolbar.setNavigationOnClickListener {
-            finish() // 뒤로가기 동작
-        }
 
         // View 연결
         pwEdit = findViewById(R.id.editTextPassword)
@@ -49,23 +39,20 @@ class SignUpActivity : AppCompatActivity() {
         registerBtn = findViewById(R.id.btnRegister)
         checkEmailBtn = findViewById(R.id.btnCheckEmail)
 
-        // Retrofit 초기화
+        emailMsg = findViewById(R.id.textViewEmailMsg)
+        pwMsg = findViewById(R.id.textViewPwMsg)
+
         api = Retrofit.Builder()
             .baseUrl("https://meokplaylist.store")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApi::class.java)
 
-        // 회원가입 버튼
-        registerBtn.setOnClickListener {
-            handleRegister()
-        }
-
-        // 이메일 중복 확인 버튼
         checkEmailBtn.setOnClickListener {
             val email = emailEdit.text.toString()
             if (email.isBlank()) {
-                showToast("이메일을 입력해주세요.")
+                emailMsg.text = "이메일을 입력해주세요."
+                emailMsg.setTextColor(0xFFDF4A4A.toInt())
                 return@setOnClickListener
             }
 
@@ -74,29 +61,52 @@ class SignUpActivity : AppCompatActivity() {
                     val res = api.checkEmail(emailInspectRequest(email))
                     withContext(Dispatchers.Main) {
                         if (res.isAvailable) {
-                            showToast("사용 가능한 이메일입니다.")
-                            emailEdit.isEnabled = false  // ✅ 입력 비활성화
-                            checkEmailBtn.isEnabled = false // ✅ 버튼도 비활성화 (선택)
+                            emailMsg.text = "사용 가능한 이메일입니다."
+                            emailMsg.setTextColor(0xFF3CB371.toInt())
+                            emailEdit.isEnabled = false
+                            checkEmailBtn.isEnabled = false
                         } else {
-                            showToast("이미 사용 중인 이메일입니다.")
+                            emailMsg.text = "이미 사용 중인 이메일입니다."
+                            emailMsg.setTextColor(0xFFDF4A4A.toInt())
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        showToast("중복 확인 실패: ${e.message}")
+                        emailMsg.text = "잘못된 형식의 이메일입니다."
+                        emailMsg.setTextColor(0xFFDF4A4A.toInt())
                     }
                 }
             }
         }
+
+        pwEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val pw = s.toString()
+                val pwRegex =
+                    Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\$%^&*(),.?\":{}|<>])[A-Za-z\\d!@#\$%^&*(),.?\":{}|<>]{8,16}$")
+                if (!pw.matches(pwRegex)) {
+                    pwMsg.text = "8~16자 영문 대 소문자, 숫자, 특수문자를 사용하세요."
+                    pwMsg.setTextColor(0xFFDF4A4A.toInt())
+                } else {
+                    pwMsg.text = ""
+                }
+            }
+        })
+
+        registerBtn.setOnClickListener {
+            handleRegister()
+        }
     }
 
-    // ✅ 뒤로가기 버튼 클릭 시 동작
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                finish() // 현재 화면 종료
+                finish()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -108,18 +118,23 @@ class SignUpActivity : AppCompatActivity() {
         val name = nameEdit.text.toString()
         val birth = birthEdit.text.toString()
 
+        pwMsg.text = ""
         if (pw.isBlank() || confirm.isBlank() || email.isBlank() || name.isBlank()) {
             showToast("필수 항목을 모두 입력해 주세요.")
             return
         }
 
         if (pw != confirm) {
-            showToast("비밀번호가 일치하지 않습니다.")
+            pwMsg.text = "비밀번호가 일치하지 않습니다."
+            pwMsg.setTextColor(0xFFDF4A4A.toInt())
             return
         }
 
-        if (pw.length < 8 || !pw.matches(Regex(".*[!@#\$%^&*(),.?\":{}|<>].*"))) {
-            showToast("비밀번호는 8자 이상이며 특수문자를 포함해야 합니다.")
+        val pwRegex =
+            Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\$%^&*(),.?\":{}|<>])[A-Za-z\\d!@#\$%^&*(),.?\":{}|<>]{8,16}$")
+        if (!pw.matches(pwRegex)) {
+            pwMsg.text = "8~16자 영문 대 소문자, 숫자, 특수문자를 사용하세요."
+            pwMsg.setTextColor(0xFFDF4A4A.toInt())
             return
         }
 

@@ -25,6 +25,8 @@
         </activity>
         <activity android:name=".SignUpActivity" />
         <activity android:name=".MainActivity" />
+        <activity android:name=".InitProfileActivity" />
+        <activity android:name=".CategoryActivity" />
 
         <meta-data
             android:name="preloaded_fonts"
