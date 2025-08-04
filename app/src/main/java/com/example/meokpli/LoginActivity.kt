@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.kakao.sdk.common.KakaoSdk
 import com.google.android.gms.auth.api.signin.*
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.user.UserApiClient
@@ -30,6 +29,7 @@ class LoginActivity : AppCompatActivity() {
         val loginButton = findViewById<Button>(R.id.btnLogin)
         val registerButton = findViewById<TextView>(R.id.tvSignUp)
         val googleButton = findViewById<ImageView>(R.id.btnGoogle)
+        val kakaoButton = findViewById<ImageView>(R.id.btnKakao)
 
         prefs = getSharedPreferences("meokpli_prefs", MODE_PRIVATE)
 
@@ -38,8 +38,6 @@ class LoginActivity : AppCompatActivity() {
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
-
-        KakaoSdk.init(this, "1a0fd1421e84e625979ad2a917b4e262")
 
         api = Retrofit.Builder()
             .baseUrl("https://meokplaylist.store/")
@@ -74,26 +72,16 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
+        // 🔵 구글 로그인 버튼
         googleButton.setOnClickListener {
             val signInIntent = googleSignInClient.signInIntent
             startActivityForResult(signInIntent, 1000)
         }
 
-        val kakaoButton = findViewById<ImageView>(R.id.btnKakao)
-
+        // 🟡 카카오 로그인 버튼
         kakaoButton.setOnClickListener {
-            if (UserApiClient.instance.isKakaoTalkLoginAvailable(this)) {
-                // 카카오톡으로 로그인
-                UserApiClient.instance.loginWithKakaoTalk(this) { token, error ->
-                    handleKakaoLogin(token, error)
+            kakaoLogin()
                 }
-            } else {
-                // 카카오계정으로 로그인 (웹뷰)
-                UserApiClient.instance.loginWithKakaoAccount(this) { token, error ->
-                    handleKakaoLogin(token, error)
-                }
-            }
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -132,37 +120,43 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private fun kakaoLogin() {
+        val callback: (OAuthToken?, Throwable?) -> Unit = { token, error ->
+            if (error != null) {
+                showError("카카오 로그인 실패: ${error.message}")
+            } else if (token != null) {
+                val idToken = token.accessToken
+                Log.d("KAKAO", "AccessToken: $idToken")
+
+                if (useServer) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val res = api.oauthLogin(OAuthRequest("kakao", idToken!!))
+                            Log.d("JWT_TOKEN", "Kakao Login JWT: ${res.jwt}")
+                            goMain()
+                        } catch (e: Exception) {
+                            showError("카카오 로그인 실패: ${e.message}")
+                        }
+                    }
+                } else {
+                    goMain()
+                }
+            }
+        }
+        // 카카오톡 설치 여부 확인 후 로그인 실행
+        UserApiClient.instance.loginWithKakaoAccount(this, callback = callback)
+    }
+
     private fun goMain() {
-        Log.d("LoginActivity", "goMain() called")
-        startActivity(Intent(this, MainActivity::class.java))
-        finish()
+        runOnUiThread {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
     }
 
     private fun showError(msg: String) {
         runOnUiThread {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-    }
-    private fun handleKakaoLogin(token: OAuthToken?, error: Throwable?) {
-        if (error != null) {
-            showError("카카오 로그인 실패: ${error.localizedMessage}")
-        } else if (token != null) {
-            val idToken = token.idToken // 서버에 전달할 id_token (없을 수도 있음)
-            Log.d("KAKAO_LOGIN", "Access Token: ${token.accessToken}")
-
-            if (useServer) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val res = api.oauthLogin(OAuthRequest("kakao", token.accessToken))
-                        Log.d("JWT_TOKEN", "Login JWT: ${res.jwt}")
-                        goMain()
-                    } catch (e: Exception) {
-                        showError("카카오 로그인 서버 오류: ${e.message}")
-                    }
-                }
-            } else {
-                goMain()
-            }
         }
     }
 }

@@ -1,10 +1,7 @@
 package com.example.meokpli
 
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Query
-import java.time.LocalDate
 
 interface AuthApi {
     @POST("/login")

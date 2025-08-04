@@ -59,6 +59,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     //카카오 로그인
     implementation("com.kakao.sdk:v2-user:2.21.5")
+    implementation("com.kakao.sdk:v2-auth:2.21.5")
 
     /* Retrofit */
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
