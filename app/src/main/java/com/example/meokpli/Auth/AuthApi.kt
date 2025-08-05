@@ -18,7 +18,7 @@ interface AuthApi {
     suspend fun oauthLogin(@Body req: OAuthRequest): LoginResponse
 
     @POST("find")
-    suspend fun findUser(@Body request: findUserRequest)
+    suspend fun findUser(@Body request: findUserRequest): FindUserResponse
 
     @POST("renewalPassword")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
@@ -38,8 +38,10 @@ data class OAuthRequest(val provider: String, val token: String)
 data class LoginResponse(val jwt: String)
 data class findUserRequest(val name: String, val email: String)
 data class emailInspectRequest(val email: String)
+data class FindUserResponse(val userId: Long)
+
 data class EmailCheckResponse(val isAvailable: Boolean)
-data class ResetPasswordRequest(val newPassword: String)
+data class ResetPasswordRequest(val userId: Long,val newPassword: String)
 
 data class ProfileStatusResponse(val isCompleted: Boolean)
 data class CategoryStatusResponse(val isCompleted: Boolean)
