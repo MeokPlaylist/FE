@@ -1,6 +1,7 @@
 package com.example.meokpli
 
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface AuthApi {
@@ -19,6 +20,12 @@ interface AuthApi {
     @POST("/auth/reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
 
+    @GET("/api/profile/status")
+    suspend fun getProfileStatus(): ProfileStatusResponse
+
+    @GET("/api/category/status")
+    suspend fun getCategoryStatus(): CategoryStatusResponse
+
 
 }
 
@@ -29,3 +36,6 @@ data class LoginResponse(val jwt: String)
 data class emailInspectRequest(val email: String)
 data class EmailCheckResponse(val isAvailable: Boolean)
 data class ResetPasswordRequest(val newPassword: String)
+
+data class ProfileStatusResponse(val isCompleted: Boolean)
+data class CategoryStatusResponse(val isCompleted: Boolean)
