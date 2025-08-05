@@ -92,8 +92,8 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val account = task.result
                 if (account != null) {
-                    val idToken = account.idToken
-                    if (idToken == null) {
+                    val token = account.idToken
+                    if (token == null) {
                         Log.d("GoogleLogin", "idToken is null")
                         showError("구글 로그인 토큰을 가져오지 못했습니다")
                         return
@@ -101,7 +101,7 @@ class LoginActivity : AppCompatActivity() {
                     if (useServer) {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
-                                val res = api.oauthLogin(OAuthRequest("google", idToken!!))
+                                val res = api.oauthLogin(OAuthRequest("google", token!!))
                                 Log.d("JWT_TOKEN", "Login JWT: ${res.jwt}")
                                 goMain()
                             } catch (e: Exception) {
@@ -125,17 +125,19 @@ class LoginActivity : AppCompatActivity() {
             if (error != null) {
                 showError("카카오 로그인 실패: ${error.message}")
             } else if (token != null) {
-                val idToken = token.accessToken
-                Log.d("KAKAO", "AccessToken: $idToken")
+                val token = token.accessToken
+                Log.d("KAKAO", "AccessToken: $token")
 
                 if (useServer) {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val res = api.oauthLogin(OAuthRequest("kakao", idToken!!))
+                            Log.d("KAKAO", "launch start")
+                            val res = api.oauthLogin(OAuthRequest(provider="kakao", token=token))
                             Log.d("JWT_TOKEN", "Kakao Login JWT: ${res.jwt}")
                             goMain()
                         } catch (e: Exception) {
-                            showError("카카오 로그인 실패: ${e.message}")
+                            Log.e("KAKAO", "server error", e)
+                            showError("카카오 로그인 실패: ${e.javaClass.simpleName}: ${e.message}")
                         }
                     }
                 } else {
@@ -147,7 +149,7 @@ class LoginActivity : AppCompatActivity() {
         UserApiClient.instance.loginWithKakaoAccount(this, callback = callback)
     }
 
-    private fun goMain() {
+    private fun goMain() {  
         runOnUiThread {
             startActivity(Intent(this, MainActivity::class.java))
             finish()

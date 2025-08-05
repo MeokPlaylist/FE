@@ -21,7 +21,7 @@ interface AuthApi {
 
 data class LoginRequest(val email: String, val password: String)
 data class RegisterRequest(val email: String, val password: String, val name: String, val birthDay: String? = null)
-data class OAuthRequest(val provider: String, val idToken: String)
+data class OAuthRequest(val provider: String, val token: String)
 data class LoginResponse(val jwt: String)
 data class emailInspectRequest(val email: String)
 data class EmailCheckResponse(val isAvailable: Boolean)
