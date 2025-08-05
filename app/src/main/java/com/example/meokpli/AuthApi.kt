@@ -17,7 +17,7 @@ interface AuthApi {
     @POST("/social/login")
     suspend fun oauthLogin(@Body req: OAuthRequest): LoginResponse
 
-    @POST("/auth/reset-password")
+    @POST("/find/user")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
 
     @GET("/api/profile/status")
