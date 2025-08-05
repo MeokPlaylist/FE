@@ -5,8 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.meokpli.ForgotPasswordApi
-import com.example.meokpli.ForgotPasswordRequest
+import com.example.meokpli.Auth.AuthApi
 import com.example.meokpli.R
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
@@ -20,7 +19,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private lateinit var errorMsg: TextView
     private lateinit var nextBtn: Button
 
-    private lateinit var api: ForgotPasswordApi
+    private lateinit var api: AuthApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +34,10 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         // Retrofit 초기화
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/") // 실제 서버 주소
+            .baseUrl("https://meokplaylist.store/auth/") // 실제 서버 주소
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ForgotPasswordApi::class.java)
+            .create(AuthApi::class.java)
 
         nextBtn.setOnClickListener {
             handleNext()
@@ -58,13 +57,13 @@ class ForgotPasswordActivity : AppCompatActivity() {
             return
         }
 
-        val request = ForgotPasswordRequest(email, name, birthToSend)
+        val request = findUserRequest(email, name)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.findPassword(request)
+                val response = api.findUser(request)
                 withContext(Dispatchers.Main) {
-                    if (response.success) {
+                    if (response.isPresent) {
                         val intent = Intent(this@ForgotPasswordActivity, ResetPasswordActivity::class.java)
                         intent.putExtra("email", email)
                         startActivity(intent)
