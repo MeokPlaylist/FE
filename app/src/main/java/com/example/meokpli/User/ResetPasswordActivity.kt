@@ -7,7 +7,7 @@ import android.text.TextWatcher
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.meokpli.Auth.LoginActivity
-import com.example.meokpli.Auth.ResetPasswordRequest
+import com.example.meokpli.User.ResetPasswordRequest
 import com.example.meokpli.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

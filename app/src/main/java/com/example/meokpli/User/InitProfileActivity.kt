@@ -1,6 +1,7 @@
 package com.example.meokpli.User
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -8,6 +9,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
@@ -15,6 +17,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.InputStream
 import com.example.meokpli.R
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.io.FileOutputStream
 
 class InitProfileActivity : AppCompatActivity() {
 
@@ -95,15 +102,20 @@ class InitProfileActivity : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = api.saveProfile(UserRequest(nickname, intro))
-                    withContext(Dispatchers.Main) {
-                        if (response.isSuccessful) {
-                            val intent = Intent(this@InitProfileActivity, CategoryActivity::class.java)
-                            startActivity(intent)
-                            finish()
-                        } else {
-                            showToast("서버 오류: ${response.code()}")
+                    val jwt = getSharedPreferences("meokpli_prefs", MODE_PRIVATE).getString("jwt_token", null)
+                    if (jwt.isNullOrBlank()) {
+                        withContext(Dispatchers.Main) {
+                            showToast("JWT가 존재하지 않습니다.")
                         }
+                        return@launch
+                    }
+
+                    val bearerToken = "Bearer $jwt"
+                    api.saveDetail(bearerToken, UserDetailRequest(nickname, intro)) // 응답 무시
+                    withContext(Dispatchers.Main) {
+                        val intent = Intent(this@InitProfileActivity, CategoryActivity::class.java)
+                        startActivity(intent)
+                        finish()
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
@@ -119,14 +131,58 @@ class InitProfileActivity : AppCompatActivity() {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
             val imageUri: Uri? = data.data
             try {
+
                 val inputStream: InputStream? = imageUri?.let { contentResolver.openInputStream(it) }
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 imageProfile.setImageBitmap(bitmap)
+
+                // ✅ 이미지 서버 전송
+                imageUri?.let { uri ->
+                    val file = createTempFileFromUri(uri)
+                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    val body = MultipartBody.Part.createFormData("profileImg", file.name, requestFile)
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val jwt = getSharedPreferences("meokpli_prefs", MODE_PRIVATE).getString("jwt_token", null)
+                            if (jwt.isNullOrBlank()) {
+                                withContext(Dispatchers.Main) {
+                                    showToast("JWT가 존재하지 않습니다.")
+                                }
+                                return@launch
+                            }
+                            val bearerToken = "Bearer $jwt"
+                            api.savePhoto(bearerToken, UserPhotoRequest(body))
+                            withContext(Dispatchers.Main) {
+                                showToast("이미지 업로드 성공!")
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                showToast("업로드 실패: ${e.message}")
+                            }
+                        }
+                    }
+                }
+
             } catch (e: Exception) {
                 showToast("이미지를 불러오지 못했습니다.")
             }
         }
     }
+
+    fun Context.createTempFileFromUri(uri: Uri): File {
+        val inputStream = contentResolver.openInputStream(uri) ?: throw IllegalArgumentException("InputStream null")
+        val file = this@InitProfileActivity.createTempFileFromUri(uri)
+        val outputStream = FileOutputStream(file)
+
+        inputStream.copyTo(outputStream)
+
+        outputStream.close()
+        inputStream.close()
+
+        return file
+    }
+
 
     private fun showToast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()

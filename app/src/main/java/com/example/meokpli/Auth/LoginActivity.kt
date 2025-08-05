@@ -64,7 +64,8 @@ class LoginActivity : AppCompatActivity() {
             if (useServer) {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        api.login(LoginRequest(email, pw))
+                        val res = api.login(LoginRequest(email, pw))
+                        saveJwtToken(res.jwt)
                         goMain()
                     } catch (e: Exception) {
                         showError("로그인 실패: ${e.message}")
@@ -111,6 +112,7 @@ class LoginActivity : AppCompatActivity() {
                             try {
                                 val res = api.oauthLogin(OAuthRequest("google", idToken!!))
                                 Log.d("JWT_TOKEN", "Login JWT: ${res.jwt}")
+                                saveJwtToken(res.jwt)
                                 goMain()
                             } catch (e: Exception) {
                                 showError("구글 로그인 실패: ${e.message}")
@@ -141,6 +143,7 @@ class LoginActivity : AppCompatActivity() {
                         try {
                             val res = api.oauthLogin(OAuthRequest("kakao", idToken!!))
                             Log.d("JWT_TOKEN", "Kakao Login JWT: ${res.jwt}")
+                            saveJwtToken(res.jwt)
                             goMain()
                         } catch (e: Exception) {
                             showError("카카오 로그인 실패: ${e.message}")
@@ -166,5 +169,11 @@ class LoginActivity : AppCompatActivity() {
         runOnUiThread {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun saveJwtToken(token: String) {
+        val editor = prefs.edit()
+        editor.putString("jwt_token", token)
+        editor.apply()
     }
 }

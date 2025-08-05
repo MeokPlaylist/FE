@@ -6,7 +6,7 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.meokpli.Auth.findUserRequest
+import com.example.meokpli.User.FindUserRequest
 import com.example.meokpli.R
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
@@ -56,7 +56,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
             return
         }
 
-        val request = findUserRequest(name, email)
+        val request = FindUserRequest(name, email)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = api.findUser(request)  // 성공 시 userId만 반환됨

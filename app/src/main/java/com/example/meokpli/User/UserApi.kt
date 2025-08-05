@@ -1,25 +1,31 @@
 package com.example.meokpli.User
 
-import com.example.meokpli.Auth.FindUserResponse
-import com.example.meokpli.Auth.ResetPasswordRequest
-import com.example.meokpli.Auth.findUserRequest
-import retrofit2.Response
+import okhttp3.MultipartBody
 import retrofit2.http.Body
+import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 
 interface UserApi {
 
-    @POST("/api/profile")
-    suspend fun saveProfile(@Body req: UserRequest): Response<Unit>
+    @POST("setupDetailInfo")
+    suspend fun saveDetail(@Header("Authorization") token: String, @Body req: UserDetailRequest)
+
+    @Multipart
+    @POST("setupProfile")
+    suspend fun savePhoto(@Header("Authorization") token: String, @Part profileImg: UserPhotoRequest)
 
     @POST("find")
-    suspend fun findUser(@Body request: findUserRequest): FindUserResponse
+    suspend fun findUser(@Body request: FindUserRequest): FindUserResponse
 
     @POST("renewalPassword")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
 
 }
-data class UserRequest(
-    val nickname: String,
-    val introduction: String
-)
+
+data class FindUserRequest(val name: String, val email: String)
+data class FindUserResponse(val userId: Long)
+data class ResetPasswordRequest(val userId: Long,val newPassword: String)
+data class UserDetailRequest(val nickname: String, val introduction: String)
+data class UserPhotoRequest(val profileImg: MultipartBody.Part)
