@@ -13,10 +13,10 @@ interface AuthApi {
     @POST("/emailInspect")
     suspend fun checkEmail(@Body request: emailInspectRequest): EmailCheckResponse
 
-    @POST("/social/login")
+    @POST("/socialLogin")
     suspend fun oauthLogin(@Body req: OAuthRequest): LoginResponse
 
-    @POST("/auth/reset-password")
+    @POST("/renewalPassword")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
 
 

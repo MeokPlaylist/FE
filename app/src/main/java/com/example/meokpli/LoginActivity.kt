@@ -40,7 +40,7 @@ class LoginActivity : AppCompatActivity() {
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/")
+            .baseUrl("https://meokplaylist.store/auth/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApi::class.java)
