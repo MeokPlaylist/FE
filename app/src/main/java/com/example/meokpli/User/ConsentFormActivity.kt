@@ -1,4 +1,4 @@
-package com.example.meokpli
+package com.example.meokpli.User
 
 import android.app.Dialog
 import android.os.Bundle
@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import android.content.Intent
+import com.example.meokpli.R
 
 class ConsentFormActivity : AppCompatActivity() {
 

@@ -1,4 +1,4 @@
-package com.example.meokpli
+package com.example.meokpli.Auth
 
 import android.app.Application
 import com.kakao.sdk.common.KakaoSdk

@@ -1,10 +1,12 @@
-package com.example.meokpli
+package com.example.meokpli.Auth
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.example.meokpli.Main.MainActivity
+import com.example.meokpli.R
 import com.google.android.gms.auth.api.signin.*
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.user.UserApiClient

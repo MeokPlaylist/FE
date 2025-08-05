@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".GlobalApplication"
+        android:name=".Auth.GlobalApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -32,7 +32,7 @@
         </activity>
 
         <activity
-            android:name=".LoginActivity"
+            android:name=".Auth.LoginActivity"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -42,13 +42,13 @@
         </activity>
 
         <!-- 나머지 Activity 목록 -->
-        <activity android:name=".SignUpActivity" />
-        <activity android:name=".MainActivity" />
-        <activity android:name=".InitProfileActivity" />
-        <activity android:name=".CategoryActivity" />
-        <activity android:name=".ConsentFormActivity" />
-        <activity android:name=".ForgotPasswordActivity" />
-        <activity android:name=".ResetPasswordActivity" />
+        <activity android:name=".Auth.SignUpActivity" />
+        <activity android:name=".Main.MainActivity" />
+        <activity android:name=".User.InitProfileActivity" />
+        <activity android:name=".User.CategoryActivity" />
+        <activity android:name=".User.ConsentFormActivity" />
+        <activity android:name=".Auth.ForgotPasswordActivity" />
+        <activity android:name=".Auth.ResetPasswordActivity" />
 
         <!-- 사전 로딩할 폰트 설정 -->
         <meta-data

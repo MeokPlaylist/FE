@@ -1,4 +1,4 @@
-package com.example.meokpli
+package com.example.meokpli.User
 
 import android.os.Bundle
 import android.util.Log
@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.example.meokpli.R
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 

@@ -1,4 +1,4 @@
-package com.example.meokpli
+package com.example.meokpli.User
 
 import retrofit2.Response
 import retrofit2.http.Body

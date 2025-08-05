@@ -1,4 +1,4 @@
-package com.example.meokpli
+package com.example.meokpli.User
 
 import android.app.Activity
 import android.content.Intent
@@ -14,7 +14,7 @@ import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.InputStream
-import com.example.meokpli.ProfileApi
+import com.example.meokpli.R
 
 class InitProfileActivity : AppCompatActivity() {
 

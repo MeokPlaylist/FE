@@ -1,9 +1,11 @@
-package com.example.meokpli
+package com.example.meokpli.Main
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.example.meokpli.Auth.LoginActivity
+import com.example.meokpli.R
 import com.example.meokpli.databinding.ActivityMainBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions

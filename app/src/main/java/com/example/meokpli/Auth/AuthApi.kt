@@ -1,9 +1,8 @@
-package com.example.meokpli
+package com.example.meokpli.Auth
 
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
-import java.lang.ref.ReferenceQueue
 
 interface AuthApi {
     @POST("login")
