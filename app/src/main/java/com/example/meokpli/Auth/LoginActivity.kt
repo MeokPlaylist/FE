@@ -5,8 +5,10 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.meokpli.Main.MainActivity
 import com.example.meokpli.R
+import com.example.meokpli.User.ForgotPasswordActivity
+import com.example.meokpli.Main.MainActivity
+import com.example.meokpli.User.ConsentFormActivity
 import com.google.android.gms.auth.api.signin.*
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.user.UserApiClient
@@ -155,7 +157,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun goMain() {
         runOnUiThread {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, ConsentFormActivity::class.java))
             finish()
         }
     }

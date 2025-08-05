@@ -47,8 +47,8 @@
         <activity android:name=".User.InitProfileActivity" />
         <activity android:name=".User.CategoryActivity" />
         <activity android:name=".User.ConsentFormActivity" />
-        <activity android:name=".Auth.ForgotPasswordActivity" />
-        <activity android:name=".Auth.ResetPasswordActivity" />
+        <activity android:name=".User.ForgotPasswordActivity" />
+        <activity android:name=".User.ResetPasswordActivity" />
 
         <!-- 사전 로딩할 폰트 설정 -->
         <meta-data

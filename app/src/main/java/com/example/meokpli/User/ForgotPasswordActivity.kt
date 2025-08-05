@@ -1,12 +1,12 @@
-package com.example.meokpli.Auth
+package com.example.meokpli.User
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.meokpli.ForgotPasswordApi
-import com.example.meokpli.ForgotPasswordRequest
+import com.example.meokpli.Auth.findUserRequest
 import com.example.meokpli.R
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
@@ -19,8 +19,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private lateinit var birthEdit: EditText
     private lateinit var errorMsg: TextView
     private lateinit var nextBtn: Button
-
-    private lateinit var api: AuthApi
+    private lateinit var api: UserApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +34,10 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         // Retrofit 초기화
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/") // 실제 서버 주소
+            .baseUrl("https://meokplaylist.store/user/") // 실제 서버 주소
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApi::class.java)
+            .create(UserApi::class.java)
 
         nextBtn.setOnClickListener {
             handleNext()
@@ -49,7 +48,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
         val email = emailEdit.text.toString().trim()
         val name = nameEdit.text.toString().trim()
         val birth = birthEdit.text.toString().trim()
-        val birthToSend = if (birth.isBlank()) null else birth
 
         errorMsg.visibility = View.GONE
 
@@ -59,7 +57,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
         }
 
         val request = findUserRequest(name, email)
-
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = api.findUser(request)  // 성공 시 userId만 반환됨

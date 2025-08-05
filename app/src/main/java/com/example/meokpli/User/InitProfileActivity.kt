@@ -29,7 +29,7 @@ class InitProfileActivity : AppCompatActivity() {
     private val NICKNAME_LIMIT = 10
     private val INTRO_LIMIT = 30
 
-    private lateinit var api: ProfileApi
+    private lateinit var api: UserApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +47,7 @@ class InitProfileActivity : AppCompatActivity() {
             .baseUrl("https://meokplaylist.store/user/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ProfileApi::class.java)
+            .create(UserApi::class.java)
 
         // 닉네임 글자 수 실시간 표시
         editNickname.addTextChangedListener(object : TextWatcher {
@@ -95,7 +95,7 @@ class InitProfileActivity : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = api.saveProfile(ProfileRequest(nickname, intro))
+                    val response = api.saveProfile(UserRequest(nickname, intro))
                     withContext(Dispatchers.Main) {
                         if (response.isSuccessful) {
                             val intent = Intent(this@InitProfileActivity, CategoryActivity::class.java)

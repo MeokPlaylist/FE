@@ -17,12 +17,6 @@ interface AuthApi {
     @POST("socialLogin")
     suspend fun oauthLogin(@Body req: OAuthRequest): LoginResponse
 
-    @POST("find")
-    suspend fun findUser(@Body request: findUserRequest): FindUserResponse
-
-    @POST("renewalPassword")
-    suspend fun resetPassword(@Body request: ResetPasswordRequest)
-
     @GET("api/profile/status")
     suspend fun getProfileStatus(): ProfileStatusResponse
 

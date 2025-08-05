@@ -1,4 +1,4 @@
-package com.example.meokpli.Auth
+package com.example.meokpli.User
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,6 +6,8 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.example.meokpli.Auth.LoginActivity
+import com.example.meokpli.Auth.ResetPasswordRequest
 import com.example.meokpli.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +23,7 @@ class ResetPasswordActivity : AppCompatActivity() {
     private lateinit var confirmPwErrorMsg: TextView
     private lateinit var btnReset: Button
 
-    private lateinit var api: AuthApi
+    private lateinit var api: UserApi
 
     private val pwRegex =
         Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\\\$%^&*(),.?\":{}|<>])[A-Za-z\\d!@#\\\$%^&*(),.?\":{}|<>]{8,16}")
@@ -43,7 +45,7 @@ class ResetPasswordActivity : AppCompatActivity() {
             .baseUrl("https://meokplaylist.store/user/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApi::class.java)
+            .create(UserApi::class.java)
 
         // 비밀번호 형식 실시간 체크만 적용 (일치 여부는 버튼 클릭 시만 확인)
         editPassword.addTextChangedListener(object : TextWatcher {
@@ -72,20 +74,17 @@ class ResetPasswordActivity : AppCompatActivity() {
 
         var isValid = true
 
-        if (!pw.matches(pwRegex)) {
-            pwErrorMsg.text = "8~16자 영문 대 소문자, 숫자, 특수문자를 사용하세요."
+        if (!confirmPw.matches(pwRegex)) {
+            confirmPwErrorMsg.text = "8~16자 영문 대 소문자, 숫자, 특수문자를 사용하세요."
             isValid = false
         } else {
-            pwErrorMsg.text = ""
+            if (pw != confirmPw) {
+                confirmPwErrorMsg.text = "비밀번호가 일치하지 않습니다."
+                isValid = false
+            } else {
+                confirmPwErrorMsg.text = ""
+            }
         }
-
-        if (pw != confirmPw) {
-            confirmPwErrorMsg.text = "비밀번호가 일치하지 않습니다."
-            isValid = false
-        } else {
-            confirmPwErrorMsg.text = ""
-        }
-
         return isValid
     }
 
