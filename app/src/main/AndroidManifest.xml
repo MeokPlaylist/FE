@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 인터넷 권한 (서버 통신용) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -40,13 +41,19 @@
             </intent-filter>
         </activity>
 
+        <!-- 나머지 Activity 목록 -->
         <activity android:name=".SignUpActivity" />
         <activity android:name=".MainActivity" />
         <activity android:name=".InitProfileActivity" />
         <activity android:name=".CategoryActivity" />
+        <activity android:name=".ConsentFormActivity" />
+        <activity android:name=".ForgotPasswordActivity" />
+        <activity android:name=".ResetPasswordActivity" />
 
+        <!-- 사전 로딩할 폰트 설정 -->
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
     </application>
+
 </manifest>

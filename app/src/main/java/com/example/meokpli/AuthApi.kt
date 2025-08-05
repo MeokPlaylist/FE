@@ -16,6 +16,9 @@ interface AuthApi {
     @POST("/social/login")
     suspend fun oauthLogin(@Body req: OAuthRequest): LoginResponse
 
+    @POST("/auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest)
+
 
 }
 
@@ -25,3 +28,4 @@ data class OAuthRequest(val provider: String, val token: String)
 data class LoginResponse(val jwt: String)
 data class emailInspectRequest(val email: String)
 data class EmailCheckResponse(val isAvailable: Boolean)
+data class ResetPasswordRequest(val newPassword: String)
