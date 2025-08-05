@@ -5,7 +5,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.meokpli.Auth.AuthApi
+import com.example.meokpli.ForgotPasswordApi
+import com.example.meokpli.ForgotPasswordRequest
 import com.example.meokpli.R
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
@@ -34,7 +35,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         // Retrofit 초기화
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/auth/") // 실제 서버 주소
+            .baseUrl("https://meokplaylist.store/") // 실제 서버 주소
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApi::class.java)
@@ -57,23 +58,21 @@ class ForgotPasswordActivity : AppCompatActivity() {
             return
         }
 
-        val request = findUserRequest(email, name)
+        val request = findUserRequest(name, email)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = api.findUser(request)
+                val response = api.findUser(request)  // 성공 시 userId만 반환됨
+                val userId = response.userId
+
                 withContext(Dispatchers.Main) {
-                    if (response.isPresent) {
-                        val intent = Intent(this@ForgotPasswordActivity, ResetPasswordActivity::class.java)
-                        intent.putExtra("email", email)
-                        startActivity(intent)
-                    } else {
-                        showError("정보가 일치하지 않습니다.")
-                    }
+                    val intent = Intent(this@ForgotPasswordActivity, ResetPasswordActivity::class.java)
+                    intent.putExtra("userId", userId)
+                    startActivity(intent)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    showError("오류 발생: ${e.message}")
+                    showError("정보가 일치하지 않습니다.")
                 }
             }
         }
