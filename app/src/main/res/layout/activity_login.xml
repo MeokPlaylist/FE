@@ -77,18 +77,31 @@
     <!-- 로그인 유지 -->
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:orientation="horizontal"
-        android:layout_marginTop="6dp"
         android:gravity="center_vertical"
-        android:layout_gravity="start">
+        android:layout_gravity="start"
+        android:layout_marginTop="6dp">
 
-        <CheckBox
-            android:id="@+id/checkKeepLogin"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:button="@drawable/checkbox_border"
-            android:layout_marginEnd="6dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp">
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/checkKeepLogin"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:button="@drawable/checkbox_border"
+                android:layout_gravity="center" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                android:onClick="onKeepLoginClick" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="wrap_content"
@@ -100,8 +113,6 @@
     </LinearLayout>
 
     <!-- 로그인 버튼 -->
-
-    <!-- 회원가입 + 비밀번호 찾기 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
@@ -119,6 +130,7 @@
         android:textSize="15sp"
         app:backgroundTint="@null" />
 
+    <!-- 회원가입 + 비밀번호 찾기 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
