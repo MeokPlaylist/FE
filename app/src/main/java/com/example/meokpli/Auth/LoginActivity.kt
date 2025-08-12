@@ -7,7 +7,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.meokpli.R
 import com.example.meokpli.User.ForgotPasswordActivity
-import com.example.meokpli.Main.MainActivity
 import com.example.meokpli.User.ConsentFormActivity
 import com.google.android.gms.auth.api.signin.*
 import com.kakao.sdk.auth.model.OAuthToken
