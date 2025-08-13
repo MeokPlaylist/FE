@@ -76,36 +76,32 @@
 
     <!-- 로그인 유지 -->
     <LinearLayout
+        android:id="@+id/keepLoginRow"
         android:layout_width="wrap_content"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:layout_marginTop="6dp"
         android:gravity="center_vertical"
-        android:layout_gravity="start"
-        android:layout_marginTop="6dp">
+        android:layout_gravity="start">
 
-        <FrameLayout
-            android:layout_width="48dp"
-            android:layout_height="48dp">
-
-            <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/checkKeepLogin"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:button="@drawable/checkbox_border"
-                android:layout_gravity="center" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="onKeepLoginClick" />
-        </FrameLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnKeepLogin"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="10dp"
+            app:checkedIcon="@null"
+            app:backgroundTint="@color/selector_keep_bg"
+            app:strokeWidth="0.5dp"
+            app:strokeColor="@color/selector_keep_stroke"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
             android:text="로그인 유지"
             android:textSize="10sp"
             android:textColor="#626262"

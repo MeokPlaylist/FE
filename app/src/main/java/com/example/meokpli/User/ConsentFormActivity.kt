@@ -62,6 +62,7 @@ class ConsentFormActivity : AppCompatActivity() {
         updateConfirmButton()
 
         // Arrow 클릭 시 팝업 띄우기
+        setArrowClick(findViewById(R.id.arrowTermsService), "age_policy.txt", "만 14세 이상입니다.")
         setArrowClick(findViewById(R.id.arrowTermsService), "terms_service.txt", "먹플리 이용약관 동의")
         setArrowClick(findViewById(R.id.arrowPrivacyPolicy), "privacy_policy.txt", "개인정보 수집이용 동의")
         setArrowClick(findViewById(R.id.arrowLocationPolicy), "location_policy.txt", "위치정보 수집 및 이용 동의")

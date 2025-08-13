@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="44dp"
+    android:gravity="center_vertical">
+
+    <!-- 선택 시 보여줄 왼쪽 빨간 인디케이터 -->
+    <View
+        android:id="@+id/leftIndicator"
+        android:layout_width="6dp"
+        android:layout_height="match_parent"
+        android:background="#C64132"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/textRegion"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="#000000"
+        android:textSize="14sp"/>
+</LinearLayout>

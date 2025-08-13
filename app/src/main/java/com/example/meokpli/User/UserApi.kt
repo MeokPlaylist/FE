@@ -10,11 +10,15 @@ import retrofit2.http.Part
 interface UserApi {
 
     @POST("setupDetailInfo")
-    suspend fun saveDetail(@Header("Authorization") token: String, @Body req: UserDetailRequest)
+    suspend fun saveDetail(
+        @Body body: UserDetailRequest
+    ): BaseResponse
 
     @Multipart
     @POST("setupProfile")
-    suspend fun savePhoto(@Header("Authorization") token: String, @Part profileImg: UserPhotoRequest)
+    suspend fun savePhoto(
+        @Part profileImg: MultipartBody.Part
+    ): BaseResponse
 
     @POST("find")
     suspend fun findUser(@Body request: FindUserRequest): FindUserResponse
@@ -28,4 +32,4 @@ data class FindUserRequest(val name: String, val email: String)
 data class FindUserResponse(val userId: Long)
 data class ResetPasswordRequest(val userId: Long,val newPassword: String)
 data class UserDetailRequest(val nickname: String, val introduction: String)
-data class UserPhotoRequest(val profileImg: MultipartBody.Part)
+data class BaseResponse(val success: Boolean, val message: String?)
