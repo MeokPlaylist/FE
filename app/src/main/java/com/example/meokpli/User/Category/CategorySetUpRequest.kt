@@ -5,6 +5,13 @@ package com.example.meokpli.User.category
  * 아래는 일반적인 구조로 가정:
  * - 분위기/음식/동반자: 다중 선택
  * - 지역: 선택했다면 다중 전달(없으면 빈 배열)
+ * json형식으로 보냄
+ * {
+ *   "moods": ["전통적인", "감성적인"],
+ *   "foods": ["분식", "한식"],
+ *   "companions": ["친구", "가족"],
+ *   "regions": ["서울|강남구", "경기|수원시"]
+ * }
  */
 data class CategorySetUpRequest(
     val moods: List<String>,        // = "분위기" 선택값들

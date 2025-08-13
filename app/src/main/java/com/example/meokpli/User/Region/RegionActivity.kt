@@ -15,6 +15,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.widget.addTextChangedListener
 import android.content.Context
 import android.view.View
+import com.example.meokpli.User.CategoryActivity
 
 
 class RegionActivity : AppCompatActivity() {
@@ -137,8 +138,10 @@ class RegionActivity : AppCompatActivity() {
             hideKeyboard()
         }
 
-        // 취소: 그냥 종료
-        btnCancel.setOnClickListener { finish() }
+        btnCancel.setOnClickListener {
+            startActivity(Intent(this, CategoryActivity::class.java))
+            finish()
+        }
 
         // 완료: 선택 결과를 CategoryActivity로 돌려준다
         btnComplete.setOnClickListener {
