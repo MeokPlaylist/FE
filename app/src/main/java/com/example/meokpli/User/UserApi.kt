@@ -26,6 +26,9 @@ interface UserApi {
     @POST("renewalPassword")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
 
+    @POST("newBCheck")
+    suspend fun newBCheck(): retrofit2.Response<Void>
+
 }
 
 data class FindUserRequest(val name: String, val email: String)

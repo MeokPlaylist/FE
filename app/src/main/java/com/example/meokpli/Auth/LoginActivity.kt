@@ -1,5 +1,6 @@
 package com.example.meokpli.Auth
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -11,6 +12,7 @@ import com.example.meokpli.User.CategoryActivity
 import com.example.meokpli.User.ForgotPasswordActivity
 import com.example.meokpli.User.ConsentFormActivity
 import com.example.meokpli.User.InitProfileActivity
+import com.example.meokpli.User.UserApi
 import com.google.android.gms.auth.api.signin.*
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.user.UserApiClient
@@ -23,6 +25,7 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var api: AuthApi
+    private lateinit var userApi: UserApi
     private lateinit var tokenManager: TokenManager
 
     private val useServer = true
@@ -78,7 +81,7 @@ class LoginActivity : AppCompatActivity() {
                     try {
                         val res = api.login(LoginRequest(email, pw))
                         // ✅ Access-only: refreshToken은 더 이상 사용하지 않음
-                        tokenManager.saveTokens(res.accessToken, /* refresh = */ "")
+                        tokenManager.saveTokens(res.jwt)
                         routeAfterLoginByErrorCodeOnly()
                     } catch (e: Exception) {
                         var notFound = false
@@ -149,7 +152,7 @@ class LoginActivity : AppCompatActivity() {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
                                 val res = api.oauthLogin(OAuthRequest("google", idToken))
-                                tokenManager.saveTokens(res.accessToken, /* refresh = */ "")
+                                tokenManager.saveTokens(res.jwt)
                                 routeAfterLoginByErrorCodeOnly()
                             } catch (e: Exception) {
                                 showError("구글 로그인 실패: ${e.message}")
@@ -168,6 +171,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun kakaoLogin() {
+        val act: Activity = this
         val callback: (OAuthToken?, Throwable?) -> Unit = { token, error ->
             if (error != null) {
                 showError("카카오 로그인 실패: ${error.message}")
@@ -179,7 +183,7 @@ class LoginActivity : AppCompatActivity() {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val res = api.oauthLogin(OAuthRequest("kakao", idToken))
-                            tokenManager.saveTokens(res.accessToken, /* refresh = */ "")
+                            tokenManager.saveTokens(res.jwt)
                             routeAfterLoginByErrorCodeOnly()
                         } catch (e: Exception) {
                             showError("카카오 로그인 실패: ${e.message}")
@@ -190,54 +194,58 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
-        UserApiClient.instance.loginWithKakaoAccount(this, callback = callback)
+        UserApiClient.instance.loginWithKakaoAccount(act, callback = callback)
     }
 
     private suspend fun routeAfterLoginByErrorCodeOnly() {
         try {
             // 보호 API 한 번만 호출 (성공이면 모든 선행조건 충족으로 간주)
-            api.getProfileStatus()
-            goNext()
-            return
-        } catch (e: HttpException) {
-            val (codeString, codeNumber) = parseError(e)
 
+            userApi = Network.userApi(this)
+            val codeNumber = userApi.newBCheck().code()
+            Log.d("sibal", codeNumber.toString())
             when {
-                codeString == "CONSENT_NOT_FOUND" || codeNumber == 453 -> {
+                codeNumber == 590 -> {
+                    withContext(Dispatchers.Main) {
+                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        finish()
+                    }
+                    return
+                }
+
+                codeNumber == 453 -> {
                     withContext(Dispatchers.Main) {
                         startActivity(Intent(this@LoginActivity, ConsentFormActivity::class.java))
                         finish()
                     }
                     return
                 }
-                codeString == "DONT_HAVE_NICKNAME" || codeNumber == 455 -> {
+
+                codeNumber == 455 -> {
                     withContext(Dispatchers.Main) {
                         startActivity(Intent(this@LoginActivity, InitProfileActivity::class.java))
                         finish()
                     }
                     return
                 }
-                codeString == "CATEGORY_NOT_FOUND" || codeNumber == 470 -> {
+
+                codeNumber == 456 -> {
                     withContext(Dispatchers.Main) {
                         startActivity(Intent(this@LoginActivity, CategoryActivity::class.java))
                         finish()
                     }
                     return
                 }
-                e.code() == 401 -> {
-                    // ✅ Access-only: 만료/무효 → 강제 로그아웃
-                    tokenManager.clear()
-                    showOnMain("세션이 만료되었습니다. 다시 로그인해 주세요.")
-                    return
-                }
-                else -> {
-                    showOnMain("상태 확인 실패: ${e.message()}")
-                    return
-                }
+
             }
+        } catch (e: HttpException) {
+
+            //에러 발생시 전 화면으로 빠꾸 or 앱 다운
+
         } catch (e: Exception) {
             showOnMain("상태 확인 오류: ${e.message}")
         }
+
     }
 
     private fun parseError(e: HttpException): Pair<String?, Int?> {

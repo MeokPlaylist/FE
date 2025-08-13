@@ -55,6 +55,12 @@ class InitProfileActivity : AppCompatActivity() {
 
         api = Network.userApi(this)
 
+        /*
+
+        &***** jwt 토큰이 같이 안날라옴
+
+
+        */
         // Retrofit 초기화
         api = Retrofit.Builder()
             .baseUrl("https://meokplaylist.store/user/")

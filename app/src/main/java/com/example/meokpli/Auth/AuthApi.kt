@@ -16,11 +16,11 @@ interface AuthApi {
 
     @POST("socialLogin")
     suspend fun oauthLogin(@Body req: OAuthRequest): TokenResponse
-
+/*
     //액세스 토큰 갱신
     @POST("refresh")
     suspend fun refresh(@Body req: RefreshRequest): TokenResponse
-
+*/
     @GET("api/profile/status")
     suspend fun getProfileStatus(): ProfileStatusResponse
 
@@ -41,8 +41,7 @@ data class EmailInspectRequest(val email: String)
 data class EmailCheckResponse(val isAvailable: Boolean)
 //액세스토큰 DTO
 data class TokenResponse(
-    val accessToken: String,
-    val refreshToken: String
+    val jwt: String
 )
 data class RefreshRequest(val refreshToken: String)
 

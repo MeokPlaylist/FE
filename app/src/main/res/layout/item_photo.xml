@@ -9,21 +9,20 @@
         android:scaleType="centerCrop"
         android:background="#E0E0E0"/>
 
-    <!-- 선택 테두리 -->
     <View
         android:id="@+id/v_border"
         android:visibility="gone"
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:background="@drawable/bg_red_border"/>
 
-    <!-- 우상단 번호 배지 -->
     <TextView
         android:id="@+id/tv_badge"
         android:visibility="gone"
         android:layout_gravity="top|end"
         android:layout_margin="6dp"
         android:gravity="center"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
         android:layout_width="20dp" android:layout_height="20dp"
-        android:textColor="@android:color/white" android:textSize="12sp"
         android:background="@drawable/bg_badge_red"/>
 </FrameLayout>

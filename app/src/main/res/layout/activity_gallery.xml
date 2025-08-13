@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 상단 헤더: 취소 / 모든 사진 ▼ / 추가 -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -19,7 +18,6 @@
         app:contentInsetEnd="0dp"
         app:elevation="4dp">
 
-        <!-- 취소 -->
         <TextView
             android:id="@+id/tv_cancel"
             android:layout_width="wrap_content"
@@ -33,7 +31,6 @@
             android:textColor="#000000"
             android:layout_gravity="start|center_vertical" />
 
-        <!-- 가운데: 모든 사진 ▼ (드롭다운 트리거) -->
         <TextView
             android:id="@+id/tv_bucket"
             android:layout_width="wrap_content"
@@ -47,7 +44,6 @@
             android:textStyle="bold"
             android:textColor="#000000" />
 
-        <!-- 추가 (선택 전엔 비활성처럼 보이도록 반투명) -->
         <TextView
             android:id="@+id/tv_done"
             android:layout_width="wrap_content"
@@ -63,14 +59,12 @@
             android:layout_gravity="end|center_vertical" />
     </com.google.android.material.appbar.MaterialToolbar>
 
-    <!-- 헤더 아래 얇은 구분선 (피그마의 상단 선) -->
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
         android:layout_marginTop="56dp"
         android:background="#1F000000" />
 
-    <!-- 3열 그리드 갤러리 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv"
         android:layout_width="match_parent"
@@ -79,7 +73,5 @@
         android:clipToPadding="false"
         android:padding="1dp"
         android:background="@android:color/white"
-        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         android:overScrollMode="never" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

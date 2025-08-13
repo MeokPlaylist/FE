@@ -41,7 +41,6 @@ object Network {
 
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(tokenManager))
-            .authenticator(TokenRefreshAuthenticator(tokenManager, AUTH_BASE_URL))
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .build()

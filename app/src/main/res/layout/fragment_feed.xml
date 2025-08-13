@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -12,13 +13,14 @@
         android:layout_height="?attr/actionBarSize"
         app:title="새 게시물"
         app:navigationIcon="@drawable/ic_arrow"
-        app:menu="@menu/menu_feed_upload"/>
+    app:menu="@menu/menu_feed_upload"/>
 
     <!-- 내용 -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize">
+        android:layout_marginTop="?attr/actionBarSize"
+        android:fillViewport="true">
 
         <LinearLayout
             android:orientation="vertical"
@@ -33,13 +35,6 @@
                 android:layout_height="240dp"
                 android:background="@color/md_grey_200"/>
 
-            <!-- 사진 추가 버튼 -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_add_photos"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_marginTop="8dp"
-                android:text="사진 추가"/>
-
             <!-- 카테고리 / 지역 -->
             <LinearLayout
                 android:orientation="horizontal"
@@ -50,11 +45,15 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_category"
                     style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="카테고리 추가"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_region"
                     style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="지역 추가"/>
             </LinearLayout>
@@ -84,16 +83,6 @@
                     android:layout_height="wrap_content"
                     android:maxLines="3"/>
             </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 문구 추천 호출 버튼 (탭 영역) -->
-            <TextView
-                android:id="@+id/tv_caption_suggest"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="문구 추천 보기"
-                android:textStyle="bold"/>
-
         </LinearLayout>
     </ScrollView>
 
