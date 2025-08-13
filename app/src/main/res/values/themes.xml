@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Meokpli" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
@@ -11,6 +12,13 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="checkboxStyle">@style/CustomCheckBox</item>
         <!-- Customize your theme here. -->
+    </style>
+    <style name="CustomCheckBox" parent="Widget.AppCompat.CompoundButton.CheckBox">
+        <!-- 구버전 호환 위해 android:button은 비워두고 -->
+        <item name="android:button">@null</item>
+        <!-- 실제 드로어블 연결은 buttonCompat로 -->
+        <item name="buttonCompat">@drawable/checkbox_circle_fill</item>
     </style>
 </resources>

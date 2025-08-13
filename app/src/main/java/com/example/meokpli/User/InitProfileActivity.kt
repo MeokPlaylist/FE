@@ -8,10 +8,14 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Editable
+import android.text.InputFilter
 import android.text.TextWatcher
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.meokpli.Auth.LoginActivity
+import com.example.meokpli.Auth.Network
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -49,12 +53,18 @@ class InitProfileActivity : AppCompatActivity() {
         editIntro = findViewById(R.id.editIntro)
         buttonNext = findViewById(R.id.buttonNext)
 
+        api = Network.userApi(this)
+
         // Retrofit 초기화
         api = Retrofit.Builder()
             .baseUrl("https://meokplaylist.store/user/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(UserApi::class.java)
+
+        // 글자수 제한 필터 적용 (UX)
+        editNickname.filters = arrayOf(InputFilter.LengthFilter(NICKNAME_LIMIT))
+        editIntro.filters = arrayOf(InputFilter.LengthFilter(INTRO_LIMIT))
 
         // 닉네임 글자 수 실시간 표시
         editNickname.addTextChangedListener(object : TextWatcher {
@@ -84,40 +94,23 @@ class InitProfileActivity : AppCompatActivity() {
 
         // 다음 버튼 클릭 시 서버 저장
         buttonNext.setOnClickListener {
-            val nickname = editNickname.text.toString()
-            val intro = editIntro.text.toString()
+            val nickname = editNickname.text.toString().trim()
+            val intro = editIntro.text.toString().trim()
 
-            if (nickname.isBlank()) {
+            if (nickname.isEmpty()) {
                 showToast("닉네임을 입력해주세요.")
                 return@setOnClickListener
             }
-            if (nickname.length > NICKNAME_LIMIT) {
-                showToast("닉네임은 최대 10자까지 가능합니다.")
-                return@setOnClickListener
-            }
-            if (intro.length > INTRO_LIMIT) {
-                showToast("소개는 최대 30자까지 입력 가능합니다.")
-                return@setOnClickListener
-            }
-
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val jwt = getSharedPreferences("meokpli_prefs", MODE_PRIVATE).getString("jwt_token", null)
-                    if (jwt.isNullOrBlank()) {
-                        withContext(Dispatchers.Main) {
-                            showToast("JWT가 존재하지 않습니다.")
-                        }
-                        return@launch
-                    }
-
-                    val bearerToken = "Bearer $jwt"
-                    api.saveDetail(bearerToken, UserDetailRequest(nickname, intro)) // 응답 무시
+            lifecycleScope.launch(Dispatchers.IO) {
+                runCatching {
+                    // ✅ 헤더 전달 불필요 (인터셉터가 Bearer 자동 부착)
+                    api.saveDetail(UserDetailRequest(nickname, intro))
+                }.onSuccess {
                     withContext(Dispatchers.Main) {
-                        val intent = Intent(this@InitProfileActivity, CategoryActivity::class.java)
-                        startActivity(intent)
+                        startActivity(Intent(this@InitProfileActivity, CategoryActivity::class.java))
                         finish()
                     }
-                } catch (e: Exception) {
+                }.onFailure { e ->
                     withContext(Dispatchers.Main) {
                         showToast("프로필 저장 실패: ${e.message}")
                     }
@@ -125,42 +118,33 @@ class InitProfileActivity : AppCompatActivity() {
             }
         }
     }
-
+    @Deprecated("Use ActivityResultContracts")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
-            val imageUri: Uri? = data.data
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data?.data != null) {
+            val imageUri = data.data!!
             try {
+                // (선택) 큰 이미지 대응: 필요 시 다운샘플링 로직 적용
+                contentResolver.openInputStream(imageUri)?.use { input ->
+                    val bmp = BitmapFactory.decodeStream(input)
+                    imageProfile.setImageBitmap(bmp)
+                }
 
-                val inputStream: InputStream? = imageUri?.let { contentResolver.openInputStream(it) }
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                imageProfile.setImageBitmap(bitmap)
+                val file = createTempFileFromUriSafe(imageUri) // ← 수정된 안전 함수
+                val part = MultipartBody.Part.createFormData(
+                    name = "profileImg", // 서버 필드명과 동일해야 함
+                    filename = file.name,
+                    body = file.asRequestBody("image/*".toMediaTypeOrNull())
+                )
 
-                // ✅ 이미지 서버 전송
-                imageUri?.let { uri ->
-                    val file = createTempFileFromUri(uri)
-                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("profileImg", file.name, requestFile)
-
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val jwt = getSharedPreferences("meokpli_prefs", MODE_PRIVATE).getString("jwt_token", null)
-                            if (jwt.isNullOrBlank()) {
-                                withContext(Dispatchers.Main) {
-                                    showToast("JWT가 존재하지 않습니다.")
-                                }
-                                return@launch
-                            }
-                            val bearerToken = "Bearer $jwt"
-                            api.savePhoto(bearerToken, UserPhotoRequest(body))
-                            withContext(Dispatchers.Main) {
-                                showToast("이미지 업로드 성공!")
-                            }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                showToast("업로드 실패: ${e.message}")
-                            }
-                        }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    runCatching {
+                        // ✅ 헤더 전달 불필요
+                        api.savePhoto(part)
+                    }.onSuccess {
+                        withContext(Dispatchers.Main) { showToast("이미지 업로드 성공!") }
+                    }.onFailure { e ->
+                        withContext(Dispatchers.Main) { showToast("업로드 실패: ${e.message}") }
                     }
                 }
 
@@ -170,21 +154,20 @@ class InitProfileActivity : AppCompatActivity() {
         }
     }
 
-    fun Context.createTempFileFromUri(uri: Uri): File {
-        val inputStream = contentResolver.openInputStream(uri) ?: throw IllegalArgumentException("InputStream null")
-        val file = this@InitProfileActivity.createTempFileFromUri(uri)
-        val outputStream = FileOutputStream(file)
 
-        inputStream.copyTo(outputStream)
-
-        outputStream.close()
-        inputStream.close()
-
-        return file
+    private fun createTempFileFromUriSafe(uri: Uri): File {
+        val suffix = when (contentResolver.getType(uri)) {
+            "image/png" -> ".png"
+            "image/webp" -> ".webp"
+            else -> ".jpg"
+        }
+        val tempFile = File.createTempFile("profile_", suffix, cacheDir)
+        contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(tempFile).use { output -> input.copyTo(output) }
+        }
+        return tempFile
     }
 
-
-    private fun showToast(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-    }
+    private fun showToast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }
+

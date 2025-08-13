@@ -1,4 +1,4 @@
-package com.example.meokpli
+package com.example.meokpli.Main
 
 import android.os.Bundle
 import android.widget.ImageView
@@ -6,6 +6,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.meokpli.Main.*
+import com.example.meokpli.R
 
 class MainActivity : AppCompatActivity() {
 

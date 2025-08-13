@@ -49,6 +49,8 @@
         <activity android:name=".User.ConsentFormActivity" />
         <activity android:name=".User.ForgotPasswordActivity" />
         <activity android:name=".User.ResetPasswordActivity" />
+        <activity android:name=".User.Region.RegionActivity" />
+
 
         <!-- 사전 로딩할 폰트 설정 -->
         <meta-data

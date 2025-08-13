@@ -59,7 +59,7 @@ class SignUpActivity : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val res = api.checkEmail(emailInspectRequest(email))
+                    val res = api.checkEmail(EmailInspectRequest(email))
                     withContext(Dispatchers.Main) {
                         if (res.isAvailable) {
                             emailMsg.text = "사용 가능한 이메일입니다."
