@@ -15,7 +15,6 @@ object Network {
         val tokenManager = TokenManager(context)
         return OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(tokenManager))
-            .authenticator(TokenRefreshAuthenticator(tokenManager, AUTH_BASE_URL))
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .build()

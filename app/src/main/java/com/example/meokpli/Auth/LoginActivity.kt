@@ -32,7 +32,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         tokenManager = TokenManager(this)
-        api = Network.authApi(this)
+        api = Network.authApi(this) // ← Network.kt에서 Authenticator 제거해야 함 (아래 참고)
 
         val emailEdit = findViewById<EditText>(R.id.editTextId)
         val passwordEdit = findViewById<EditText>(R.id.editTextPassword)
@@ -43,7 +43,7 @@ class LoginActivity : AppCompatActivity() {
         val findInfoButton = findViewById<TextView>(R.id.tvFindInfo)
         val btnKeepLogin = findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnKeepLogin)
 
-        // 구글 설정
+        // 구글 설정 (ID 토큰 필요 시)
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken("614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com")
             .requestEmail()
@@ -77,12 +77,12 @@ class LoginActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val res = api.login(LoginRequest(email, pw))
-                        tokenManager.saveTokens(res.accessToken, res.refreshToken)
+                        // ✅ Access-only: refreshToken은 더 이상 사용하지 않음
+                        tokenManager.saveTokens(res.accessToken, /* refresh = */ "")
                         routeAfterLoginByErrorCodeOnly()
                     } catch (e: Exception) {
                         var notFound = false
                         if (e is HttpException) {
-                            //코드만 보내는지 확인
                             val (codeStr, _) = parseError(e)
                             if (e.code() == 404 || codeStr == "USER_NOT_FOUND") {
                                 notFound = true
@@ -101,7 +101,6 @@ class LoginActivity : AppCompatActivity() {
                             }
                         }
                     }
-
                 }
             } else {
                 showError("로컬 로그인은 비활성화됨")
@@ -120,13 +119,14 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // 자동 진입: 유지가 켜져 있고 refresh 가 있으면 가볍게 상태 호출 → 필요 시 자동 refresh
-        if (tokenManager.isKeepLogin() && !tokenManager.getRefreshToken().isNullOrBlank()) {
+        // ✅ Access-only: keepLogin + accessToken 존재하면 보호 API로 가볍게 진입 확인
+        val hasAccess = !tokenManager.getAccessToken().isNullOrBlank()
+        if (tokenManager.isKeepLogin() && hasAccess) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     routeAfterLoginByErrorCodeOnly()
                 } catch (_: Exception) {
-                    // 실패 시 로그인 화면에 그대로 둔다
+                    // 실패 시 로그인 화면 유지
                 }
             }
         }
@@ -149,7 +149,7 @@ class LoginActivity : AppCompatActivity() {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
                                 val res = api.oauthLogin(OAuthRequest("google", idToken))
-                                tokenManager.saveTokens(res.accessToken, res.refreshToken)
+                                tokenManager.saveTokens(res.accessToken, /* refresh = */ "")
                                 routeAfterLoginByErrorCodeOnly()
                             } catch (e: Exception) {
                                 showError("구글 로그인 실패: ${e.message}")
@@ -179,7 +179,7 @@ class LoginActivity : AppCompatActivity() {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val res = api.oauthLogin(OAuthRequest("kakao", idToken))
-                            tokenManager.saveTokens(res.accessToken, res.refreshToken)
+                            tokenManager.saveTokens(res.accessToken, /* refresh = */ "")
                             routeAfterLoginByErrorCodeOnly()
                         } catch (e: Exception) {
                             showError("카카오 로그인 실패: ${e.message}")
@@ -190,9 +190,9 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
-        // 카카오톡 설치 여부와 무관하게 계정 로그인 사용
         UserApiClient.instance.loginWithKakaoAccount(this, callback = callback)
     }
+
     private suspend fun routeAfterLoginByErrorCodeOnly() {
         try {
             // 보호 API 한 번만 호출 (성공이면 모든 선행조건 충족으로 간주)
@@ -200,47 +200,53 @@ class LoginActivity : AppCompatActivity() {
             goNext()
             return
         } catch (e: HttpException) {
-            val (codeString, codeNumber) = parseError(e)  // ← 한 번만 읽음
+            val (codeString, codeNumber) = parseError(e)
 
             when {
                 codeString == "CONSENT_NOT_FOUND" || codeNumber == 453 -> {
                     withContext(Dispatchers.Main) {
-                    startActivity(Intent(this@LoginActivity, ConsentFormActivity::class.java))
-                    finish()
-                }
+                        startActivity(Intent(this@LoginActivity, ConsentFormActivity::class.java))
+                        finish()
+                    }
                     return
                 }
                 codeString == "DONT_HAVE_NICKNAME" || codeNumber == 455 -> {
                     withContext(Dispatchers.Main) {
-                    startActivity(Intent(this@LoginActivity, InitProfileActivity::class.java))
-                    finish()
-                }
+                        startActivity(Intent(this@LoginActivity, InitProfileActivity::class.java))
+                        finish()
+                    }
                     return
                 }
                 codeString == "CATEGORY_NOT_FOUND" || codeNumber == 470 -> {
                     withContext(Dispatchers.Main) {
-                    startActivity(Intent(this@LoginActivity, CategoryActivity::class.java))
-                    finish()
+                        startActivity(Intent(this@LoginActivity, CategoryActivity::class.java))
+                        finish()
+                    }
+                    return
                 }
+                e.code() == 401 -> {
+                    // ✅ Access-only: 만료/무효 → 강제 로그아웃
+                    tokenManager.clear()
+                    showOnMain("세션이 만료되었습니다. 다시 로그인해 주세요.")
                     return
                 }
                 else -> {
                     showOnMain("상태 확인 실패: ${e.message()}")
                     return
                 }
-
             }
         } catch (e: Exception) {
             showOnMain("상태 확인 오류: ${e.message}")
         }
     }
+
     private fun parseError(e: HttpException): Pair<String?, Int?> {
         return try {
             val raw = e.response()?.errorBody()?.string()
             if (raw.isNullOrBlank()) return null to null
             val json = JSONObject(raw)
 
-            val codeStr = json.optString("code", null) // "CONSENT_NOT_FOUND" 등
+            val codeStr = json.optString("code", null)
             val codeNum = when {
                 json.has("status") -> json.optInt("status")
                 json.has("code") && json.opt("code") is Number -> (json.opt("code") as Number).toInt()
@@ -256,6 +262,7 @@ class LoginActivity : AppCompatActivity() {
             finish()
         }
     }
+
     private fun showOnMain(msg: String) {
         runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
     }
