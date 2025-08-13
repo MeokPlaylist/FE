@@ -19,7 +19,8 @@ class SidoAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_region, parent, false)
+        val v = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_region_sido, parent, false)
         return VH(v)
     }
 
@@ -28,8 +29,12 @@ class SidoAdapter(
         holder.txt.text = name
 
         val isSelected = name == selected
-        holder.txt.setBackgroundResource(if (isSelected) R.drawable.bg_selected else R.drawable.bg_unselected)
-        holder.txt.setTextColor(holder.txt.resources.getColor(if (isSelected) android.R.color.white else android.R.color.black, null))
+        holder.leftIndicator.visibility = if (isSelected) View.VISIBLE else View.GONE
+        holder.txt.setTextColor(
+            holder.txt.resources.getColor(
+                if (isSelected) R.color.red_primary else android.R.color.black, null
+            )
+        )
 
         holder.itemView.setOnClickListener {
             if (selected != name) {
@@ -44,5 +49,6 @@ class SidoAdapter(
 
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val txt: TextView = v.findViewById(R.id.textRegion)
+        val leftIndicator: View = v.findViewById(R.id.leftIndicator)
     }
 }

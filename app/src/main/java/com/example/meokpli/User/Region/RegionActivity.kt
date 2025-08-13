@@ -11,6 +11,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.meokpli.R
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import android.view.inputmethod.InputMethodManager
+import androidx.core.widget.addTextChangedListener
+import android.content.Context
+import android.view.View
+
 
 class RegionActivity : AppCompatActivity() {
 
@@ -23,8 +28,9 @@ class RegionActivity : AppCompatActivity() {
     private lateinit var btnCancel: Button
     private lateinit var btnComplete: Button
     private lateinit var textSelectedCount: TextView
-    private lateinit var textReset: TextView
     private lateinit var chipGroupSelected: ChipGroup
+    private lateinit var resetArea: View
+    private lateinit var btnSearch: ImageButton
 
     private lateinit var sidoAdapter: SidoAdapter
     private lateinit var sigunguAdapter: SigunguAdapter
@@ -60,8 +66,8 @@ class RegionActivity : AppCompatActivity() {
         btnCancel = findViewById(R.id.btnCancel)
         btnComplete = findViewById(R.id.btnComplete)
         textSelectedCount = findViewById(R.id.textSelectedCount)
-        textReset = findViewById(R.id.textReset)
         chipGroupSelected = findViewById(R.id.chipGroupSelected)
+        resetArea = findViewById(R.id.resetArea)
 
         // 시/도
         sidoAdapter = SidoAdapter(
@@ -113,11 +119,22 @@ class RegionActivity : AppCompatActivity() {
         })
 
         // 초기화
-        textReset.setOnClickListener {
+        resetArea.setOnClickListener {
             selectedSigungu.clear()
             selectedPairs.clear()
             syncSelectedChips()
             sigunguAdapter.notifyDataSetChanged()
+        }
+        btnSearch = findViewById(R.id.btnSearch)
+        searchRegion.addTextChangedListener { text ->
+            filterSigungu(text.toString())
+        }
+
+        // 돋보기(오른쪽 drawable) 터치 시 검색 실행 + 키보드 숨김
+        btnSearch.setOnClickListener {
+            it.performClick() // 접근성 이벤트
+            filterSigungu(searchRegion.text.toString())
+            hideKeyboard()
         }
 
         // 취소: 그냥 종료
@@ -150,6 +167,10 @@ class RegionActivity : AppCompatActivity() {
             fullSigungu.filter { it.contains(query.trim(), ignoreCase = true) }
         }
         sigunguAdapter.submit(filteredSigungu)
+    }
+    private fun hideKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(window.decorView.windowToken, 0)
     }
 
     private fun syncSelectedChips() {
