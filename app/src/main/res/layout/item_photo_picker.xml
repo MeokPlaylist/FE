@@ -1,0 +1,42 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:layout_gravity="center"
+    android:layout_margin="4dp">
+
+    <ImageView
+        android:id="@+id/img"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"/>
+
+    <!-- 선택 테두리 -->
+    <View
+        android:id="@+id/selectedBorder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_selected_border"
+        android:visibility="gone"/>
+
+    <!-- 선택 순서 배지 숫자 표시 -->
+    <TextView
+        android:id="@+id/badge"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@drawable/bg_badge_red_oval"
+        android:textColor="@android:color/white"
+        android:textSize="11sp"
+        android:gravity="center"
+        android:layout_margin="6dp"
+        android:visibility="gone"/>
+
+    <!-- 우측 상단 체크 원(비선택 상태 표시용) -->
+    <View
+        android:id="@+id/checkGhost"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_gravity="end|top"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_ghost_circle"/>
+</FrameLayout>

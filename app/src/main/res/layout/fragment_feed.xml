@@ -1,89 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:paddingTop="30dp">
 
-    <!-- 상단바 -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        app:title="새 게시물"
-        app:navigationIcon="@drawable/ic_arrow"
-    app:menu="@menu/menu_feed_upload"/>
+    <!-- Top bar -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:tint="@android:color/black"
+        android:src="@drawable/ic_arrow_left"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"/>
 
-    <!-- 내용 -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:fillViewport="true">
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="새 게시물"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack"
+        app:layout_constraintEnd_toStartOf="@id/btnUpload"
+        app:layout_constraintHorizontal_bias="0.622"
+        app:layout_constraintStart_toEndOf="@id/btnBack"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintVertical_bias="0.0" />
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/btnUpload"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:minWidth="68dp"
+        android:paddingHorizontal="12dp"
+        android:gravity="center"
+        android:text="업로드"
+        android:textColor="@android:color/white"
+        android:textSize="13sp"
+        android:background="@drawable/btn_primary_bg"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"/>
 
-            <!-- 선택된 사진 미리보기: 좌우 스와이프 -->
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/pager"
-                android:layout_width="match_parent"
-                android:layout_height="240dp"
-                android:background="@color/md_grey_200"/>
+    <!-- 사진 슬라이더(가로 스와이프). 정사각형 비율 유지 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPhotos"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintWidth_default="spread"
+        app:layout_constraintHeight_default="wrap"
+        app:layout_constraintBottom_toTopOf="@+id/btnCategoryAdd"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"/>
 
-            <!-- 카테고리 / 지역 -->
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginTop="12dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+    <!-- 카테고리 추가 -->
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_category"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="카테고리 추가"/>
+    <TextView
+        android:id="@+id/btnCategoryAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:background="@drawable/bg_chip_outline_gray"
+        android:gravity="center"
+        android:paddingHorizontal="12dp"
+        android:text="카테고리 추가"
+        android:textColor="#666666"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rvPhotos"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="12dp"/>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_region"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="지역 추가"/>
-            </LinearLayout>
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#33000000"
+        app:layout_constraintTop_toBottomOf="@id/btnCategoryAdd"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"/>
 
-            <!-- 선택된 카테고리/지역 표시 -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chips_selected"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:singleLine="false"
-                app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="8dp"/>
+    <EditText
+        android:id="@+id/etContent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:hint="어떤 여행이었나요?"
+        android:textSize="14sp"
+        android:background="@android:color/transparent"
+        android:padding="16dp"
+        android:gravity="start|top"
+        android:inputType="textMultiLine"
+        android:scrollbars="vertical"
+        android:overScrollMode="always"
+        app:layout_constraintTop_toBottomOf="@id/divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <!-- 문구 입력 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/til_caption"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="어떤 여행이었나요?">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_caption"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:maxLines="3"/>
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-    </ScrollView>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
