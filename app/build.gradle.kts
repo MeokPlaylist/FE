@@ -43,6 +43,17 @@ android {
 
     /* ☑️ Kotlin 컴파일 타깃도 21 */
     kotlinOptions { jvmTarget = "21" }
+
+    sourceSets {
+        getByName("main") {
+            res.srcDirs(
+                "src/main/res",           // 기존
+                "src/main/activity",      // 액티비티
+                "src/main/fragment",   // fragment
+                "src/main/item"     // 아이템
+            )
+        }
+    }
 }
 
 dependencies {

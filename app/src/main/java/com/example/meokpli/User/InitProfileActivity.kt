@@ -1,7 +1,6 @@
 package com.example.meokpli.User
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -10,16 +9,13 @@ import android.provider.MediaStore
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
-import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.meokpli.Auth.LoginActivity
 import com.example.meokpli.Auth.Network
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.InputStream
 import com.example.meokpli.R
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -44,7 +40,7 @@ class InitProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.init_profile)
+        setContentView(R.layout.activity_init_profile)
 
         imageProfile = findViewById(R.id.imageProfile)
         editNickname = findViewById(R.id.editNickname)
