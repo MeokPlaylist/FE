@@ -44,7 +44,7 @@ class InitProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.init_profile)
+        setContentView(R.layout.activity_init_profile)
 
         imageProfile = findViewById(R.id.imageProfile)
         editNickname = findViewById(R.id.editNickname)

@@ -8,7 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import android.content.Intent
+import androidx.lifecycle.lifecycleScope
+import com.example.meokpli.Auth.Network
 import com.example.meokpli.R
+import kotlinx.coroutines.launch
 
 class ConsentFormActivity : AppCompatActivity() {
 
@@ -18,14 +21,24 @@ class ConsentFormActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.consent_form)
+        setContentView(R.layout.activity_consent_form)
 
         btnConfirm = findViewById(R.id.btnConfirm)
         cbAllAgree = findViewById(R.id.cbAllAgree)
 
-        btnConfirm.setOnClickListener {
-            val intent = Intent(this, InitProfileActivity::class.java)
-            startActivity(intent)
+        btnConfirm.setOnClickListener { v ->
+            v.isEnabled = false
+            lifecycleScope.launch {
+                try {
+                    val api = Network.userApi(this@ConsentFormActivity) // 예: this@ConsentActivity
+                    api.consentAgree(BooleanRequest(true))  // ← 바디에 true 담아서 전송
+                    startActivity(Intent(this@ConsentFormActivity, InitProfileActivity::class.java))
+                    finish()
+                } catch (e: Exception) {
+                    v.isEnabled = true
+                    Toast.makeText(this@ConsentFormActivity, "동의 처리 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
 
         requiredCheckBoxes = listOf(

@@ -184,6 +184,7 @@ class LoginActivity : AppCompatActivity() {
                         try {
                             val res = api.oauthLogin(OAuthRequest("kakao", idToken))
                             tokenManager.saveTokens(res.jwt)
+                            Log.d("kak","여기까진됨")
                             routeAfterLoginByErrorCodeOnly()
                         } catch (e: Exception) {
                             showError("카카오 로그인 실패: ${e.message}")

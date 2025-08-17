@@ -6,17 +6,28 @@ import okhttp3.Response
 class AuthInterceptor(private val tokenManager: TokenManager): Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
-        val access = tokenManager.getAccessToken()
+        val access = tokenManager.getAccessToken()?.trim()
 
-        val newReq = if (!access.isNullOrBlank()) {
-            original.newBuilder()
-                .addHeader("Authorization", "Bearer $access")
-                .build()
-        } else original
+        val builder = original.newBuilder()
 
-        return chain.proceed(newReq)
+        if (!access.isNullOrEmpty()) {
+            // 이미 Authorization가 있다면 제거하고 다시 넣기
+            builder.removeHeader("Authorization")
+
+            // Bearer 중복 방지
+            val authValue = if (access.startsWith("Bearer ", ignoreCase = true))
+                access
+            else
+                "Bearer $access"
+
+            // addHeader가 아니라 header 사용(중복 방지)
+            builder.header("Authorization", authValue)
+        }
+
+        return chain.proceed(builder.build())
     }
 }
+
 /*
 2) AuthInterceptor (요청에 Authorization 자동 부착)
 무엇을: 모든 API 요청에 Bearer <access> 헤더 추가.

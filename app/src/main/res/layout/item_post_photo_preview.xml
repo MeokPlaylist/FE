@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
         android:id="@+id/imgPhoto"
@@ -19,5 +20,5 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_close_round"
         android:contentDescription="@string/close"
-        android:tint="@android:color/white"/>
+        app:tint="@android:color/white"/>
 </FrameLayout>

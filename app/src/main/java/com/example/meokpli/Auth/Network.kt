@@ -3,6 +3,8 @@ package com.example.meokpli.Auth
 import android.content.Context
 import okhttp3.OkHttpClient
 import com.example.meokpli.User.UserApi
+import com.example.meokpli.User.category.CategoryApi
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -26,32 +28,30 @@ object Network {
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    private fun debugClient(context: Context, withAuth: Boolean): OkHttpClient {
+        val log = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.HEADERS }
 
-    fun authApi(context: Context): AuthApi {
-        val client = okHttp(context)
-        return retrofit(AUTH_BASE_URL, client).create(AuthApi::class.java)
-    }
-
-    fun userApi(context: Context): UserApi {
-        val client = okHttp(context)
-        return retrofit(USER_BASE_URL, client).create(UserApi::class.java)
-    }
-    fun categoryApi(context: Context): com.example.meokpli.User.category.CategoryApi {
-        val tokenManager = TokenManager(context)
-
-        val client = OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(tokenManager))
+        val b = OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
-            .build()
+            .followRedirects(false) // ★ 리다이렉트로 Authorization 떨어지는지 확인용
+            .addInterceptor(log)
 
-        return Retrofit.Builder()
-            .baseUrl(AUTH_BASE_URL) // "https://meokplaylist.store/auth/" 그대로 사용
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(com.example.meokpli.User.category.CategoryApi::class.java)
+        if (withAuth) {
+            b.addInterceptor(AuthInterceptor(TokenManager(context.applicationContext)))
+        }
+        return b.build()
     }
+
+    fun authApi(context: Context): AuthApi =
+        retrofit(AUTH_BASE_URL, debugClient(context, withAuth = false)).create(AuthApi::class.java)
+
+    fun userApi(context: Context): UserApi =
+        retrofit(USER_BASE_URL, debugClient(context, withAuth = true)).create(UserApi::class.java)
+
+    fun categoryApi(context: Context): CategoryApi =
+        retrofit(USER_BASE_URL, debugClient(context, withAuth = true)).create(CategoryApi::class.java)
+
 }
 /*
 4) Network (공용 Retrofit/OkHttp 팩토리)

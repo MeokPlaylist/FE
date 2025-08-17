@@ -1,0 +1,17 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 얕은 그림자 레이어 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#22000000"/>
+            <corners android:topLeftRadius="16dp" android:topRightRadius="16dp"/>
+        </shape>
+    </item>
+
+    <!-- 본체(흰 배경) 약간 인셋: 그림자가 가장자리로 보이게 -->
+    <item android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFFFF"/>
+            <corners android:topLeftRadius="16dp" android:topRightRadius="16dp"/>
+        </shape>
+    </item>
+</layer-list>

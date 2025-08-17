@@ -1,5 +1,6 @@
 package com.example.meokpli.User
 
+import com.google.android.gms.common.api.BooleanResult
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -8,7 +9,8 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 
 interface UserApi {
-
+    @POST("consentAgree")
+    suspend fun consentAgree( @Body request: BooleanRequest)
     @POST("setupDetailInfo")
     suspend fun saveDetail(
         @Body body: UserDetailRequest
@@ -33,6 +35,8 @@ interface UserApi {
 
 data class FindUserRequest(val name: String, val email: String)
 data class FindUserResponse(val userId: Long)
+
+data class BooleanRequest(val isAvailable: Boolean)
 data class ResetPasswordRequest(val userId: Long,val newPassword: String)
 data class UserDetailRequest(val nickname: String, val introduction: String)
 data class BaseResponse(val success: Boolean, val message: String?)

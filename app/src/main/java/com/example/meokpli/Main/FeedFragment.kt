@@ -49,8 +49,8 @@ class FeedFragment : Fragment() {
         }
 
         // 2) 다른 버튼에서도 열고 싶으면 이렇게
-        view.findViewById<View>(R.id.btn_category)?.setOnClickListener { openGallery() }
-        view.findViewById<View>(R.id.btn_region)?.setOnClickListener { /* 지역 선택 다이얼로그 등 */ }
+//        view.findViewById<View>(R.id.btn_category)?.setOnClickListener { openGallery() }
+//        view.findViewById<View>(R.id.btn_region)?.setOnClickListener { /* 지역 선택 다이얼로그 등 */ }
     }
 
     private fun openGallery() {
