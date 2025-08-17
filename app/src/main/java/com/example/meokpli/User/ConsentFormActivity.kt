@@ -10,36 +10,59 @@ import java.io.InputStreamReader
 import android.content.Intent
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.Auth.Network
+import com.example.meokpli.Auth.TokenManager
 import com.example.meokpli.R
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ConsentFormActivity : AppCompatActivity() {
 
     private lateinit var btnConfirm: Button
     private lateinit var cbAllAgree: CheckBox
     private lateinit var requiredCheckBoxes: List<CheckBox>
+    private lateinit var tokenManager: TokenManager
+    private lateinit var userApi: UserApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_consent_form)
+        //JWT가 자동으로 헤더에 실림
+        userApi = Network.userApi(this)
+
 
         btnConfirm = findViewById(R.id.btnConfirm)
         cbAllAgree = findViewById(R.id.cbAllAgree)
 
-        btnConfirm.setOnClickListener { v ->
-            v.isEnabled = false
+        btnConfirm.setOnClickListener {
+            val agreed = cbAllAgree.isChecked
+            if (!agreed) {
+                Toast.makeText(this, "모든 약관에 동의해야 진행할 수 있습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val req = ConsentAgreeRequest(agreed = true)
+            btnConfirm.isEnabled = false
             lifecycleScope.launch {
                 try {
-                    val api = Network.userApi(this@ConsentFormActivity) // 예: this@ConsentActivity
-                    api.consentAgree(BooleanRequest(true))  // ← 바디에 true 담아서 전송
-                    startActivity(Intent(this@ConsentFormActivity, InitProfileActivity::class.java))
-                    finish()
+                    val res = withContext(Dispatchers.IO) {
+                        userApi.consentAgree(req)
+                    }
+                    if (res.success) {
+                        Toast.makeText(this@ConsentFormActivity, "약관 동의가 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this@ConsentFormActivity, InitProfileActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this@ConsentFormActivity, res.message ?: "실패했습니다.", Toast.LENGTH_SHORT).show()
+                        btnConfirm.isEnabled = true
+                    }
                 } catch (e: Exception) {
-                    v.isEnabled = true
-                    Toast.makeText(this@ConsentFormActivity, "동의 처리 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ConsentFormActivity, "네트워크 오류: ${e.message}", Toast.LENGTH_SHORT).show()
+                    btnConfirm.isEnabled = true
                 }
             }
         }
+
 
         requiredCheckBoxes = listOf(
             findViewById(R.id.cbAgePolicy),
@@ -50,7 +73,8 @@ class ConsentFormActivity : AppCompatActivity() {
             findViewById(R.id.cbPhotoPolicy)
         )
 
-        // 전체 동의 클릭 시 모든 체크박스 상태 변경
+
+            // 전체 동의 클릭 시 모든 체크박스 상태 변경
         cbAllAgree.setOnCheckedChangeListener { _, isChecked ->
             requiredCheckBoxes.forEach { it.setOnCheckedChangeListener(null) }
             requiredCheckBoxes.forEach { it.isChecked = isChecked }
@@ -75,7 +99,7 @@ class ConsentFormActivity : AppCompatActivity() {
         updateConfirmButton()
 
         // Arrow 클릭 시 팝업 띄우기
-        setArrowClick(findViewById(R.id.arrowTermsService), "age_policy.txt", "만 14세 이상입니다.")
+        setArrowClick(findViewById(R.id.arrowAgeService), "age_policy.txt", "만 14세 이상입니다.")
         setArrowClick(findViewById(R.id.arrowTermsService), "terms_service.txt", "먹플리 이용약관 동의")
         setArrowClick(findViewById(R.id.arrowPrivacyPolicy), "privacy_policy.txt", "개인정보 수집이용 동의")
         setArrowClick(findViewById(R.id.arrowLocationPolicy), "location_policy.txt", "위치정보 수집 및 이용 동의")

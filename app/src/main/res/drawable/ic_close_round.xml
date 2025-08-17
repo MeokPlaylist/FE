@@ -1,18 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-
-    <!-- 둥근 배지 (반투명) -->
+    android:width="21dp" android:height="20dp" android:viewportWidth="21" android:viewportHeight="20">
     <path
-        android:pathData="M12,2a10,10 0 1,0 0,20a10,10 0 1,0 0,-20z"
-        android:fillColor="#11000000"/>
-
-    <!-- X (흰색, 스퀘어 캡) -->
-    <path
-        android:pathData="M8.5,8.5 L15.5,15.5 M15.5,8.5 L8.5,15.5"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="0.5"
-        android:strokeLineCap="square"/>
+        android:fillColor="#73737399"
+        android:pathData="M10.4541,0.01807a9.63814,9.63814 0 1 1 0,19.27628a9.63814,9.63814 0 1 1 0,-19.27628"/>
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="0.923407"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M6.46743,5.74229 L14.477,13.7518" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="0.923407"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M10.454,9.76514 L6.46746,13.7517" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="0.923407"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M14.6586,5.56006 L11.0224,9.19625" />
 </vector>
