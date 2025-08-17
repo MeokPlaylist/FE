@@ -57,13 +57,6 @@ class InitProfileActivity : AppCompatActivity() {
 
 
         */
-        // Retrofit 초기화
-        api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/user/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(UserApi::class.java)
-
         // 글자수 제한 필터 적용 (UX)
         editNickname.filters = arrayOf(InputFilter.LengthFilter(NICKNAME_LIMIT))
         editIntro.filters = arrayOf(InputFilter.LengthFilter(INTRO_LIMIT))

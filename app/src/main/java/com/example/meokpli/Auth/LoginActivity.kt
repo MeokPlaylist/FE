@@ -204,9 +204,8 @@ class LoginActivity : AppCompatActivity() {
 
             userApi = Network.userApi(this)
             val codeNumber = userApi.newBCheck().code()
-            Log.d("sibal", codeNumber.toString())
             when {
-                codeNumber == 590 -> {
+                codeNumber == 200 -> {
                     withContext(Dispatchers.Main) {
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()

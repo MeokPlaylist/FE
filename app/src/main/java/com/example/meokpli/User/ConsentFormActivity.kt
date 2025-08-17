@@ -41,14 +41,15 @@ class ConsentFormActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val req = ConsentAgreeRequest(agreed = true)
+            val req = ConsentAgreeRequest(isAvailable = true)
             btnConfirm.isEnabled = false
             lifecycleScope.launch {
                 try {
                     val res = withContext(Dispatchers.IO) {
                         userApi.consentAgree(req)
+
                     }
-                    if (res.success) {
+                    if (res.isAvailable) {
                         Toast.makeText(this@ConsentFormActivity, "약관 동의가 저장되었습니다.", Toast.LENGTH_SHORT).show()
                         startActivity(Intent(this@ConsentFormActivity, InitProfileActivity::class.java))
                         finish()

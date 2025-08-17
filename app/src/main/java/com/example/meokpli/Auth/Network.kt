@@ -3,7 +3,7 @@ package com.example.meokpli.Auth
 import android.content.Context
 import okhttp3.OkHttpClient
 import com.example.meokpli.User.UserApi
-import com.example.meokpli.User.category.CategoryApi
+import com.example.meokpli.User.Category.CategoryApi
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
