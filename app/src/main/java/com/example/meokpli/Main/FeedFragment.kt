@@ -1,60 +1,107 @@
 package com.example.meokpli.Main
 
-import android.app.Activity
-import android.content.Intent
+import SelectedPhotosAdapter
 import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.R
-import com.example.meokpli.gallery.GalleryActivity
-import android.app.Activity.RESULT_OK
-import com.google.android.material.appbar.MaterialToolbar
+import com.example.meokpli.gallery.GalleryBottomSheet
+import java.util.Collections
 
-class FeedFragment : Fragment() {
+class FeedFragment : Fragment(R.layout.fragment_feed) {
 
-    private val launchGallery = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { r ->
-        if (r.resultCode == RESULT_OK && r.data != null) {
-            val uris = r.data!!.getParcelableArrayListExtra<Uri>(GalleryActivity.EXTRA_RESULT_URIS) ?: arrayListOf()
-            Toast.makeText(requireContext(), "선택: ${uris.size}장", Toast.LENGTH_SHORT).show()
-            // TODO: 다음 단계에서 ViewPager/RecyclerView에 보여주기
-        }
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
-        inflater.inflate(R.layout.fragment_feed, container, false)
+    private lateinit var cameraBtn: View
+    private lateinit var backBtn: View
+    private lateinit var rvPhotos: RecyclerView
+    private val selectedUris = mutableListOf<Uri>()
+    private lateinit var photosAdapter: SelectedPhotosAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // 1) 툴바 메뉴(업로드) → 갤러리 열기
-        view.findViewById<MaterialToolbar>(R.id.toolbar)?.apply {
-            setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.action_upload -> {
-                        openGallery()
-                        true
-                    }
-                    else -> false
+        super.onViewCreated(view, savedInstanceState)
+
+        backBtn = view.findViewById(R.id.btnBack)
+        cameraBtn = view.findViewById(R.id.btnCamera)
+        rvPhotos = view.findViewById(R.id.rvPhotos)
+
+        rvPhotos.layoutManager =
+            LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        rvPhotos.setHasFixedSize(true)
+
+        // 1) ItemTouchHelper 콜백: 롱프레스 자동 드래그 비활성화
+        val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0
+        ) {
+            override fun isLongPressDragEnabled(): Boolean = false    // ★ 핵심
+
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val from = viewHolder.bindingAdapterPosition
+                val to = target.bindingAdapterPosition
+                if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION) return false
+                Collections.swap(selectedUris, from, to)
+                photosAdapter.submitList(selectedUris.toList())
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) { /* no-op */ }
+        }
+        val touchHelper = ItemTouchHelper(touchHelperCallback)
+
+        // 2) 어댑터: touchHelper 주입 + 클릭/삭제 콜백
+        photosAdapter = SelectedPhotosAdapter(
+            itemTouchHelper = touchHelper,
+            onItemClick = { _, _ -> openGalleryForRepick() },
+            onRemoveClick = { pos, _ ->
+                if (pos in selectedUris.indices) {
+                    selectedUris.removeAt(pos)
+                    photosAdapter.submitList(selectedUris.toList())
+                    view.findViewById<View>(R.id.emptyPhotoBox)?.visibility =
+                        if (selectedUris.isEmpty()) View.VISIBLE else View.GONE
                 }
             }
-            setNavigationOnClickListener {
-                // 필요하면 뒤로가기 동작 연결
-                Toast.makeText(requireContext(), "뒤로가기", Toast.LENGTH_SHORT).show()
-            }
+        )
+        rvPhotos.adapter = photosAdapter
+        touchHelper.attachToRecyclerView(rvPhotos)
+        // ✅ 결과 리스너: parentFragmentManager로 통일
+        parentFragmentManager.setFragmentResultListener(
+            GalleryBottomSheet.RESULT_KEY, viewLifecycleOwner
+        ) { _, bundle ->
+            val uris = bundle.getParcelableArrayList<Uri>(GalleryBottomSheet.RESULT_URIS) ?: arrayListOf()
+            selectedUris.clear()
+            selectedUris.addAll(uris)                           // 바텀시트가 순서 보존해서 돌려줌
+            photosAdapter.submitList(selectedUris.toList())
+
+            view.findViewById<View>(R.id.emptyPhotoBox)?.visibility =
+                if (selectedUris.isEmpty()) View.VISIBLE else View.GONE
+
+            // 첫 항목으로 스크롤(선택 후 바로 보이게)
+            if (selectedUris.isNotEmpty()) rvPhotos.scrollToPosition(0)
         }
 
-        // 2) 다른 버튼에서도 열고 싶으면 이렇게
-//        view.findViewById<View>(R.id.btn_category)?.setOnClickListener { openGallery() }
-//        view.findViewById<View>(R.id.btn_region)?.setOnClickListener { /* 지역 선택 다이얼로그 등 */ }
+        // ▼ 갤러리 바텀시트 열기 (최초/재선택 공통)
+        cameraBtn.setOnClickListener { openGalleryForRepick() }
+
+        backBtn.setOnClickListener {
+            (requireActivity() as MainActivity).handleSystemBack()
+        }
     }
 
-    private fun openGallery() {
-        val intent = Intent(requireContext(), GalleryActivity::class.java)
-        launchGallery.launch(intent)
+    private fun openGalleryForRepick() {
+        // 중복 표시 방지
+        (parentFragmentManager.findFragmentByTag("gallery") as? GalleryBottomSheet)?.let {
+            if (it.dialog?.isShowing == true) return
+            it.dismissAllowingStateLoss()
+        }
+
+        // 현재 선택 전달 → 초기 체크 및 순서 유지
+        GalleryBottomSheet.newInstance(ArrayList(selectedUris))
+            .show(parentFragmentManager, "gallery")
     }
 }

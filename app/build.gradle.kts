@@ -57,6 +57,10 @@ android {
 }
 
 dependencies {
+    val nav_version = "2.7.7"  // 최신 확인 가능
+
+    implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")
+    implementation("androidx.navigation:navigation-ui-ktx:${nav_version}")
     // --- AndroidX 기본 ---
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

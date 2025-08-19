@@ -126,6 +126,7 @@ class CategoryActivity : AppCompatActivity() {
             )
 
             val request = CategorySetUpRequest(categories = categories)
+            Log.d("req",request.toString())
             lifecycleScope.launch {
                 val api: CategoryApi = Network.categoryApi(this@CategoryActivity)
                 runCatching {

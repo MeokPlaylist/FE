@@ -15,6 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Meokpli"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="31">
 
         <!-- ✅ 카카오 리다이렉트 수신 -->
@@ -51,7 +52,7 @@
         <activity android:name=".User.ResetPasswordActivity" />
         <activity android:name=".User.Region.RegionActivity" />
         <activity
-            android:name=".gallery.GalleryActivity"
+            android:name=".gallery.GalleryBottomSheet"
             android:exported="false" />
 
 

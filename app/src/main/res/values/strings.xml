@@ -6,5 +6,6 @@
         614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com
     </string>
     <string name="search">검색</string>
+    <string name="camera">카메라</string>
     <string name="close"><![CDATA[<resources>\n    <string name=\"close\">닫기</string>\n</resources>]]></string>
 </resources>
