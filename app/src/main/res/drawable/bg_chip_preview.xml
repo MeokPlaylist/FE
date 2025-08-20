@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 배경색 -->
+    <solid android:color="#FFE7E7" />
+    <!-- 둥근 모서리 (원하는 만큼 조절) -->
+    <corners android:radius="16dp" />
+    <!-- 테두리 -->
+    <stroke
+        android:width="1dp"
+        android:color="#C64132" />
+    <!-- 내부 여백은 레이아웃에서 이미 있으니 생략 가능 -->
+</shape>

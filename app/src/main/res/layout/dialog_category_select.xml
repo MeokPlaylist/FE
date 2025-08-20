@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="24dp"
+    android:layout_marginEnd="24dp"
+    android:layout_marginTop="24dp"
+    android:layout_marginBottom="24dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="20dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp">
+
+            <!-- 헤더: 제목 + 닫기 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="맞춤 콘텐츠를 추천해드릴게요!"
+                    android:textSize="18sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/inter_semibold"/>
+
+                <ImageButton
+                    android:id="@+id/btnClose"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:padding="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/close"
+                    android:src="@drawable/ic_close"
+                    app:tint="@null"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="복수 선택 가능"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/inter_medium"/>
+
+            <!-- 분위기 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="분위기"
+                android:textSize="15sp"
+                android:textColor="#000000"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/inter_semibold"/>
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupMood"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleLine="false"
+                app:chipSpacingVertical="4dp"
+                app:chipSpacingHorizontal="6dp"
+                />
+
+            <!-- 음식 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="음식"
+                android:textSize="15sp"
+                android:textColor="#000000"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/inter_semibold"/>
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFood"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleLine="false"
+                app:chipSpacing="8dp" />
+
+            <!-- 동반자 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="동반자"
+                android:textSize="15sp"
+                android:textColor="#000000"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/inter_semibold"/>
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupCompanion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleLine="false"
+                app:chipSpacing="8dp" />
+            <TextView
+                android:id="@+id/textRegionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="지역"
+                android:textSize="16sp"
+                android:textColor="#000000"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/inter_semibold"/>
+
+            <!-- 지역: 가로 스크롤로 칩 나열 (폭을 match_parent 로!) -->
+            <HorizontalScrollView
+                android:id="@+id/scrollRegions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupRegions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleLine="true"
+                    app:chipSpacingHorizontal="8dp"
+                    app:chipSpacingVertical="0dp" />
+            </HorizontalScrollView>
+
+            <Button
+                android:id="@+id/PlusRegionButton"
+                android:layout_width="300dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="32dp"
+                android:background="@drawable/btn_black_border"
+                android:text="+ 추가하기"
+                android:textColor="#000000"
+                android:textSize="15sp"
+                android:fontFamily="@font/inter_semibold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                app:backgroundTint="@null" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDone"
+                android:layout_width="200dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:text="완료"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:fontFamily="@font/inter_semibold"
+                android:layout_marginTop="25dp"
+                android:layout_marginBottom="25dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                app:backgroundTint="@null"
+                android:background="@drawable/btn_basic" />
+
+        </LinearLayout>
+    </ScrollView>
+</com.google.android.material.card.MaterialCardView>

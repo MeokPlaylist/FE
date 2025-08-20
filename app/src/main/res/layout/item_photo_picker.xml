@@ -1,10 +1,9 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="0dp"
     android:foreground="?attr/selectableItemBackground"
     android:layout_gravity="center"
-    android:layout_marginEnd="8dp">
+    android:layout_margin="4dp">
 
     <ImageView
         android:id="@+id/img"
@@ -33,18 +32,11 @@
         android:visibility="gone"/>
 
     <!-- 우측 상단 체크 원(비선택 상태 표시용) -->
-    <ImageButton
-    android:id="@+id/btnRemove"
-    android:layout_width="24dp"
-    android:layout_height="24dp"
-    android:layout_gravity="top|end"
-    android:layout_margin="8dp"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:src="@drawable/ic_close_round"
-    android:contentDescription="@string/close"
-    app:tint="@android:color/white"
-    android:clickable="true"
-    android:focusable="true"
-    android:importantForAccessibility="yes"
-    android:elevation="8dp" />
+    <View
+        android:id="@+id/checkGhost"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_gravity="end|top"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_ghost_circle"/>
 </FrameLayout>
