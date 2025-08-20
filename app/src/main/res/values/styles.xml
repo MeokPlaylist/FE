@@ -1,5 +1,7 @@
 <resources>
     <style name="NoActiveIndicator">
         <item name="android:color">@android:color/transparent</item>
+
     </style>
+    <style name="App.MdcAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog"/>
 </resources>

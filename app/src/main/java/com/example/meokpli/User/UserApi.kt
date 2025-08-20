@@ -3,6 +3,7 @@ package com.example.meokpli.User
 import com.google.android.gms.common.api.BooleanResult
 import okhttp3.MultipartBody
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -31,6 +32,9 @@ interface UserApi {
 
     @POST("consentAgree")
     suspend fun consentAgree(@Body request: ConsentAgreeRequest): BaseResponse
+    //profile feed 엔드포인트 바꿀거
+    @GET("me")
+    suspend fun getMe(): MeResponse
 
 
 }
@@ -44,4 +48,13 @@ data class BaseResponse(val isAvailable: Boolean, val message: String?)
 
 data class ConsentAgreeRequest(
     val isAvailable: Boolean
+)
+
+data class MeResponse(
+    val nickname: String? = null,
+    val introduction: String? = null,
+    val postCount: Int? = null,
+    val following: Int? = null,
+    val followers: Int? = null,
+    val profileImage: String? = null
 )
