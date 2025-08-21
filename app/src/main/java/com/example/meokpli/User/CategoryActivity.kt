@@ -28,7 +28,7 @@ class CategoryActivity : AppCompatActivity() {
     private lateinit var chipGroupFood: ChipGroup
     private lateinit var chipGroupCompanion: ChipGroup
     private lateinit var chipGroupRegions: ChipGroup
-    // 이미 있는 selectedRegions: List<String>  // 예: ["서울|강남구","경기|고양시"]
+    // 이미 있는 selectedRegions: List<String>  // 예: ["서울:강남구","경기:고양시"]
     private lateinit var submitButton: Button
     private lateinit var plusRegionButton: Button
 
@@ -407,8 +407,12 @@ class CategoryActivity : AppCompatActivity() {
                 companionsKo = selected["동반자"] ?: emptyList(),
                 regions = selectedRegions
             )
+            val regionsEng = buildRegionsEng(selectedRegions)
 
-            val request = CategorySetUpRequest(categories = categories)
+            val request = CategorySetUpRequest(
+                categories = categories,               // ex) ["moods:GOODVIEW", "foods:CAFEDESERT", "companions:FRIEND"]
+                regions = regionsEng                // ex) ["Gangwon:Samcheok-si","Gangwon:Yangyang-gun"]
+            )
             Log.d("d",request.toString())
             lifecycleScope.launch {
                 val api: CategoryApi = Network.categoryApi(this@CategoryActivity)
@@ -444,28 +448,45 @@ class CategoryActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun buildCategoryStrings(
         moodsKo: List<String>,
         foodsKo: List<String>,
         companionsKo: List<String>,
-        regions: List<String>
+        regions: List<String> // ← 시그니처는 유지하지만, 이 값은 여기서 쓰지 않음
     ): List<String> {
         val result = mutableListOf<String>()
-        translate(moodsKo, moodMap).forEach { result += "moods:$it" }
-        translate(foodsKo, foodMap).forEach { result += "foods:$it" }
+        translate(moodsKo, moodMap).forEach       { result += "moods:$it" }
+        translate(foodsKo, foodMap).forEach       { result += "foods:$it" }
         translate(companionsKo, companionMap).forEach { result += "companions:$it" }
-        // 지역도 같은 규칙이면:
-        val regionsFlat = regions.orEmpty().mapNotNull { r ->
-            val parts = r.split(":")
-            if (parts.size == 2) {
-                val province = com.example.meokpli.Main.provinceMap[parts[0]] ?: parts[0]
-                val city = com.example.meokpli.Main.cityMap[parts[1]] ?: parts[1]
-                "$province:$city"
-            } else null
-        }
-        result+="regions:"
+        // regions는 여기서 처리하지 않음!
+        // (이전의 "regions:..." push 전부 제거)
         return result
+    }
+    private fun buildRegionsEng(regions: List<String>): List<String> {
+
+        fun mapRegionOne(ko: String): String? {
+            // "서울:강남구" 또는 "서울:강남구" 모두 허용
+            val parts = ko.split(':', ':')
+            if (parts.size != 2) return null
+
+            val provinceKo = parts[0].trim()
+            val cityKo     = parts[1].trim()
+
+            val provinceEn = provinceMap[provinceKo] ?: provinceKo
+
+            // 모호한 구명은 "중구(부산)" 같은 키 우선
+            val disambiguatedKey = "$cityKo($provinceKo)"
+            val cityEn = when {
+                cityMap.containsKey(disambiguatedKey) -> cityMap[disambiguatedKey]!!
+                cityMap.containsKey(cityKo)           -> cityMap[cityKo]!!
+                else                                   -> cityKo // 매핑 없으면 원문 유지
+            }
+
+            // 서버 표준 구분자: ':'
+            return "$provinceEn:$cityEn"
+        }
+
+        return regions.orEmpty().mapNotNull { mapRegionOne(it) }
     }
 
     private fun hasAllSelected(): Boolean {
@@ -519,7 +540,7 @@ class CategoryActivity : AppCompatActivity() {
 
         selectedRegions.forEach { regionCode ->
             // 화면 표시는 "서울 강남구"처럼, 서버 전송은 원본 그대로 유지
-            val label = regionCode.replace("|", " ")
+            val label = regionCode.replace(":", " ")
 
             val chip = Chip(this).apply {
                 text = label
