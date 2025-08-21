@@ -15,12 +15,24 @@
     <!-- 중앙 아이콘 (업로드된 벡터) -->
 
     <!-- 하단 버튼 (작은 캡슐 형태) -->
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="155dp"
+        android:layout_height="220dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/app_name"
+        android:src="@drawable/ic_meokplaylist"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="248dp" />
 
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="0dp"
+        android:layout_width="210dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="136dp"
+        android:layout_marginTop="176dp"
         android:gravity="center"
         android:includeFontPadding="false"
         android:text="가입완료 !"
@@ -28,32 +40,16 @@
         android:textSize="30sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/ivLogo"
-        android:layout_width="175dp"
-        android:layout_height="234dp"
-        android:layout_marginTop="1dp"
-        android:layout_marginBottom="24dp"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/ic_meokplaylist"
-        app:layout_constraintBottom_toTopOf="@id/btnGoHome"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
-        app:layout_constraintVertical_bias="0.0" />
-
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnGoHome"
-        android:layout_width="200dp"
+        android:layout_width="150dp"
         android:layout_height="48dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="50dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="172dp"
         android:background="@drawable/btn_basic"
         android:fontFamily="@font/inter_semibold"
         android:insetLeft="0dp"
@@ -67,9 +63,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
 
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintStart_toStartOf="parent"
-
-        app:layout_constraintTop_toBottomOf="@id/ivLogo" />
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

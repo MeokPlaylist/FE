@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.MainActivity
 import com.example.meokpli.R
 import com.example.meokpli.User.Region.RegionActivity
 import com.example.meokpli.User.Category.*
@@ -429,7 +428,7 @@ class CategoryActivity : AppCompatActivity() {
                             .onSuccess {
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(this@CategoryActivity, "카테고리 설정 완료!", Toast.LENGTH_SHORT).show()
-                                    val intent = Intent(this@CategoryActivity, MainActivity::class.java)
+                                    val intent = Intent(this@CategoryActivity, WelcomeActivity::class.java)
                                     startActivity(intent)
                                     finish()
                                 }

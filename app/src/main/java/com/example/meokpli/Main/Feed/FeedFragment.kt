@@ -264,6 +264,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                         // 결과 확인
                         if (results.all { it }) {
                             Toast.makeText(requireContext(), "원본 업로드 완료", Toast.LENGTH_SHORT).show()
+                            (requireActivity() as? MainActivity)?.handleSystemBack()
                         } else {
                             val failed = results.withIndex().filter { !it.value }.map { it.index }
                             Toast.makeText(requireContext(), "업로드 실패 인덱스: $failed", Toast.LENGTH_SHORT).show()
