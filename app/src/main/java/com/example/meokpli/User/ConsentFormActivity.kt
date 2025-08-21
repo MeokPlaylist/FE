@@ -10,7 +10,6 @@ import java.io.InputStreamReader
 import android.content.Intent
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Auth.TokenManager
 import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,7 +20,6 @@ class ConsentFormActivity : AppCompatActivity() {
     private lateinit var btnConfirm: Button
     private lateinit var cbAllAgree: CheckBox
     private lateinit var requiredCheckBoxes: List<CheckBox>
-    private lateinit var tokenManager: TokenManager
     private lateinit var userApi: UserApi
 
     override fun onCreate(savedInstanceState: Bundle?) {

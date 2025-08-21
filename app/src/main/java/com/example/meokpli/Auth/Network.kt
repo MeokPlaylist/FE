@@ -1,6 +1,7 @@
 package com.example.meokpli.Auth
 
 import android.content.Context
+import com.example.meokpli.Main.MainApi
 import okhttp3.OkHttpClient
 import com.example.meokpli.User.UserApi
 import com.example.meokpli.User.Category.CategoryApi
@@ -12,15 +13,7 @@ import java.util.concurrent.TimeUnit
 object Network {
     private const val AUTH_BASE_URL = "https://meokplaylist.store/auth/"
     private const val USER_BASE_URL = "https://meokplaylist.store/user/"
-
-    private fun okHttp(context: Context): OkHttpClient {
-        val tokenManager = TokenManager(context)
-        return OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(tokenManager))
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .build()
-    }
+    private const val FEED_BASE_URL = "https://meokplaylist.store/feed/"
 
     private fun retrofit(baseUrl: String, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
@@ -52,6 +45,8 @@ object Network {
     fun categoryApi(context: Context): CategoryApi =
         retrofit(USER_BASE_URL, debugClient(context, withAuth = true)).create(CategoryApi::class.java)
 
+    fun feedApi(context: Context): MainApi =
+        retrofit(FEED_BASE_URL, debugClient(context, withAuth = true)).create(MainApi::class.java)
 }
 /*
 4) Network (공용 Retrofit/OkHttp 팩토리)

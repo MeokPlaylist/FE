@@ -15,6 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Meokpli"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="31">
 
         <!-- ✅ 카카오 리다이렉트 수신 -->
@@ -32,7 +33,7 @@
         </activity>
 
         <activity
-            android:name=".Main.MainActivity"
+            android:name=".Auth.LoginActivity"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -43,7 +44,7 @@
 
         <!-- 나머지 Activity 목록 -->
         <activity android:name=".Auth.SignUpActivity" />
-
+        <activity android:name=".Main.MainActivity" />
         <activity android:name=".User.InitProfileActivity" />
         <activity android:name=".User.CategoryActivity" />
         <activity android:name=".User.ConsentFormActivity" />
@@ -51,7 +52,7 @@
         <activity android:name=".User.ResetPasswordActivity" />
         <activity android:name=".User.Region.RegionActivity" />
         <activity
-            android:name=".gallery.GalleryActivity"
+            android:name=".gallery.GalleryBottomSheet"
             android:exported="false" />
 
 

@@ -1,6 +1,7 @@
-package com.example.meokpli.Main
+package com.example.meokpli.Main.Feed
 
 import android.app.Dialog
+import android.content.res.Resources
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -21,7 +22,7 @@ class RegionSelectDialog : DialogFragment() {
 
     companion object {
         const val REQUEST_KEY = "region_result"
-        const val KEY_SELECTED_CODES = "selected_codes"     // 결과: ["서울|강남구", ...]
+        const val KEY_SELECTED_CODES = "selected_codes"     // 결과: ["서울:강남구", ...]
         private const val KEY_PRESELECTED_CODES = "preselected_codes"
 
         fun newInstance(preselected: ArrayList<String> = arrayListOf()) = RegionSelectDialog().apply {
@@ -64,7 +65,7 @@ class RegionSelectDialog : DialogFragment() {
     )
 
     private var currentSido: String = "서울"
-    private val selectedPairs = linkedSetOf<String>()   // 전체 선택: "시도|시군구"
+    private val selectedPairs = linkedSetOf<String>()   // 전체 선택: "시도:시군구"
     private val selectedSigunguInCurrent = linkedSetOf<String>() // 현재 시/도 내 선택
 
     // 목록 데이터(현재 시/도 + 검색)
@@ -106,7 +107,7 @@ class RegionSelectDialog : DialogFragment() {
             selected = selectedSigunguInCurrent,
             maxCount = MAX_SELECT,
             onToggle = { name, added ->
-                val code = "$currentSido|$name"
+                val code = "$currentSido:$name"
                 if (added) {
                     if (selectedPairs.size >= MAX_SELECT) {
                         Toast.makeText(requireContext(), "최대 $MAX_SELECT 개까지 선택할 수 있어요.", Toast.LENGTH_SHORT).show()
@@ -166,7 +167,7 @@ class RegionSelectDialog : DialogFragment() {
         currentSido = sido
 
         // 현재 시/도 내 선택 복원
-        val inThis = selectedPairs.filter { it.startsWith("$sido|") }.map { it.substringAfter("|") }
+        val inThis = selectedPairs.filter { it.startsWith("$sido:") }.map { it.substringAfter(":") }
         selectedSigunguInCurrent.clear()
         selectedSigunguInCurrent.addAll(inThis)
 
@@ -187,7 +188,7 @@ class RegionSelectDialog : DialogFragment() {
     private fun syncSelectedChips() {
         chipGroupSelected.removeAllViews()
         selectedPairs.forEach { code ->
-            val (sido, sgg) = code.split("|", limit = 2)
+            val (sido, sgg) = code.split(":", limit = 2)
             val chip = Chip(requireContext()).apply {
                 text = sgg
                 isCloseIconVisible = true
@@ -319,4 +320,4 @@ class RegionSelectDialog : DialogFragment() {
 }
 
 // px 변환
-private fun dp(v: Int) = (v * (android.content.res.Resources.getSystem().displayMetrics.density)).toInt()
+private fun dp(v: Int) = (v * (Resources.getSystem().displayMetrics.density)).toInt()

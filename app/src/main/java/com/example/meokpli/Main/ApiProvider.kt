@@ -2,19 +2,45 @@ package com.example.meokpli.Main
 
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageButton
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
+import com.example.meokpli.Main.Feed.RegionSelectDialog
 import com.example.meokpli.R
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import java.util.concurrent.TimeUnit
 
-import android.util.Log
-import android.widget.Toast
+object ApiProvider {
+    private val client: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+            })
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build()
+    }
+
+    // build.gradle 에 buildConfigField 로 BASE_URL 넣어두면 좋음
+    private val retrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://meokplaylist.com/") // 예: "https://api.meokplaylist.com/"
+            .client(client)
+            .build() // 멀티파트만 쓰면 컨버터 없어도 OK. JSON 쓰면 Gson 추가
+    }
+
+    val api: MainApi by lazy { retrofit.create(MainApi::class.java) }
+}
 
 class CategorySelectDialog : DialogFragment() {
     //예외처리용
@@ -79,7 +105,7 @@ class CategorySelectDialog : DialogFragment() {
             .inflate(R.layout.dialog_category_select, null, false)
 
 
-        val cgRegions = v.findViewById<com.google.android.material.chip.ChipGroup>(R.id.chipGroupRegions)
+        val cgRegions = v.findViewById<ChipGroup>(R.id.chipGroupRegions)
         val PlusRegionButton = v.findViewById<View>(R.id.PlusRegionButton)
         //복원용
         selectedRegionCodes = savedInstanceState?.getStringArrayList(STATE_REGIONS)
@@ -102,9 +128,9 @@ class CategorySelectDialog : DialogFragment() {
 
         // 지역 선택 다이얼로그 결과 수신(이 다이얼로그의 childFM에서 받음)
         childFragmentManager.setFragmentResultListener(
-            RegionSelectDialog.REQUEST_KEY, this
+            RegionSelectDialog.Companion.REQUEST_KEY, this
         ) { _, b ->
-            val codes = b.getStringArrayList(RegionSelectDialog.KEY_SELECTED_CODES) ?: arrayListOf()
+            val codes = b.getStringArrayList(RegionSelectDialog.Companion.KEY_SELECTED_CODES) ?: arrayListOf()
             selectedRegionCodes = ArrayList(codes) // 덮어쓰기(최신 선택 유지)
             Log.d(TAG, "Region result received: ${selectedRegionCodes.size} items -> $selectedRegionCodes")
             renderRegionChips(cgRegions, selectedRegionCodes)
@@ -112,7 +138,7 @@ class CategorySelectDialog : DialogFragment() {
 
         // 지역 추가 버튼 → RegionSelectDialog 띄우기(미리 선택값 넘김)
         PlusRegionButton.setOnClickListener {
-            RegionSelectDialog.newInstance(ArrayList(selectedRegionCodes))
+            RegionSelectDialog.Companion.newInstance(ArrayList(selectedRegionCodes))
                 .show(childFragmentManager, "RegionSelectDialog")
         }
 
@@ -215,7 +241,7 @@ class CategorySelectDialog : DialogFragment() {
     }
 
     private fun renderRegionPreviewChips(
-        group: com.google.android.material.chip.ChipGroup,
+        group: ChipGroup,
         codes: Collection<String>
     ) {
         group.removeAllViews()
@@ -223,7 +249,7 @@ class CategorySelectDialog : DialogFragment() {
 
         codes.forEach { code ->
             val label = code.substringAfter("|") // "서울|강남구" → "강남구"만 표시
-            val chip = com.google.android.material.chip.Chip(requireContext()).apply {
+            val chip = Chip(requireContext()).apply {
                 text = label
                 isCheckable = false
                 isClickable = false
@@ -246,6 +272,3 @@ class CategorySelectDialog : DialogFragment() {
         }
     }
 }
-
-
-

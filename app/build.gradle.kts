@@ -57,6 +57,11 @@ android {
 }
 
 dependencies {
+    val nav_version = "2.7.7"  // 최신 확인 가능
+
+    implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")
+    implementation("androidx.navigation:navigation-ui-ktx:${nav_version}")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
     // --- AndroidX 기본 ---
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
@@ -74,7 +79,9 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")                 // 권장 추가
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")    // (선택) 로그
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)    // (선택) 로그
 
     // --- 테스트 ---
     testImplementation(libs.junit)

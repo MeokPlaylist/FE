@@ -184,7 +184,6 @@ class LoginActivity : AppCompatActivity() {
                         try {
                             val res = api.oauthLogin(OAuthRequest("kakao", idToken))
                             tokenManager.saveTokens(res.jwt)
-                            Log.d("kak","여기까진됨")
                             routeAfterLoginByErrorCodeOnly()
                         } catch (e: Exception) {
                             showError("카카오 로그인 실패: ${e.message}")
@@ -241,6 +240,7 @@ class LoginActivity : AppCompatActivity() {
         } catch (e: HttpException) {
 
             //에러 발생시 전 화면으로 빠꾸 or 앱 다운
+            Log.d("E","HttpException")
 
         } catch (e: Exception) {
             showOnMain("상태 확인 오류: ${e.message}")
