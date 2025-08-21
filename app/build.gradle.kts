@@ -57,6 +57,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.navigation.runtime.android)
     val nav_version = "2.7.7"  // 최신 확인 가능
 
     implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")

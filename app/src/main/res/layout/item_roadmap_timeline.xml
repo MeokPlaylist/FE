@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="84dp"
+    android:layout_marginTop="8dp">
+
+    <!-- 세로 라인 위치 고정용 가이드라인 (리스트 paddingStart 24dp 기준으로 약 124dp 위치) -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideTimeline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="124dp" />
+
+    <!-- 중앙 세로 라인 (아이템 높이만큼) -->
+    <View
+        android:id="@+id/connector_vertical"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="#33000000"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/guideTimeline"/>
+
+    <!-- 왼쪽 원형 타임라인 점 (겉: 흰색 + 미세 그림자, 안: 남색) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/dot_outer"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="40dp"
+        app:cardElevation="2dp"
+        app:strokeColor="#1A000000"
+        app:strokeWidth="1dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <View
+            android:id="@+id/dot_inner"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_circle_dark"/>
+        <!-- drawable이거는 기본 디자인나오거나 사진으로 대체 -->
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 점 → 중앙 세로 라인까지의 가로 연결선 : 두 앵커 사이를 꽉 채우도록 0dp(매치제약) -->
+    <View
+        android:id="@+id/connector_horizontal"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#66000000"
+        app:layout_constraintStart_toEndOf="@id/dot_outer"
+        app:layout_constraintEnd_toStartOf="@id/guideTimeline"
+        app:layout_constraintTop_toTopOf="@id/dot_outer"
+        app:layout_constraintBottom_toBottomOf="@id/dot_outer"/>
+
+    <!-- 우측 장소 카드 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:minHeight="60dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:strokeColor="#40000000"
+        app:strokeWidth="1dp"
+        app:layout_constraintStart_toEndOf="@id/guideTimeline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/dot_outer"
+        app:layout_constraintBottom_toBottomOf="@id/dot_outer">
+        <!-- 글씨는 데이터 들어오면서 바뀌게 할것 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvPlaceName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                tools:text="맥도날드"/>
+
+            <TextView
+                android:id="@+id/tvAddress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                tools:text="경기도 수원시 영통구 아주로 46"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
