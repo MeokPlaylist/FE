@@ -1,0 +1,17 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 눌렸을 때 -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#11000000"/> <!-- 살짝 어두운 반투명 배경 -->
+            <corners android:radius="20dp"/>   <!-- pill/실린더 느낌 -->
+        </shape>
+    </item>
+
+    <!-- 평상시 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/>
+            <corners android:radius="20dp"/>
+        </shape>
+    </item>
+</selector>

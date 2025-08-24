@@ -55,37 +55,33 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/imgAvatar"/>
 
-        <!-- 본문 이미지 (지금은 플레이스홀더) -->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/imgPhoto"
+        <!-- 본문 이미지 → ViewPager2 로 교체 -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPagerPhotos"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:src="@drawable/ic_profile_camera"
-            android:scaleType="centerCrop"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Large"
             app:layout_constraintTop_toBottomOf="@id/imgAvatar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintDimensionRatio="16:10"
-            app:layout_constraintHorizontal_bias="0"
             android:layout_marginTop="12dp"/>
 
-        <!-- 좌상단: 페이지 배지 -->
+        <!-- 페이지 배지 -->
         <TextView
             android:id="@+id/tvPageBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="1/10"
-            android:textSize="11sp"
-            android:textColor="#000000"
+            android:layout_margin="10dp"
+            android:background="@drawable/bg_capsule_page"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
-            android:background="@drawable/bg_capsule_page"
-            app:layout_constraintStart_toStartOf="@id/imgPhoto"
-            app:layout_constraintTop_toTopOf="@id/imgPhoto"
-            android:layout_margin="10dp"/>
+            android:text="1/1"
+            android:textColor="#000000"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="@id/viewPagerPhotos"
+            app:layout_constraintTop_toTopOf="@id/viewPagerPhotos" />
 
-        <!-- 우하단: 위치 버튼 -->
+        <!-- 위치 버튼 -->
         <ImageButton
             android:id="@+id/btnLocation"
             android:layout_width="40dp"
@@ -94,21 +90,26 @@
             android:background="@null"
             android:contentDescription="@string/app_name"
             app:tint="#C64132"
-            app:layout_constraintEnd_toEndOf="@id/imgPhoto"
-            app:layout_constraintBottom_toBottomOf="@id/imgPhoto"
+            app:layout_constraintEnd_toEndOf="@id/viewPagerPhotos"
+            app:layout_constraintBottom_toBottomOf="@id/viewPagerPhotos"
             android:layout_margin="10dp"/>
 
-        <!-- 캡션 위 점 3개 (중앙 표시용) -->
-        <TextView
-            android:id="@+id/tvDots"
+        <!-- 캡션 위 점 indicator -->
+        <LinearLayout
+            android:id="@+id/indicatorLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="•••"
-            android:textColor="#66000000"
-            app:layout_constraintTop_toBottomOf="@id/imgPhoto"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_indicator_container"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            app:layout_constraintTop_toBottomOf="@id/viewPagerPhotos"
+            app:layout_constraintBottom_toTopOf="@id/captionGuide"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="8dp"/>
+            app:layout_constraintEnd_toEndOf="parent"/>
+
 
         <!-- 캡션: 왼쪽 가이드 라인 + 텍스트 -->
         <View
@@ -116,7 +117,7 @@
             android:layout_width="2dp"
             android:layout_height="55dp"
             android:background="#1A000000"
-            app:layout_constraintTop_toBottomOf="@id/tvDots"
+            app:layout_constraintTop_toBottomOf="@id/indicatorLayout"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="12dp"
             android:layout_marginStart="6dp"/>
@@ -125,7 +126,7 @@
             android:id="@+id/tvCaption"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="안녕하십니까, 디자인 감다훼 김수민입니다. 잘부탁드립니다.\n너무 힘들어요"
+            android:text=""
             android:textSize="10sp"
             android:textColor="#000000"
             app:layout_constraintTop_toTopOf="@id/captionGuide"
@@ -161,8 +162,6 @@
                 android:contentDescription="댓글"
                 android:layout_marginStart="14dp" />
         </LinearLayout>
-
-        <!-- 카드 하단 패딩 확보 -->
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

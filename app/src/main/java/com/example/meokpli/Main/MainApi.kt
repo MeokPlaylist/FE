@@ -2,9 +2,12 @@ package com.example.meokpli.Main
 
 
 import android.content.Context
+import com.example.meokpli.feed.Feed
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 /* 1) Retrofit API */
 interface MainApi {
@@ -13,6 +16,12 @@ interface MainApi {
     suspend fun createFeed(
         @Body body: CreateFeedBody
     ): Response<CreateFeedResponse>
+
+    @GET("main")
+    suspend fun getMainFeeds(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 10
+    ): SlicedResponse<Feed>
 }
 data class CreateFeedBody(
     val content: String?,
@@ -34,7 +43,16 @@ data class PhotoBody(
 data class CreateFeedResponse(
     val presignedPutUrls: List<String> = emptyList()
 )
-
+//Page dto
+data class SlicedResponse<T>(
+    val content: List<T>,
+    val page: Int,
+    val size: Int,
+    val first: Boolean,
+    val last: Boolean,
+    val empty: Boolean,
+    val hasNext: Boolean
+)
 
 /* 2) 클라 내부 표현 (그대로 사용) */
 data class CategoryRequest(
