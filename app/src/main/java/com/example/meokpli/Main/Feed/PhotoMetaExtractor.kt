@@ -8,24 +8,26 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.annotation.RequiresApi
 import androidx.exifinterface.media.ExifInterface
+import com.drew.imaging.ImageMetadataReader
+import com.drew.metadata.exif.GpsDirectory
+import java.io.File
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 data class PhotoMeta(
     val uri: Uri,
-    val fileName: String,            // 표시 이름 or fallback
-    val mime: String,                // contentResolver getType 또는 기본값
-    val sizeBytes: Long?,            // 바이트 크기(알 수 없으면 null)
-    val latitude: Double?,           // EXIF GPS (없으면 null)
-    val longitude: Double?,          // EXIF GPS (없으면 null)
-    val dateTimeOriginalIso: String?,// "yyyy-MM-dd'T'HH:mm:ss" (타임존 반영)
-    val orientationDegrees: Int?,    // 0/90/180/270 (없으면 null)
-    val width: Int?,                 // 가능하면 채움
-    val height: Int?                 // 가능하면 채움
+    val fileName: String,
+    val mime: String,
+    val sizeBytes: Long?,
+    val latitude: Double?,
+    val longitude: Double?,
+    val dateTimeOriginalIso: String?,
+    val orientationDegrees: Int?,
+    val width: Int?,
+    val height: Int?
 )
 
-/** 단일 URI에서 PhotoMeta 추출 */
 @RequiresApi(Build.VERSION_CODES.O)
 fun extractPhotoMeta(context: Context, uri: Uri): PhotoMeta {
     val cr = context.contentResolver
@@ -34,24 +36,46 @@ fun extractPhotoMeta(context: Context, uri: Uri): PhotoMeta {
     val (name, size) = queryDisplayNameAndSize(cr, uri)
     val displayName = name ?: "photo_${System.currentTimeMillis()}"
 
-    // MediaStore에서 폭/높이, 찍은 시각(백업) 가져오기
     val (msWidth, msHeight, msTakenMs) = queryWidthHeightAndTaken(cr, uri)
 
-    // EXIF 로드 (없는 포맷/스트림이면 null)
-    val exif = openExif(cr, uri)
+    // 실제 파일로 복사해서 다룸
+    val realPath = resolveRealPath(context, uri)
+    val file = if (realPath != null) File(realPath) else copyUriToFile(context, uri)
 
-    // EXIF GPS
-    val (lat, lng) = exifLatLng(exif)
+    // 1) ExifInterface
+    val exif = ExifInterface(file.absolutePath)
 
-    // EXIF 촬영 시각 → ISO
+    // 우선 ExifInterface에서 위도/경도 직접 시도
+    var lat: Double? = null
+    var lon: Double? = null
+    runCatching {
+        val out = FloatArray(2)
+        if (exif.getLatLong(out)) {
+            lat = out[0].toDouble()
+            lon = out[1].toDouble()
+        }
+    }
+
+    // 2) ExifInterface 실패 시 metadata-extractor로 보강
+    if (lat == null || lon == null) {
+        runCatching {
+            val metadata = ImageMetadataReader.readMetadata(file)
+            val gpsDir = metadata.getFirstDirectoryOfType(GpsDirectory::class.java)
+            val geoLoc = gpsDir?.geoLocation
+            if (geoLoc != null && !geoLoc.latitude.isNaN() && !geoLoc.longitude.isNaN()) {
+                lat = geoLoc.latitude
+                lon = geoLoc.longitude
+            }
+        }
+    }
+
+    // 촬영 시각
     val isoTime = exifDateTimeToIso(exif) ?: msTakenMs?.let { millisToIso(it) }
 
-    // EXIF 회전
     val orientationDeg = exifOrientationDegrees(exif)
 
-    // EXIF 폭/높이(없으면 MediaStore 값으로 대체)
-    val width = exif?.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, 0)?.takeIf { it > 0 } ?: msWidth
-    val height = exif?.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, 0)?.takeIf { it > 0 } ?: msHeight
+    val width = exif.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, 0).takeIf { it > 0 } ?: msWidth
+    val height = exif.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, 0).takeIf { it > 0 } ?: msHeight
 
     return PhotoMeta(
         uri = uri,
@@ -59,7 +83,7 @@ fun extractPhotoMeta(context: Context, uri: Uri): PhotoMeta {
         mime = mime,
         sizeBytes = size,
         latitude = lat,
-        longitude = lng,
+        longitude = lon,
         dateTimeOriginalIso = isoTime,
         orientationDegrees = orientationDeg,
         width = width,
@@ -87,8 +111,8 @@ private fun queryWidthHeightAndTaken(cr: ContentResolver, uri: Uri): MsInfo {
     val cols = arrayOf(
         MediaStore.Images.Media.WIDTH,
         MediaStore.Images.Media.HEIGHT,
-        MediaStore.Images.Media.DATE_TAKEN,   // ms since epoch
-        MediaStore.Images.Media.DATE_ADDED    // s since epoch (fallback)
+        MediaStore.Images.Media.DATE_TAKEN,
+        MediaStore.Images.Media.DATE_ADDED
     )
     return cr.query(uri, cols, null, null, null)?.use { c ->
         val wIdx = c.getColumnIndex(MediaStore.Images.Media.WIDTH)
@@ -105,14 +129,17 @@ private fun queryWidthHeightAndTaken(cr: ContentResolver, uri: Uri): MsInfo {
     } ?: MsInfo(null, null, null)
 }
 
-private fun openExif(cr: ContentResolver, uri: Uri): ExifInterface? = runCatching {
-    cr.openInputStream(uri)?.use { ExifInterface(it) }
-}.getOrNull()
+private fun copyUriToFile(context: Context, uri: Uri): File {
+    // 위치 메타데이터가 지워지지 않은 "원본"을 요구
+    val src = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        try { MediaStore.setRequireOriginal(uri) } catch (_: Throwable) { uri }
+    } else uri
 
-private fun exifLatLng(exif: ExifInterface?): Pair<Double?, Double?> {
-    if (exif == null) return null to null
-    val out = FloatArray(2)
-    return if (exif.getLatLong(out)) out[0].toDouble() to out[1].toDouble() else null to null
+    val file = File(context.cacheDir, "temp_${System.currentTimeMillis()}.jpg")
+    context.contentResolver.openInputStream(src)!!.use { input ->
+        file.outputStream().use { output -> input.copyTo(output) }
+    }
+    return file
 }
 
 private fun exifOrientationDegrees(exif: ExifInterface?): Int? {
@@ -121,42 +148,46 @@ private fun exifOrientationDegrees(exif: ExifInterface?): Int? {
         ExifInterface.ORIENTATION_ROTATE_90 -> 90
         ExifInterface.ORIENTATION_ROTATE_180 -> 180
         ExifInterface.ORIENTATION_ROTATE_270 -> 270
-        ExifInterface.ORIENTATION_NORMAL, ExifInterface.ORIENTATION_UNDEFINED -> 0
         else -> 0
     }
 }
 
-/** EXIF 시간 → ISO_LOCAL_DATE_TIME (가능하면 오프셋 적용) */
 @RequiresApi(Build.VERSION_CODES.O)
 private fun exifDateTimeToIso(exif: ExifInterface?): String? {
     exif ?: return null
-
-    // 우선순위: Original > Digitized > Datetime
     val raw = exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
         ?: exif.getAttribute(ExifInterface.TAG_DATETIME_DIGITIZED)
         ?: exif.getAttribute(ExifInterface.TAG_DATETIME)
         ?: return null
 
-    // "yyyy:MM:dd HH:mm:ss"
     val base = try {
         val fmt = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss", Locale.US)
         LocalDateTime.parse(raw, fmt)
     } catch (_: Throwable) { return null }
 
-    // EXIF 오프셋(+09:00 등)이 있으면 적용
-    val offset =
-        exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL)
-            ?: exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_DIGITIZED)
-            ?: exif.getAttribute(ExifInterface.TAG_OFFSET_TIME)
+    val offset = exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL)
+        ?: exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_DIGITIZED)
+        ?: exif.getAttribute(ExifInterface.TAG_OFFSET_TIME)
 
     return if (offset != null) {
         val odt = OffsetDateTime.of(base, ZoneOffset.of(offset))
-        odt.withSecond(odt.second).withNano(0).toLocalDateTime().toString()
+        odt.withSecond(0).withNano(0).toLocalDateTime().toString()
     } else {
-        // 오프셋 없으면 시스템 타임존 가정
         base.atZone(ZoneId.systemDefault()).toLocalDateTime().withSecond(0).withNano(0).toString()
     }
 }
+
+private fun resolveRealPath(context: Context, uri: Uri): String? {
+    val proj = arrayOf(MediaStore.Images.Media.DATA)
+    context.contentResolver.query(uri, proj, null, null, null)?.use { cursor ->
+        val col = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+        if (cursor.moveToFirst()) {
+            return cursor.getString(col) // 실제 파일 경로
+        }
+    }
+    return null
+}
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun millisToIso(ms: Long): String =

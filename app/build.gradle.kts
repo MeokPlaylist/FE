@@ -62,7 +62,9 @@ dependencies {
 
     implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")
     implementation("androidx.navigation:navigation-ui-ktx:${nav_version}")
+    //사진 exif추출
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("com.drewnoakes:metadata-extractor:2.19.0")
     // --- AndroidX 기본 ---
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

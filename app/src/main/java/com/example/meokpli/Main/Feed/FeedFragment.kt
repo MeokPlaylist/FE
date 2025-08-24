@@ -72,6 +72,8 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        ensureMediaPerms()
+
         feedApi = Network.feedApi(requireContext())
         // 버튼/리사이클러뷰 바인딩
         backBtn = view.findViewById(R.id.btnBack)
@@ -370,6 +372,23 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         cg.post {
             Log.d(TAG, "renderPreviewChips: childCount=${cg.childCount}, size=${labels.size}")
         }
+    }
+    //GPS받는 권한
+    private fun ensureMediaPerms() {
+        val perms = when {
+            Build.VERSION.SDK_INT >= 33 ->
+                arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES,
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            Build.VERSION.SDK_INT >= 29 ->
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            else ->
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        registerForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+        ) { /* 결과 체크 */ }
+            .launch(perms)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
