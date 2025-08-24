@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginTop="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="3dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- 상단: 프로필, 이름, 날짜, 더보기 -->
+        <ImageView
+            android:id="@+id/imgAvatar"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_profile_red"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvUserName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="김수민"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@id/imgAvatar"
+            app:layout_constraintTop_toTopOf="@id/imgAvatar"
+            app:layout_constraintEnd_toStartOf="@id/btnMore"
+            android:layout_marginStart="8dp"/>
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2025.9.24"
+            android:textSize="12sp"
+            android:textColor="#8A000000"
+            app:layout_constraintStart_toStartOf="@id/tvUserName"
+            app:layout_constraintTop_toBottomOf="@id/tvUserName"/>
+
+        <ImageButton
+            android:id="@+id/btnMore"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_more_horiz"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/imgAvatar"/>
+
+        <!-- 본문 이미지 (지금은 플레이스홀더) -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgPhoto"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:src="@drawable/ic_profile_camera"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Large"
+            app:layout_constraintTop_toBottomOf="@id/imgAvatar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintDimensionRatio="16:10"
+            app:layout_constraintHorizontal_bias="0"
+            android:layout_marginTop="12dp"/>
+
+        <!-- 좌상단: 페이지 배지 -->
+        <TextView
+            android:id="@+id/tvPageBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1/10"
+            android:textSize="11sp"
+            android:textColor="#000000"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:background="@drawable/bg_capsule_page"
+            app:layout_constraintStart_toStartOf="@id/imgPhoto"
+            app:layout_constraintTop_toTopOf="@id/imgPhoto"
+            android:layout_margin="10dp"/>
+
+        <!-- 우하단: 위치 버튼 -->
+        <ImageButton
+            android:id="@+id/btnLocation"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_location_feed"
+            android:background="@null"
+            android:contentDescription="@string/app_name"
+            app:tint="#C64132"
+            app:layout_constraintEnd_toEndOf="@id/imgPhoto"
+            app:layout_constraintBottom_toBottomOf="@id/imgPhoto"
+            android:layout_margin="10dp"/>
+
+        <!-- 캡션 위 점 3개 (중앙 표시용) -->
+        <TextView
+            android:id="@+id/tvDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="•••"
+            android:textColor="#66000000"
+            app:layout_constraintTop_toBottomOf="@id/imgPhoto"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp"/>
+
+        <!-- 캡션: 왼쪽 가이드 라인 + 텍스트 -->
+        <View
+            android:id="@+id/captionGuide"
+            android:layout_width="2dp"
+            android:layout_height="55dp"
+            android:background="#1A000000"
+            app:layout_constraintTop_toBottomOf="@id/tvDots"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="6dp"/>
+
+        <TextView
+            android:id="@+id/tvCaption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="안녕하십니까, 디자인 감다훼 김수민입니다. 잘부탁드립니다.\n너무 힘들어요"
+            android:textSize="10sp"
+            android:textColor="#000000"
+            app:layout_constraintTop_toTopOf="@id/captionGuide"
+            app:layout_constraintStart_toEndOf="@id/captionGuide"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- 하단 액션 -->
+        <LinearLayout
+            android:id="@+id/actionRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/tvCaption"
+            app:layout_constraintStart_toEndOf="@id/captionGuide"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp">
+
+            <ImageView
+                android:id="@+id/btnLike"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_heart_unfilled"
+                android:contentDescription="좋아요" />
+
+            <ImageView
+                android:id="@+id/btnComment"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chatballon"
+                android:contentDescription="댓글"
+                android:layout_marginStart="14dp" />
+        </LinearLayout>
+
+        <!-- 카드 하단 패딩 확보 -->
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
