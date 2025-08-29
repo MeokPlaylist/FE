@@ -1,16 +1,21 @@
 package com.example.meokpli.User
 
+import android.os.Build
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.R
 import com.example.meokpli.Auth.Network
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class AccountInfoActivity : AppCompatActivity() {
 
@@ -18,13 +23,16 @@ class AccountInfoActivity : AppCompatActivity() {
     private lateinit var tvName: TextView
     private lateinit var tvBirth: TextView
     private lateinit var tvEmail: TextView
+    private lateinit var tvAccountDate: TextView
+    private lateinit var tvLoginMethod: TextView
 
     // API (인증 자동첨부)
     private val userApi by lazy { Network.userApi(this) }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_account_info) // XML과 매핑 :contentReference[oaicite:0]{index=0}
+        setContentView(R.layout.activity_account_info) // XML 매핑 (valueAccountdate/valueLoginmethod 사용)
 
         // 뒤로가기
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
@@ -35,11 +43,14 @@ class AccountInfoActivity : AppCompatActivity() {
         tvName = findViewById(R.id.valueName)
         tvBirth = findViewById(R.id.valueBirth)
         tvEmail = findViewById(R.id.valueEmail)
+        tvAccountDate = findViewById(R.id.valueAccountdate)     // 계정 생성일  :contentReference[oaicite:1]{index=1}
+        tvLoginMethod = findViewById(R.id.valueLoginmethod)     // 소셜 로그인 방식 :contentReference[oaicite:2]{index=2}
 
         // 서버에서 개인정보 가져오기
         fetchPersonalInfo()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun fetchPersonalInfo() {
         lifecycleScope.launch {
             try {
@@ -53,20 +64,40 @@ class AccountInfoActivity : AppCompatActivity() {
             }
         }
     }
-    //이건 교체 필요할듯 저장 현식에 따라
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun bind(info: PersonalInfoResponse) {
         tvName.text = info.name ?: "-"
         tvEmail.text = info.email ?: "-"
 
-        // birthDay 포매팅: "yyyy-MM-dd" → "yyyy.MM.dd"
-        tvBirth.text = formatDate(info.birthDay)
+        // 생년월일: "yyyy-MM-dd" → "yyyy.MM.dd"
+        tvBirth.text = formatDateToDot(info.birthDay)
+
+        // 계정 생성일: OffsetDateTime(예: "2025-08-28T10:20:30+09:00") → "yyyy.MM.dd"
+        tvAccountDate.text = formatCreatedAt(info.createdAt)
+
+        // 소셜 로그인 방식: false → "먹플리계정", true → "소셜계정"
+        val isSocial = info.OauthUser == true
+        tvLoginMethod.text = if (isSocial) "소셜계정" else "먹플리계정"
     }
 
-    private fun formatDate(raw: String?): String {
+    private fun formatDateToDot(raw: String?): String {
         if (raw.isNullOrBlank()) return "-"
-        // 예: "2025-08-28T10:20:30Z" → 앞 10자리 "2025-08-28"만 사용
-        val isoDate = (if (raw.length >= 10) raw.substring(0, 10) else raw).replace('-', '.')
-        return isoDate // "2025.08.28"
+        // "yyyy-MM-dd" 또는 "yyyy-MM-ddTHH:mm..." 모두 앞 10자리만 사용
+        val head10 = if (raw.length >= 10) raw.substring(0, 10) else raw
+        return head10.replace('-', '.')
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun formatCreatedAt(raw: String?): String {
+        if (raw.isNullOrBlank()) return "-"
+        // 우선 ISO-8601로 파싱 시도, 실패하면 앞 10자리로 대체
+        return try {
+            val odt = OffsetDateTime.parse(raw)
+            odt.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
+        } catch (_: Exception) {
+            formatDateToDot(raw)
+        }
     }
 }
+
