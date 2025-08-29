@@ -2,8 +2,10 @@ package com.example.meokpli.feed
 
 import android.content.Context
 import android.graphics.Color
+import android.media.Image
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -30,6 +32,10 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
         val tvDate: TextView = v.findViewById(R.id.tvDate)
         val tvPageBadge: TextView = v.findViewById(R.id.tvPageBadge)
         val tvCaption: TextView = v.findViewById(R.id.tvCaption)
+        val btnLike: ImageView = v.findViewById(R.id.btnLike)
+        val btnComment: ImageView = v.findViewById(R.id.btnComment)
+        val likeCount: TextView = v.findViewById(R.id.likeCount)
+        val commentCount: TextView = v.findViewById(R.id.commentCount)
         val viewPager: androidx.viewpager2.widget.ViewPager2 = v.findViewById(R.id.viewPagerPhotos)
     }
 
@@ -43,6 +49,8 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
 
         h.tvUser.text = item.nickName
         h.tvDate.text = item.createdAt
+        h.likeCount.text = item.likeCount.toString()
+        h.commentCount.text = item.commentCount.toString()
 
         // 내용 + 해시태그
         val tags = item.hashTag?.filter { it.isNotBlank() }?.joinToString(" ") { "#$it" }.orEmpty()
@@ -61,6 +69,21 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
             )
         }
         h.tvCaption.text = spannable
+        var isExpanded = false
+        //나중에 더보기 추가
+        h.tvCaption.setOnClickListener {
+            if (isExpanded) {
+                // 접기
+                h.tvCaption.maxLines = 3
+                h.tvCaption.ellipsize = TextUtils.TruncateAt.END
+                isExpanded = false
+            } else {
+                // 전체 보기
+                h.tvCaption.maxLines = Int.MAX_VALUE
+                h.tvCaption.ellipsize = null
+                isExpanded = true
+            }
+        }
 
         // ✅ 여러 장 사진 세팅
         val urls = item.feedPhotoUrl ?: emptyList()
@@ -187,7 +210,7 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoVH {
             val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_photo, parent, false)
+                .inflate(R.layout.item_feed_photo, parent, false)
             return PhotoVH(view)
         }
 
@@ -223,5 +246,7 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
     val content: String?,
     val hashTag: List<String>?,
     val createdAt: String,
-    val feedPhotoUrl: List<String>?
+    val feedPhotoUrl: List<String>?,
+    val likeCount: Long,
+    val commentCount: Long
 )

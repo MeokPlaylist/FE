@@ -198,6 +198,11 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
         // 5) 업로드 버튼
         uploadBtn.setOnClickListener {
+            // 0) 사진이 없으면 업로드 막기
+            if (selectedUris.isEmpty()) {
+                Toast.makeText(requireContext(), "사진을 최소 1장 이상 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val contentText = etContent.text?.toString()?.trim().orEmpty()
             val contentNullable = contentText.takeIf { it.isNotBlank() } // 비었으면 null
 

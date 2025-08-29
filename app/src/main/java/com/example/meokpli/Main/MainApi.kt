@@ -28,7 +28,7 @@ data class CreateFeedBody(
     val hashTag: List<String> = emptyList(),
     val categories: List<String> = emptyList(), // "moods:기분", "foods:라멘" 형식
     val regions: List<String> = emptyList(),
-    val photos: List<PhotoBody> = emptyList()
+    val photos: List<PhotoBody> = emptyList(),
 )
 
 data class PhotoBody(
@@ -78,7 +78,7 @@ object FeedRequestBuilder {
         hashTags: List<String>?,
         categories:  CategoryRequest,
         regions: List<String>?,
-        photos: List<ClientPhoto>?
+        photos: List<ClientPhoto>?,
     ): CreateFeedBody {
 
         fun clean(ls: List<String>?): List<String> =

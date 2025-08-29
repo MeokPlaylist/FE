@@ -6,8 +6,8 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginTop="16dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="3dp"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp"
     app:strokeWidth="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -56,15 +56,23 @@
             app:layout_constraintTop_toTopOf="@id/imgAvatar"/>
 
         <!-- 본문 이미지 → ViewPager2 로 교체 -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/viewPagerPhotos"
+        <FrameLayout
+            android:id="@+id/photoContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:clipToOutline="true"
+            android:background="@drawable/bg_photo_rounded"
             app:layout_constraintTop_toBottomOf="@id/imgAvatar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintDimensionRatio="16:10"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="12dp">
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewPagerPhotos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </FrameLayout>
 
         <!-- 페이지 배지 -->
         <TextView
@@ -78,21 +86,21 @@
             android:text="1/1"
             android:textColor="#000000"
             android:textSize="11sp"
-            app:layout_constraintEnd_toEndOf="@id/viewPagerPhotos"
-            app:layout_constraintTop_toTopOf="@id/viewPagerPhotos" />
+            app:layout_constraintEnd_toEndOf="@id/photoContainer"
+            app:layout_constraintTop_toTopOf="@id/photoContainer" />
 
         <!-- 위치 버튼 -->
         <ImageButton
             android:id="@+id/btnLocation"
-            android:layout_width="40dp"
+            android:layout_width="50dp"
             android:layout_height="40dp"
             android:src="@drawable/ic_location_feed"
             android:background="@null"
             android:contentDescription="@string/app_name"
-            app:tint="#C64132"
-            app:layout_constraintEnd_toEndOf="@id/viewPagerPhotos"
-            app:layout_constraintBottom_toBottomOf="@id/viewPagerPhotos"
-            android:layout_margin="10dp"/>
+            app:tint="#FFFFFF"
+            app:layout_constraintEnd_toEndOf="@id/photoContainer"
+            app:layout_constraintBottom_toBottomOf="@id/photoContainer"
+            android:layout_margin="0dp"/>
 
         <!-- 캡션 위 점 indicator -->
         <LinearLayout
@@ -105,62 +113,91 @@
             android:background="@drawable/bg_indicator_container"
             android:paddingHorizontal="12dp"
             android:paddingVertical="6dp"
-            app:layout_constraintTop_toBottomOf="@id/viewPagerPhotos"
-            app:layout_constraintBottom_toTopOf="@id/captionGuide"
+            app:layout_constraintTop_toBottomOf="@id/photoContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-
-        <!-- 캡션: 왼쪽 가이드 라인 + 텍스트 -->
-        <View
-            android:id="@+id/captionGuide"
-            android:layout_width="2dp"
-            android:layout_height="55dp"
-            android:background="#1A000000"
-            app:layout_constraintTop_toBottomOf="@id/indicatorLayout"
-            app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginTop="12dp"
-            android:layout_marginStart="6dp"/>
-
-        <TextView
-            android:id="@+id/tvCaption"
+        <!-- 캡션 블록: 가이드 바 + (캡션 + 액션) -->
+        <LinearLayout
+            android:id="@+id/captionBlock"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text=""
-            android:textSize="10sp"
-            android:textColor="#000000"
-            app:layout_constraintTop_toTopOf="@id/captionGuide"
-            app:layout_constraintStart_toEndOf="@id/captionGuide"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="8dp"/>
-
-        <!-- 하단 액션 -->
-        <LinearLayout
-            android:id="@+id/actionRow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/tvCaption"
-            app:layout_constraintStart_toEndOf="@id/captionGuide"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp">
+            app:layout_constraintTop_toBottomOf="@id/indicatorLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp">
 
-            <ImageView
-                android:id="@+id/btnLike"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_heart_unfilled"
-                android:contentDescription="좋아요" />
+            <!-- 왼쪽 세로 가이드 바 -->
+            <View
+                android:id="@+id/captionGuide"
+                android:layout_width="2dp"
+                android:layout_height="match_parent"
+                android:background="#000000"
+                android:layout_marginStart="6dp"/>
 
-            <ImageView
-                android:id="@+id/btnComment"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_chatballon"
-                android:contentDescription="댓글"
-                android:layout_marginStart="14dp" />
+            <!-- 오른쪽 캡션 + 하단 액션 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:id="@+id/tvCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="10sp"
+                    android:textColor="#000000"
+                    android:ellipsize="end"
+                    android:maxLines="3"
+                    android:scrollHorizontally="false"
+                    android:singleLine="false"/>
+
+                <LinearLayout
+                    android:id="@+id/actionRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <ImageView
+                        android:id="@+id/btnLike"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_heart_unfilled"
+                        android:contentDescription="좋아요" />
+                    <TextView
+                        android:id="@+id/likeCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:text=""
+                        android:textSize="14sp"
+                        android:layout_gravity="center_vertical"
+                        android:paddingBottom="5dp"/>
+
+                    <ImageView
+                        android:id="@+id/btnComment"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chatballon"
+                        android:layout_marginStart="5dp"
+                        android:contentDescription="댓글" />
+                    <TextView
+                        android:id="@+id/commentCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:text=""
+                        android:textSize="14sp"
+                        android:layout_gravity="center_vertical"
+                        android:paddingBottom="5dp"/>
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

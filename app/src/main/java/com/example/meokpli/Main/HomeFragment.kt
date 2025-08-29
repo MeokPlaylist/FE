@@ -57,7 +57,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         createdAt = formatKST(dto.createdAt),
                         content = dto.content ?: "",
                         hashTag = dto.hashTag ?: emptyList(),
-                        feedPhotoUrl = dto.feedPhotoUrl ?: emptyList()
+                        feedPhotoUrl = dto.feedPhotoUrl ?: emptyList(),
+                        likeCount = dto.likeCount,
+                        commentCount = dto.commentCount
                     )
                 }
 
