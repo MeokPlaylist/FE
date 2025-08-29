@@ -32,9 +32,13 @@ interface UserApi {
 
     @POST("consentAgree")
     suspend fun consentAgree(@Body request: ConsentAgreeRequest): BaseResponse
-    //profile feed 엔드포인트 바꿀거
-    @GET("me")
-    suspend fun getMe(): MeResponse
+
+    @GET("personalInfor")
+    suspend fun getPersonalInfo(): PersonalInfoResponse
+
+
+
+
 
 
 }
@@ -50,11 +54,9 @@ data class ConsentAgreeRequest(
     val isAvailable: Boolean
 )
 
-data class MeResponse(
-    val nickname: String? = null,
-    val introduction: String? = null,
-    val postCount: Int? = null,
-    val following: Int? = null,
-    val followers: Int? = null,
-    val profileImage: String? = null
+data class PersonalInfoResponse(
+    val name: String?,
+    val email: String?,
+    val birthDay: String?,    // ISO 문자열로 오면 화면에서 포맷팅
+    val createdAt: String?    // 필요 시 사용
 )

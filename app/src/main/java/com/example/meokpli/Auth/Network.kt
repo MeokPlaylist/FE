@@ -1,6 +1,7 @@
 package com.example.meokpli.Auth
 
 import android.content.Context
+import com.example.meokpli.Main.FollowApi
 import com.example.meokpli.Main.MainApi
 import okhttp3.OkHttpClient
 import com.example.meokpli.User.UserApi
@@ -9,11 +10,14 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import com.example.meokpli.Main.SocialInteractionApi
 
 object Network {
     private const val AUTH_BASE_URL = "https://meokplaylist.store/auth/"
     private const val USER_BASE_URL = "https://meokplaylist.store/user/"
     private const val FEED_BASE_URL = "https://meokplaylist.store/feed/"
+    private const val SOCIAL_BASE_URL = "https://meokplaylist.store/socialInteraction/"
+
 
     private fun retrofit(baseUrl: String, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
@@ -47,6 +51,13 @@ object Network {
 
     fun feedApi(context: Context): MainApi =
         retrofit(FEED_BASE_URL, debugClient(context, withAuth = true)).create(MainApi::class.java)
+
+    fun followApi(context: Context): FollowApi =
+        retrofit(USER_BASE_URL, debugClient(context, withAuth = true)).create(FollowApi::class.java)
+
+    fun socialApi(context: Context): SocialInteractionApi =
+        retrofit(SOCIAL_BASE_URL, debugClient(context, withAuth = true))
+            .create(SocialInteractionApi::class.java)
 }
 /*
 4) Network (공용 Retrofit/OkHttp 팩토리)
