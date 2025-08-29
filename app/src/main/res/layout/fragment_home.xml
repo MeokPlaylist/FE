@@ -53,7 +53,7 @@
             android:layout_height="30dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_bell_noimport"
+            android:src="@drawable/ic_bell_unimport"
             app:layout_constraintEnd_toStartOf="@+id/btnMenu"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"

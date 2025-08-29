@@ -78,7 +78,7 @@ class AccountInfoActivity : AppCompatActivity() {
 
         // 소셜 로그인 방식: false → "먹플리계정", true → "소셜계정"
         val isSocial = info.OauthUser == true
-        tvLoginMethod.text = if (isSocial) "소셜계정" else "먹플리계정"
+        tvLoginMethod.text = if (isSocial) "소셜 계정" else "먹플리 계정"
     }
 
     private fun formatDateToDot(raw: String?): String {

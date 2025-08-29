@@ -10,6 +10,7 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.widget.*
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.Auth.Network
@@ -51,12 +52,13 @@ class InitProfileActivity : AppCompatActivity() {
 
         api = Network.userApi(this)
 
-        /*
+        onBackPressedDispatcher.addCallback(this) {
+            val intent = Intent(this@InitProfileActivity, ConsentFormActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            startActivity(intent)
+            finish()
+        }
 
-        &***** jwt 토큰이 같이 안날라옴
-
-
-        */
         // 글자수 제한 필터 적용 (UX)
         editNickname.filters = arrayOf(InputFilter.LengthFilter(NICKNAME_LIMIT))
         editIntro.filters = arrayOf(InputFilter.LengthFilter(INTRO_LIMIT))

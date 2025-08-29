@@ -219,6 +219,13 @@ class LoginActivity : AppCompatActivity() {
                     }
                     return
                 }
+                //454 비밀번호 오류 메시지 출력 안 됨
+                codeNumber == 454 -> {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@LoginActivity, "잘못된 비밀번호입니다.", Toast.LENGTH_SHORT).show()
+                    }
+                    return
+                }
 
                 codeNumber == 455 -> {
                     withContext(Dispatchers.Main) {

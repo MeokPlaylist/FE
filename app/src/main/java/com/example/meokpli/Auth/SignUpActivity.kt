@@ -22,7 +22,7 @@ class SignUpActivity : AppCompatActivity() {
     private lateinit var checkEmailBtn: Button
     private lateinit var emailMsg: TextView
     private lateinit var pwMsg: TextView
-
+    private var isEmailChecked = false
     private lateinit var api: AuthApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,9 +66,11 @@ class SignUpActivity : AppCompatActivity() {
                             emailMsg.setTextColor(0xFF3CB371.toInt())
                             emailEdit.isEnabled = false
                             checkEmailBtn.isEnabled = false
+                            isEmailChecked = true
                         } else {
                             emailMsg.text = "이미 사용 중인 이메일입니다."
                             emailMsg.setTextColor(0xFFDF4A4A.toInt())
+                            isEmailChecked = false
                         }
                     }
                 } catch (e: Exception) {
@@ -113,6 +115,10 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun handleRegister() {
+        if (!isEmailChecked) {
+            showToast("이메일 중복 확인을 해주세요.")
+            return
+        }
         val pw = pwEdit.text.toString()
         val confirm = confirmEdit.text.toString()
         val email = emailEdit.text.toString()

@@ -27,8 +27,5 @@ class AccountCenterActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.rowPersonalInfo).setOnClickListener {
             startActivity(Intent(this, AccountInfoActivity::class.java))
         }
-
-        //로그아웃
-
     }
 }

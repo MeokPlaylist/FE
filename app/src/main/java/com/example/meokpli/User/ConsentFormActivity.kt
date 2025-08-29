@@ -8,7 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import android.content.Intent
+import androidx.activity.addCallback
 import androidx.lifecycle.lifecycleScope
+import com.example.meokpli.Auth.LoginActivity
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +23,8 @@ class ConsentFormActivity : AppCompatActivity() {
     private lateinit var cbAllAgree: CheckBox
     private lateinit var requiredCheckBoxes: List<CheckBox>
     private lateinit var userApi: UserApi
+    private var backPressedTime: Long = 0
+    private val BACK_PRESS_INTERVAL = 2000L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,10 +32,20 @@ class ConsentFormActivity : AppCompatActivity() {
         //JWT가 자동으로 헤더에 실림
         userApi = Network.userApi(this)
 
+        onBackPressedDispatcher.addCallback(this) {
+            // 홈 화면에서 종료 시 두 번 눌러야 꺼지도록
+            if (System.currentTimeMillis() - backPressedTime < BACK_PRESS_INTERVAL) {
+                finish()
+            } else {
+                Toast.makeText(this@ConsentFormActivity, "한 번 더 누르시면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show()
+                backPressedTime = System.currentTimeMillis()
+
+
+            }
+        }
 
         btnConfirm = findViewById(R.id.btnConfirm)
         cbAllAgree = findViewById(R.id.cbAllAgree)
-
         btnConfirm.setOnClickListener {
             val agreed = cbAllAgree.isChecked
             if (!agreed) {
