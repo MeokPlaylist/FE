@@ -33,10 +33,18 @@
                     android:layout_height="24dp"
                     android:layout_marginStart="16dp"
                     android:contentDescription="@string/back"
-                    android:src="@drawable/ic_arrow_left_red"
+                    android:src="@drawable/ic_arrow_left"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="내 계정"
+                    android:textSize="15dp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"/>
 
                 <!-- 오른쪽 끝에 딱 붙게 (marginEnd=0) -->
                 <ImageView
@@ -110,12 +118,29 @@
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:textColor="#D8D8D8"/>
-
                     <View
+                        android:id="@+id/viewSettingsLine"
                         android:layout_width="48dp"
                         android:layout_height="1dp"
                         android:layout_marginTop="4dp"
                         android:background="#D8D8D8"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFollow"
+                        style="@style/Widget.MaterialComponents.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:minWidth="96dp"
+                        android:text="팔로우"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@null"
+                        android:background="@drawable/btn_basic"
+                        app:cornerRadius="24dp"
+                        app:rippleColor="@android:color/transparent"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone"/>
+
+
                 </LinearLayout>
 
                 <!-- 가운데 세로 구분선 -->

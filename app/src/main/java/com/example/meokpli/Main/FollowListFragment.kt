@@ -93,6 +93,7 @@ class FollowListFragment : Fragment() {
             onItemClick = { user ->
                 Toast.makeText(requireContext(), "${user.name} 클릭", Toast.LENGTH_SHORT).show()
                 // TODO: 프로필 상세로 이동
+                UserProfileActivity.start(requireContext(), user.name)
             },
             onActionClick = { user ->
                 lifecycleScope.launch {

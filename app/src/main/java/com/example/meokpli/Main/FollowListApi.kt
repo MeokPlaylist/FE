@@ -1,8 +1,6 @@
 package com.example.meokpli.Main
 
 import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 // ── BE 응답 1건(항목) DTO ────────────────────────────────────────────────
