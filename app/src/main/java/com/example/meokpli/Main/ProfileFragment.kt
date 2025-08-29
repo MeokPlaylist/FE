@@ -96,24 +96,23 @@ class ProfileFragment : Fragment() {
         }
 
         // 서버에서 내 프로필 불러오기 (Authorization은 AuthInterceptor가 자동 첨부)
-        //fetchProfile()
+        fetchProfile()
     }
-/*
     private fun fetchProfile() {
         lifecycleScope.launch {
             try {
                 val api = Network.userApi(requireContext())
-                val me: MeResponse = withContext(Dispatchers.IO) { api.getMe() }
+                val myPage = api.getMyPage()
 
                 // UI 반영
-                nick.text = me.nickname
-                bio.text = me.introduction.orEmpty()
-                postCount.text = me.postCount?.toString() ?: "0"
-                following.text = me.following?.toString() ?: "0"
-                followers.text = me.followers?.toString() ?: "0"
+                nick.text = myPage.userNickname
+                bio.text = myPage.userIntro
+                postCount.text = myPage.feedNum.toString()
+                following.text = myPage.followingNum.toString()
+                followers.text = myPage.followerNum.toString()
 
                 // 프로필 이미지 (없으면 기본 아이콘)
-                val url = me.profileImage
+                val url = myPage.profileUrl
                 if (!url.isNullOrBlank()) {
                     avatar.load(url) {
                         placeholder(R.drawable.ic_profile_red)
@@ -135,6 +134,4 @@ class ProfileFragment : Fragment() {
             }
         }
     }
-
- */
 }

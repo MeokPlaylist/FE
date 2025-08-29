@@ -36,10 +36,8 @@ interface UserApi {
     @GET("personalInfor")
     suspend fun getPersonalInfo(): PersonalInfoResponse
 
-
-
-
-
+    @GET("mypage")
+    suspend fun  getMyPage(): myPageResponse
 
 }
 
@@ -48,12 +46,19 @@ data class FindUserResponse(val userId: Long)
 data class ResetPasswordRequest(val userId: Long,val newPassword: String)
 data class UserDetailRequest(val nickname: String, val introduction: String)
 data class BaseResponse(val isAvailable: Boolean, val message: String?)
-
-
+data class myPageResponse(
+    val feedNum : Long,
+    val followingNum: Long,
+    val followerNum: Long,
+    val userNickname: String,
+    val userIntro: String,
+    val profileUrl: String,
+    val feedId: List<Long>,
+    val feedMainPhotoUrls: List<String>
+)
 data class ConsentAgreeRequest(
     val isAvailable: Boolean
 )
-
 data class PersonalInfoResponse(
     val name: String?,
     val email: String?,

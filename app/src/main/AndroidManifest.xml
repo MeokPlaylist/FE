@@ -33,7 +33,7 @@
         </activity>
 
         <activity
-            android:name=".Main.MainActivity"
+            android:name=".Auth.LoginActivity"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -44,7 +44,7 @@
 
         <!-- 나머지 Activity 목록 -->
         <activity android:name=".Auth.SignUpActivity" />
-
+        <activity android:name=".Main.MainActivity"/>
         <activity android:name=".User.InitProfileActivity" />
         <activity android:name=".User.CategoryActivity" />
         <activity android:name=".User.ConsentFormActivity" />

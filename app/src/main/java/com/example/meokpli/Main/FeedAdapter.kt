@@ -49,8 +49,10 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
 
         h.tvUser.text = item.nickName
         h.tvDate.text = item.createdAt
-        h.likeCount.text = item.likeCount.toString()
-        h.commentCount.text = item.commentCount.toString()
+        if (item.likeCount != 0.toLong())
+            h.likeCount.text = item.likeCount.toString()
+        if (item.commentCount != 0.toLong())
+            h.commentCount.text = item.commentCount.toString()
 
         // 내용 + 해시태그
         val tags = item.hashTag?.filter { it.isNotBlank() }?.joinToString(" ") { "#$it" }.orEmpty()
