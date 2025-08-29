@@ -1,5 +1,6 @@
 package com.example.meokpli.Main
 
+import MyFeedThumbnailAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +21,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class ProfileFragment : Fragment() {
 
@@ -29,6 +32,7 @@ class ProfileFragment : Fragment() {
     private lateinit var postCount: TextView
     private lateinit var following: TextView
     private lateinit var followers: TextView
+    private lateinit var rvMyFeeds: RecyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -45,26 +49,7 @@ class ProfileFragment : Fragment() {
         following = view.findViewById(R.id.textFollowing)
         followers = view.findViewById(R.id.textFollowers)
 
-//        // 뒤로(상단 좌측 화살표): 직전 탭으로
-//        view.findViewById<ImageView>(R.id.btnBack)?.setOnClickListener {
-//            (activity as? MainActivity)?.goToLastTab()
-//                ?: requireActivity().onBackPressedDispatcher.onBackPressed()
-//        }
-//
-//        // 시스템 뒤로도 동일 동작 (프로필은 탭 루트이므로 직전 탭으로)
-//        requireActivity().onBackPressedDispatcher.addCallback(
-//            viewLifecycleOwner,
-//            object : OnBackPressedCallback(true) {
-//                override fun handleOnBackPressed() {
-//                    val fm = parentFragmentManager
-//                    if (fm.backStackEntryCount > 0) {
-//                        fm.popBackStack()
-//                    } else {
-//                        (activity as? MainActivity)?.goToLastTab() ?: requireActivity().finish()
-//                    }
-//                }
-//            }
-//        )
+
         val textSettings = view.findViewById<TextView>(R.id.textSettings)
         textSettings.setOnClickListener {
             findNavController().navigate(R.id.fragmentSetting)
@@ -96,7 +81,9 @@ class ProfileFragment : Fragment() {
         }
 
         // 서버에서 내 프로필 불러오기 (Authorization은 AuthInterceptor가 자동 첨부)
+
         fetchProfile()
+
     }
     private fun fetchProfile() {
         lifecycleScope.launch {
@@ -122,6 +109,30 @@ class ProfileFragment : Fragment() {
                 } else {
                     avatar.setImageResource(R.drawable.ic_profile_red)
                 }
+
+                // 연도별 아이템 만들기
+                val items = mutableListOf<MyPageItem>()
+                myPage.urlGroupedByYear.toSortedMap(compareByDescending { it }).forEach { (year, urls) ->
+                    items.add(MyPageItem.YearHeader(year))
+                    urls.forEach { url ->
+                        items.add(MyPageItem.Photo(url))
+                    }
+                }
+
+                // RecyclerView
+                val adapter = MyFeedThumbnailAdapter(items)
+                rvMyFeeds.layoutManager = GridLayoutManager(requireContext(), 2).apply {
+                    spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                        override fun getSpanSize(position: Int): Int {
+                            return when (adapter.getItemViewType(position)) {
+                                0 -> 2 // 헤더는 전체 폭
+                                else -> 1 // 사진은 반폭
+                            }
+                        }
+                    }
+                }
+                rvMyFeeds.adapter = adapter
+
             } catch (e: HttpException) {
                 if (e.code() == 401) {
                     // 토큰 만료/비로그인: 로컬 토큰 비우고 로그인 화면으로 전환하는 로직을 여기에.
@@ -134,4 +145,8 @@ class ProfileFragment : Fragment() {
             }
         }
     }
+}
+sealed class MyPageItem {
+    data class YearHeader(val year: Int) : MyPageItem()
+    data class Photo(val url: String) : MyPageItem()
 }

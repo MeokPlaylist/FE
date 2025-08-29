@@ -54,7 +54,8 @@ data class myPageResponse(
     val userIntro: String,
     val profileUrl: String,
     val feedId: List<Long>,
-    val feedMainPhotoUrls: List<String>
+    val urlGroupedByYear: Map<Int, List<String>>,
+    val urlMappedByFeedId: Map<Long, String>
 )
 data class ConsentAgreeRequest(
     val isAvailable: Boolean

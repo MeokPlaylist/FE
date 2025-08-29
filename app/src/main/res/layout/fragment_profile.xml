@@ -269,17 +269,16 @@
 
             <!-- 그리드/리스트 -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler"
+                android:id="@+id/rvMyFeeds"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="96dp"
                 android:clipToPadding="false"
-                android:contentDescription="@string/desc_profile_grid"
-                tools:listitem="@android:layout/simple_list_item_1" />
+                android:padding="4dp"
+                android:overScrollMode="never"
+                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                app:spanCount="2"
+                tools:listitem="@layout/item_my_feed_thumbnail"/>
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

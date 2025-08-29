@@ -107,13 +107,15 @@ class ChangePasswordActivity : AppCompatActivity() {
         val current = etCurrent.text?.toString().orEmpty()
         val newPw = etNew.text?.toString().orEmpty()
         val confirm = etConfirm.text?.toString().orEmpty()
-
+        val tvLine: View = findViewById(R.id.tvLine)
         // 현재 비번: 분실 플로우가 아니면 비어 있으면 경고(형식 제약은 두지 않음)
         if (!isForgotFlow) {
             tvErrCurrent.text = "현재 비밀번호를 입력하세요."
             tvErrCurrent.visibility = if (current.isEmpty()) View.VISIBLE else View.GONE
         } else {
             tvErrCurrent.visibility = View.GONE
+            tvFindPassword.visibility = View.GONE
+            tvLine.visibility = View.GONE
         }
 
         // 새 비번: 규칙 + 현재와 동일 금지
@@ -193,6 +195,9 @@ class ChangePasswordActivity : AppCompatActivity() {
                 }
 
                 Toast.makeText(this@ChangePasswordActivity, "비밀번호가 변경되었습니다.", Toast.LENGTH_SHORT).show()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentSetting, FragmentSetting())
+                    .commit()
                 finish()
 
             } catch (e: Exception) {
