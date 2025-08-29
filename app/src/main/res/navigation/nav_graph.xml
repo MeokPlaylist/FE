@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/homeFragment">
 
+    <!-- 탑레벨 5개 -->
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.meokpli.Main.HomeFragment"
@@ -27,6 +29,43 @@
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.meokpli.Main.ProfileFragment"
-        android:label="프로필" />
+        android:label="프로필">
+        <!-- 프로필에서 이동할 수 있는 상세 화면들 -->
+        <action
+            android:id="@+id/action_profile_to_fragmentSetting"
+            app:destination="@id/fragmentSetting" />
+        <action
+            android:id="@+id/action_profile_to_followList"
+            app:destination="@id/followListFragment" />
+    </fragment>
+
+    <!-- 상세: 설정 -->
+    <fragment
+        android:id="@+id/fragmentSetting"
+        android:name="com.example.meokpli.User.FragmentSetting"
+        android:label="설정 및 활동"
+        tools:layout="@layout/fragment_settings" />
+
+    <!-- 상세: 팔로워/팔로잉 리스트 -->
+    <fragment
+        android:id="@+id/followListFragment"
+        android:name="com.example.meokpli.Main.FollowListFragment"
+        android:label="팔로우 리스트"
+        tools:layout="@layout/fragment_follow_list">
+
+        <argument
+            android:name="arg_tab"
+            app:argType="string" />
+
+        <argument
+            android:name="arg_followers"
+            app:argType="integer"
+            android:defaultValue="0" />
+
+        <argument
+            android:name="arg_following"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
 
 </navigation>

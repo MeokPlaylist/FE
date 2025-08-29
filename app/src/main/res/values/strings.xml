@@ -13,4 +13,10 @@
     <string name="location">Location</string>
     <string name="profile_image">Profile image</string>
     <string name="desc_profile_grid">Profile grid</string>
+    <string name="profile">프로필</string>
+    <string name="account">계정</string>
+    <string name="likes">좋아요</string>
+    <string name="notification">알림</string>
+    <string name="policy">약관 및 개인정보</string>
+
 </resources>

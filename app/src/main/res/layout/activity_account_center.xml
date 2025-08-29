@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@android:color/white">
+
+    <!-- 상단 컬러 바 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:background="#C64132">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/back"
+            android:src="@drawable/ic_arrow_left"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:text="계정 센터"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:fontFamily="@font/inter_semibold" />
+    </FrameLayout>
+
+    <!-- 목록 영역 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 비밀번호 변경 -->
+        <LinearLayout
+            android:id="@+id/rowChangePassword"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="18dp"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/inter_semibold"
+                android:text="비밀번호 변경"
+                android:textColor="#000000"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:src="@drawable/ic_arrow"
+                app:tint="#000000"
+                android:contentDescription="@string/app_name" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:background="#F0F0F0" />
+
+        <!-- 개인정보 -->
+        <LinearLayout
+            android:id="@+id/rowPersonalInfo"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="18dp"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="개인정보"
+                android:textColor="#000000"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/inter_semibold" />
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:src="@drawable/ic_arrow"
+                app:tint="#000000"
+                android:contentDescription="@string/app_name" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -7,16 +7,19 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.meokpli.R
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.User.MeResponse
+//import com.example.meokpli.User.MeResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import androidx.navigation.fragment.findNavController
 
 class ProfileFragment : Fragment() {
 
@@ -62,37 +65,40 @@ class ProfileFragment : Fragment() {
 //                }
 //            }
 //        )
+        val textSettings = view.findViewById<TextView>(R.id.textSettings)
+        textSettings.setOnClickListener {
+            findNavController().navigate(R.id.fragmentSetting)
+        }
 
 
 
-        // 팔로잉/팔로워 화면으로 이동 (상단 탭 있는 리스트)
-//        following.setOnClickListener {
-//            val followersCnt = followers.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
-//            val followingCnt = following.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
-//            (activity as? MainActivity)?.pushFragment(
-//                FollowListFragment.newInstance(
-//                    FollowListFragment.FollowTab.FOLLOWING,
-//                    followersCount = followersCnt,
-//                    followingCount = followingCnt
-//                )
-//            )
-//        }
-//        followers.setOnClickListener {
-//            val followersCnt = followers.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
-//            val followingCnt = following.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
-//            (activity as? MainActivity)?.pushFragment(
-//                FollowListFragment.newInstance(
-//                    FollowListFragment.FollowTab.FOLLOWERS,
-//                    followersCount = followersCnt,
-//                    followingCount = followingCnt
-//                )
-//            )
-//        }
+        //팔로잉/팔로워 화면으로 이동 (상단 탭 있는 리스트)
+        following.setOnClickListener {
+            val followersCnt = followers.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
+            val followingCnt = following.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
+            val args = bundleOf(
+                "arg_tab" to "FOLLOWING",
+                "arg_followers" to followersCnt,
+                "arg_following" to followingCnt
+            )
+            findNavController().navigate(R.id.followListFragment, args)
+        }
+
+        followers.setOnClickListener {
+            val followersCnt = followers.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
+            val followingCnt = following.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
+            val args = bundleOf(
+                "arg_tab" to "FOLLOWERS",
+                "arg_followers" to followersCnt,
+                "arg_following" to followingCnt
+            )
+            findNavController().navigate(R.id.followListFragment, args)
+        }
 
         // 서버에서 내 프로필 불러오기 (Authorization은 AuthInterceptor가 자동 첨부)
-        fetchProfile()
+        //fetchProfile()
     }
-
+/*
     private fun fetchProfile() {
         lifecycleScope.launch {
             try {
@@ -129,4 +135,6 @@ class ProfileFragment : Fragment() {
             }
         }
     }
+
+ */
 }
