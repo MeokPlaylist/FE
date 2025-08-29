@@ -1,0 +1,6 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 선택됨(안읽음) -->
+    <item android:drawable="@drawable/ic_bell_import" android:state_selected="true" />
+    <!-- 기본(읽음) -->
+    <item android:drawable="@drawable/ic_bell_unimport" />
+</selector>

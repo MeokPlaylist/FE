@@ -10,14 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.R
 import com.example.meokpli.Auth.Network
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
-import java.io.FileOutputStream
 
 class EditProfileActivity : AppCompatActivity() {
 
@@ -31,21 +24,19 @@ class EditProfileActivity : AppCompatActivity() {
 
     private lateinit var api: UserApi
 
-
     private var selectedImageUri: Uri? = null
-
     private val pickImage = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
-            ivAvatar.setImageURI(it)
+            ivAvatar.setImageURI(it) // 미리보기만
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_edit_profile) // 레이아웃의 ID에 맞춰 바인딩 :contentReference[oaicite:4]{index=4}
+        setContentView(R.layout.activity_edit_profile)
 
         api = Network.userApi(this)
 
@@ -62,7 +53,7 @@ class EditProfileActivity : AppCompatActivity() {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        // 사진 선택
+        // 사진 선택(미리보기만)
         val openPicker = { pickImage.launch("image/*") }
         ivAvatar.setOnClickListener { openPicker() }
         tvChangePhoto.setOnClickListener { openPicker() }
@@ -71,7 +62,7 @@ class EditProfileActivity : AppCompatActivity() {
         etNickname.addTextChangedListener(counterWatcher { c -> tvNickCount.text = "$c / 10" })
         etBio.addTextChangedListener(counterWatcher { c -> tvBioCount.text = "$c / 20" })
 
-        // 변경 완료 → 서버 전송
+        // 저장
         btnSubmit.setOnClickListener { submit() }
     }
 
@@ -109,13 +100,6 @@ class EditProfileActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // 1) 사진이 선택된 경우 먼저 업로드 (/setupProfile) :contentReference[oaicite:5]{index=5}
-                selectedImageUri?.let { uri ->
-                    val part = withContext(Dispatchers.IO) { uriToImagePart(uri, "profileImg") }
-                    api.savePhoto(part) // Multipart 업로드 호출 :contentReference[oaicite:6]{index=6}
-                }
-
-                // 2) 닉네임/소개 저장 (/setupDetailInfo) :contentReference[oaicite:7]{index=7}
                 val body = UserDetailRequest(nickname = nick, introduction = bio)
                 api.saveDetail(body)
 
@@ -129,16 +113,5 @@ class EditProfileActivity : AppCompatActivity() {
                 btnSubmit.text = "변경완료"
             }
         }
-    }
-
-    /** 갤러리 Uri → 멀티파트 파트 */
-    private fun uriToImagePart(uri: Uri, partName: String): MultipartBody.Part {
-        val input = contentResolver.openInputStream(uri)!!
-        val tempFile = File(cacheDir, "upload_${System.currentTimeMillis()}.jpg")
-        FileOutputStream(tempFile).use { out -> input.copyTo(out) }
-        input.close()
-
-        val req = tempFile.readBytes().toRequestBody("image/*".toMediaTypeOrNull())
-        return MultipartBody.Part.createFormData(partName, tempFile.name, req)
     }
 }
