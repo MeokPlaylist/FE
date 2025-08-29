@@ -3,6 +3,7 @@ package com.example.meokpli.Main
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
@@ -11,6 +12,9 @@ import androidx.navigation.fragment.NavHostFragment
 import com.example.meokpli.R
 
 class MainActivity : AppCompatActivity() {
+
+
+
 
     private lateinit var navHome: LinearLayout
     private lateinit var navSearch: LinearLayout
@@ -26,6 +30,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var nav: NavController
 
+    // 뒤로가기 두 번 눌렀는지 확인용
+    private var backPressedTime: Long = 0
+    private val BACK_PRESS_INTERVAL = 2000L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,7 +44,6 @@ class MainActivity : AppCompatActivity() {
         navFeed = findViewById(R.id.nav_feed)
         navStar = findViewById(R.id.nav_star)
         navProfile = findViewById(R.id.nav_profile)
-
 
         iconHome = findViewById(R.id.icon_home)
         iconSearch = findViewById(R.id.icon_search)
@@ -67,22 +74,17 @@ class MainActivity : AppCompatActivity() {
             .setPopUpTo(nav.graph.startDestinationId, inclusive = false, saveState = true)
             .build()
 
-
         navHome.setOnClickListener {
             navigateTopLevel(R.id.homeFragment, singleTopPopToStart)
-
         }
         navSearch.setOnClickListener {
             navigateTopLevel(R.id.searchFragment, singleTopPopToStart)
-
         }
         navFeed.setOnClickListener {
             navigateTopLevel(R.id.feedFragment, singleTopPopToStart)
-
         }
         navStar.setOnClickListener {
             navigateTopLevel(R.id.starFragment, singleTopPopToStart)
-
         }
         navProfile.setOnClickListener {
             navigateTopLevel(R.id.profileFragment, singleTopPopToStart)
@@ -103,18 +105,23 @@ class MainActivity : AppCompatActivity() {
     fun handleSystemBack() {
         val destId = nav.currentDestination?.id
 
-        // 상세 화면 등 back stack 있으면 pop
         if (nav.previousBackStackEntry != null && !isTopLevel(destId)) {
             nav.popBackStack()
             return
         }
-        // 탑레벨인데 홈이 아니면 홈으로
         if (isTopLevel(destId) && destId != R.id.homeFragment) {
             nav.navigate(R.id.homeFragment)
             return
         }
-        // 홈이면 종료
-        finish()
+        // 홈 화면에서 종료 시 두 번 눌러야 꺼지도록
+        if (System.currentTimeMillis() - backPressedTime < BACK_PRESS_INTERVAL) {
+            finish()
+        } else {
+            Toast.makeText(this, "한 번 더 누르시면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show()
+            backPressedTime = System.currentTimeMillis()
+
+
+        }
     }
 
     private fun isTopLevel(destId: Int?): Boolean {
@@ -127,14 +134,11 @@ class MainActivity : AppCompatActivity() {
 
     // 아이콘 강조
     private fun setActiveIcon(activeIcon: ImageView) {
-
         iconHome.alpha = 0.5f
         iconSearch.alpha = 0.5f
         iconFeed.alpha = 0.5f
         iconStar.alpha = 0.5f
         iconProfile.alpha = 0.5f
-
-
         activeIcon.alpha = 1.0f
     }
 }
