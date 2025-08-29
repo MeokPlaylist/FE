@@ -1,7 +1,7 @@
 package com.example.meokpli.Auth
 
 import android.content.Context
-import com.example.meokpli.Main.FollowApi
+import com.example.meokpli.Main.Interaction.FollowApi
 import com.example.meokpli.Main.MainApi
 import okhttp3.OkHttpClient
 import com.example.meokpli.User.UserApi

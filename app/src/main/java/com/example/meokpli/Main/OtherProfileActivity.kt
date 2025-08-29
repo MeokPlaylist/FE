@@ -15,7 +15,7 @@ import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
-class UserProfileActivity : AppCompatActivity() {
+class OtherProfileActivity : AppCompatActivity() {
 
     private val userApi by lazy { Network.userApi(this) }
     private val socialApi by lazy { Network.socialApi(this) }
@@ -86,7 +86,7 @@ class UserProfileActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(this@UserProfileActivity, "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@OtherProfileActivity, "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -165,7 +165,7 @@ class UserProfileActivity : AppCompatActivity() {
                 renderFollowUi()
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(this@UserProfileActivity, "처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@OtherProfileActivity, "처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
             } finally {
                 btnFollow.isEnabled = true
             }
@@ -176,7 +176,7 @@ class UserProfileActivity : AppCompatActivity() {
         private const val EXTRA_NICKNAME = "extra_nickname"
         fun start(context: Context, nickname: String) {
             context.startActivity(
-                Intent(context, UserProfileActivity::class.java)
+                Intent(context, OtherProfileActivity::class.java)
                     .putExtra(EXTRA_NICKNAME, nickname)
             )
         }

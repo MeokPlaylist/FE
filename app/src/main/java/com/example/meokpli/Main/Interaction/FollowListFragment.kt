@@ -1,20 +1,28 @@
-package com.example.meokpli.Main
+package com.example.meokpli.Main.Interaction
 
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
-import android.view.*
-import android.widget.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.meokpli.R
 import com.example.meokpli.Auth.Network
+import com.example.meokpli.Main.FollowUserAdapter
+import com.example.meokpli.Main.FollowUserUi
+import com.example.meokpli.Main.SocialInteractionApi
+import com.example.meokpli.Main.OtherProfileActivity
+import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 
 class FollowListFragment : Fragment() {
 
@@ -93,7 +101,7 @@ class FollowListFragment : Fragment() {
             onItemClick = { user ->
                 Toast.makeText(requireContext(), "${user.name} 클릭", Toast.LENGTH_SHORT).show()
                 // TODO: 프로필 상세로 이동
-                UserProfileActivity.start(requireContext(), user.name)
+                OtherProfileActivity.Companion.start(requireContext(), user.name)
             },
             onActionClick = { user ->
                 lifecycleScope.launch {

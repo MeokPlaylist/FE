@@ -1,4 +1,4 @@
-package com.example.meokpli.Main
+package com.example.meokpli.Main.Interaction
 
 import retrofit2.http.GET
 import retrofit2.http.Query

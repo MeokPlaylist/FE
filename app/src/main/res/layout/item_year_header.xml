@@ -1,7 +1,22 @@
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/tvYear"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
-    android:textSize="18sp"
-    android:textStyle="bold"/>
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <!-- 왼쪽 바 -->
+    <View
+        android:id="@+id/captionGuide"
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:layout_marginEnd="6dp" />
+
+    <!-- 연도 텍스트 -->
+    <TextView
+        android:id="@+id/tvYear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+</LinearLayout>

@@ -1,24 +1,21 @@
-package com.example.meokpli.Main
+package com.example.meokpli.Main.Profile
 
-import MyFeedThumbnailAdapter
+import com.example.meokpli.Main.Profile.MyFeedThumbnailAdapter
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.meokpli.R
 import com.example.meokpli.Auth.Network
 //import com.example.meokpli.User.MeResponse
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -48,7 +45,7 @@ class ProfileFragment : Fragment() {
         postCount = view.findViewById(R.id.textPostCount)
         following = view.findViewById(R.id.textFollowing)
         followers = view.findViewById(R.id.textFollowers)
-
+        rvMyFeeds = view.findViewById(R.id.rvMyFeeds)
 
         val textSettings = view.findViewById<TextView>(R.id.textSettings)
         textSettings.setOnClickListener {
@@ -112,6 +109,7 @@ class ProfileFragment : Fragment() {
 
                 // 연도별 아이템 만들기
                 val items = mutableListOf<MyPageItem>()
+                Log.d("debug",myPage.urlGroupedByYear.toString())
                 myPage.urlGroupedByYear.toSortedMap(compareByDescending { it }).forEach { (year, urls) ->
                     items.add(MyPageItem.YearHeader(year))
                     urls.forEach { url ->

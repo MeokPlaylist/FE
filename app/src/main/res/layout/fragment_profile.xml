@@ -42,21 +42,20 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="내 계정"
-                    android:textSize="15dp"
+                    android:textSize="18dp"
                     android:textColor="@color/black"
                     android:textStyle="bold"/>
 
                 <!-- 오른쪽 끝에 딱 붙게 (marginEnd=0) -->
                 <ImageView
                     android:id="@+id/btnLocation"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginEnd="0dp"
+                    android:layout_width="60dp"
+                    android:layout_height="70dp"
                     android:contentDescription="@string/location"
                     android:src="@drawable/ic_location_pin"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- 프로필 + 세로 구분선 + 수치 -->
@@ -79,8 +78,8 @@
 
                     <ImageView
                         android:id="@+id/imageAvatar"
-                        android:layout_width="96dp"
-                        android:layout_height="96dp"
+                        android:layout_width="135dp"
+                        android:layout_height="123dp"
                         android:contentDescription="@string/profile_image"
                         android:src="@drawable/ic_profile_red" />
 
@@ -91,14 +90,14 @@
                         android:layout_marginTop="8dp"
                         android:text="닉네임"
                         android:textStyle="bold"
-                        android:textSize="16sp" />
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/textBio"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="자기소개마바사아자차\n카타파하가나다라마바"
+                        android:text="소개"
                         android:textSize="12sp"
                         android:lineSpacingExtra="2dp"
                         tools:maxLines="3" />
@@ -169,7 +168,7 @@
                             android:layout_height="wrap_content"
                             android:text="0"
                             android:textColor="@color/black"
-                            android:textSize="20sp"
+                            android:textSize="25sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -177,7 +176,7 @@
                             android:layout_height="wrap_content"
                             android:text="Post"
                             android:textColor="@color/black"
-                            android:textSize="14sp" />
+                            android:textSize="17sp" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -193,7 +192,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textSize="20sp"
+                            android:textSize="25sp"
                             android:textColor="@color/black"
                             android:textStyle="bold" />
 
@@ -202,14 +201,15 @@
                             android:layout_height="wrap_content"
                             android:text="Following"
                             android:textColor="@color/black"
-                            android:textSize="14sp" />
+                            android:textSize="17sp"
+                            />
                     </LinearLayout>
 
                     <!-- Followers -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
+                        android:layout_marginStart="22dp"
                         android:layout_marginTop="5dp"
                         android:orientation="vertical">
 
@@ -218,7 +218,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textSize="20sp"
+                            android:textSize="25sp"
                             android:textColor="@color/black"
                             android:textStyle="bold" />
 
@@ -227,7 +227,7 @@
                             android:layout_height="wrap_content"
                             android:text="Followers"
                             android:textColor="@color/black"
-                            android:textSize="14sp" />
+                            android:textSize="17sp" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -236,7 +236,7 @@
             <LinearLayout
                 android:id="@+id/tabRow"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="55dp"
                 android:orientation="horizontal">
 
                 <!-- 기간별 (활성) -->
@@ -253,15 +253,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="기간별"
-                        android:textStyle="bold"
+                        android:textColor="#000000"
                         android:textSize="13sp"
-                        android:textColor="#000000"/>
+                        android:textStyle="bold" />
 
                     <View
                         android:id="@+id/indicatorPeriod"
                         android:layout_width="match_parent"
                         android:layout_height="3dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="15dp"
                         android:background="#000000"/>
                 </LinearLayout>
 
@@ -287,7 +287,7 @@
                         android:id="@+id/indicatorRegion"
                         android:layout_width="match_parent"
                         android:layout_height="3dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="15dp"
                         android:background="#E8E8E8"/>
                 </LinearLayout>
             </LinearLayout>

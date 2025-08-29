@@ -28,7 +28,7 @@
 
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.example.meokpli.Main.ProfileFragment"
+        android:name="com.example.meokpli.Main.Profile.ProfileFragment"
         android:label="프로필">
         <!-- 프로필에서 이동할 수 있는 상세 화면들 -->
         <action
@@ -49,7 +49,7 @@
     <!-- 상세: 팔로워/팔로잉 리스트 -->
     <fragment
         android:id="@+id/followListFragment"
-        android:name="com.example.meokpli.Main.FollowListFragment"
+        android:name="com.example.meokpli.Main.Interaction.FollowListFragment"
         android:label="팔로우 리스트"
         tools:layout="@layout/fragment_follow_list">
 

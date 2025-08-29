@@ -53,7 +53,6 @@ data class myPageResponse(
     val userNickname: String,
     val userIntro: String,
     val profileUrl: String,
-    val feedId: List<Long>,
     val urlGroupedByYear: Map<Int, List<String>>,
     val urlMappedByFeedId: Map<Long, String>
 )

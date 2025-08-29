@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
+import com.example.meokpli.Auth.LoginActivity
+import com.example.meokpli.Auth.TokenManager
 import com.example.meokpli.R
 
 class FragmentSetting : Fragment() {
@@ -33,6 +35,16 @@ class FragmentSetting : Fragment() {
         // 뒤로가기 버튼 처리
         view.findViewById<View>(R.id.btnBack)?.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
+        //로그아웃
+        view.findViewById<View>(R.id.tvLogout)?.setOnClickListener {
+            TokenManager(requireContext()).clear()
+
+            // 2) 로그인 화면으로 이동 + 백스택 정리
+            val intent = Intent(requireContext(), LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
         }
     }
 }
