@@ -89,9 +89,9 @@ object FeedRequestBuilder {
             clean(list).map { "$prefix:$it" }
 
         val categoriesFlat =
-            prefixed(categories?.mood, "moods").map { moodMap[it] ?: it } +
-                    prefixed(categories?.food, "foods").map { foodMap[it] ?: it } +
-                    prefixed(categories?.companion, "companions").map { companionMap[it] ?: it }
+            clean(categories?.mood).map { "moods:" + (moodMap[it] ?: it) } +
+                    clean(categories?.food).map { "foods:" + (foodMap[it] ?: it) } +
+                    clean(categories?.companion).map { "companions:" + (companionMap[it] ?: it) }
 
 // regions 변환: "전남:목포시" -> "Jeonnam:Mokpo-si"
         val regionsFlat = regions.orEmpty().mapNotNull { r ->

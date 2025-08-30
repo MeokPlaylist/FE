@@ -8,6 +8,8 @@ import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import com.example.meokpli.data.remote.response.MyPageResponse
+import com.example.meokpli.data.remote.response.PersonalInfoResponse
 
 interface UserApi {
     @POST("setupDetailInfo")
@@ -37,7 +39,7 @@ interface UserApi {
     suspend fun getPersonalInfo(): PersonalInfoResponse
 
     @GET("mypage")
-    suspend fun  getMyPage(): myPageResponse
+    suspend fun  getMyPage(): MyPageResponse
 
 }
 
@@ -46,23 +48,7 @@ data class FindUserResponse(val userId: Long)
 data class ResetPasswordRequest(val userId: Long,val newPassword: String)
 data class UserDetailRequest(val nickname: String, val introduction: String)
 data class BaseResponse(val isAvailable: Boolean, val message: String?)
-data class myPageResponse(
-    val feedNum : Long,
-    val followingNum: Long,
-    val followerNum: Long,
-    val userNickname: String,
-    val userIntro: String,
-    val profileUrl: String,
-    val urlGroupedByYear: Map<Int, List<String>>,
-    val urlMappedByFeedId: Map<Long, String>
-)
+
 data class ConsentAgreeRequest(
     val isAvailable: Boolean
-)
-data class PersonalInfoResponse(
-    val name: String?,
-    val email: String?,
-    val birthDay: String?,    // ISO 문자열로 오면 화면에서 포맷팅
-    val createdAt: String?,
-    val OauthUser: Boolean// 필요 시 사용
 )
