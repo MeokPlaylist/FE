@@ -39,7 +39,7 @@ interface FollowApi {
         @Query("sort") sort: String = "id,DESC"
     ): PageResponse<GetFollowResponseDto>
     //남의 계정 팔로우 리스트 엔드포인트 만들어야함
-    @GET("getFollowerListOf")
+    @GET("getOtherUserFollowerList")
     suspend fun getFollowerListOf(
         @Query("nickname") nickname: String,
         @Query("page") page: Int,
@@ -47,7 +47,7 @@ interface FollowApi {
         @Query("sort") sort: String = "id,DESC"
     ): PageResponse<GetFollowResponseDto>
 
-    @GET("getFollowingListOf")
+    @GET("getOtherUserFollowingList")
     suspend fun getFollowingListOf(
         @Query("nickname") nickname: String,
         @Query("page") page: Int,

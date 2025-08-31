@@ -42,8 +42,6 @@ interface UserApi {
     @GET("mypage")
     suspend fun  getMyPage(): myPageResponse
     //추가 필요
-    @GET("/api/user/{nickname}")
-    suspend fun getUserPage(@Path("nickname") nickname: String): UserPageResponse
 
 
 }

@@ -12,10 +12,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.Interaction.FollowListFragment
 import com.example.meokpli.Main.Interaction.OtherFollowListFragment
-import com.example.meokpli.R
 import com.example.meokpli.Main.SocialInteractionApi
+import com.example.meokpli.R
 import com.example.meokpli.User.UserApi
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +31,7 @@ class OtherProfileActivity : AppCompatActivity() {
     private var isMe = false
     private var isFollowing = false
     private var followsMe = false
-    private var followersCount = 0
+    private var followersCount = 0L
 
     // Views (fragment_profile.xml 재사용)
     private lateinit var btnBack: ImageView
@@ -49,10 +48,10 @@ class OtherProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 프래그먼트 레이아웃 재사용
+        // 프로필 프래그먼트 레이아웃 재사용
         setContentView(R.layout.fragment_profile)
 
-        nickname = intent.getStringExtra(EXTRA_NICKNAME) ?: ""
+        nickname = intent.getStringExtra(EXTRA_NICKNAME).orEmpty()
         bindViews()
         bindClicks()
         loadProfile()
@@ -61,7 +60,7 @@ class OtherProfileActivity : AppCompatActivity() {
     private fun bindViews() {
         btnBack = findViewById(R.id.btnBack)
         ivAvatar = findViewById(R.id.imageAvatar)
-        tvTitle = findViewById(R.id.textTitle)         // ← 추가한 id 사용
+        tvTitle = findViewById(R.id.textTitle)
         tvNickname = findViewById(R.id.textNickname)
         tvIntro = findViewById(R.id.textBio)
         tvPost = findViewById(R.id.textPostCount)
@@ -75,12 +74,10 @@ class OtherProfileActivity : AppCompatActivity() {
     private fun bindClicks() {
         btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
-        // 게시물 클릭 → 게시물 리스트 이동
         tvPost.setOnClickListener {
             // TODO: PostListActivity.start(this, nickname)
         }
 
-        // 팔로잉 리스트 이동
         tvFollowing.setOnClickListener {
             OtherFollowListFragment.start(this, nickname, "following")
         }
@@ -90,23 +87,25 @@ class OtherProfileActivity : AppCompatActivity() {
 
         btnFollow.setOnClickListener { toggleFollow() }
     }
+
     private fun loadProfile() {
         lifecycleScope.launch {
             try {
-                // 서버: 닉네임으로 사용자 페이지 + isMe 반환
-                val res = withContext(Dispatchers.IO) { userApi.getUserPage(nickname) }
+                // ✅ 다른 사람 프로필: 닉네임으로 조회 (SocialInteractionApi 인스턴스 호출)
+                val res = withContext(Dispatchers.IO) { socialApi.getUserPage(nickname) }
 
                 // 공통 바인딩
-                tvNickname.text = res.userNickname
+                tvNickname.text = res.userNickname ?: nickname
                 tvIntro.text = res.userIntro.orEmpty()
-                tvPost.text = res.feedNum.toString()
-                tvFollowing.text = res.followingNum.toString()
-                tvFollowers.text = res.followerNum.toString()
-                followersCount = res.followerNum.toInt()
+                tvPost.text = (res.feedNum ?: 0).toString()
+                tvFollowing.text = (res.followingNum ?: 0).toString()
+                tvFollowers.text = (res.followerNum ?: 0).toString()
+                followersCount = res.followerNum ?: 0
 
                 // 아바타
-                if (!res.profileUrl.isNullOrBlank()) {
-                    ivAvatar.load(res.profileUrl) {
+                val avatarUrl = res.profileUrl
+                if (!avatarUrl.isNullOrBlank()) {
+                    ivAvatar.load(avatarUrl) {
                         placeholder(R.drawable.ic_profile_red)
                         error(R.drawable.ic_profile_red)
                         crossfade(true)
@@ -115,8 +114,8 @@ class OtherProfileActivity : AppCompatActivity() {
                     ivAvatar.setImageResource(R.drawable.ic_profile_red)
                 }
 
-                // 분기
-                isMe = res.isMe
+                // 내 계정 여부
+                isMe = res.isMe == true
                 if (isMe) {
                     // 내 계정 UI
                     tvTitle.text = "내 계정"
@@ -125,11 +124,18 @@ class OtherProfileActivity : AppCompatActivity() {
                     btnFollow.visibility = View.GONE
                 } else {
                     // 남의 계정 UI
-                    tvTitle.text = "${res.userNickname}의 계정"
+                    tvTitle.text = "${res.userNickname ?: nickname}의 계정"
                     tvSettings.visibility = View.GONE
                     viewSettingsLine.visibility = View.GONE
 
-                    // 초기 팔로우 상태 (백엔드 확장 전까진 기본값)
+                    // (옵션) 관계 조회 API가 있다면 여기서 실제 상태를 받아와 반영
+                    // runCatching {
+                    //     val rel = withContext(Dispatchers.IO) { socialApi.getRelationship(nickname) }
+                    //     isFollowing = rel.isFollowing
+                    //     followsMe = rel.followsMe
+                    // }.onFailure { /* 무시하고 기본값 유지 */ }
+
+                    // 초기 기본값
                     isFollowing = false
                     followsMe = false
                     btnFollow.visibility = View.VISIBLE
@@ -182,11 +188,11 @@ class OtherProfileActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 if (isFollowing) {
-                    withContext(Dispatchers.IO) { Network.socialApi(this@OtherProfileActivity).unFollow(nickname) }
+                    withContext(Dispatchers.IO) { socialApi.unFollow(nickname) }
                     isFollowing = false
                     followersCount = (followersCount - 1).coerceAtLeast(0)
                 } else {
-                    withContext(Dispatchers.IO) { Network.socialApi(this@OtherProfileActivity).follow(nickname) }
+                    withContext(Dispatchers.IO) { socialApi.follow(nickname) }
                     isFollowing = true
                     followersCount += 1
                 }

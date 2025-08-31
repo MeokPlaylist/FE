@@ -9,9 +9,9 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
+import coil.load
 // Coil을 쓰려면 주석 해제
 // import coil.load
 
