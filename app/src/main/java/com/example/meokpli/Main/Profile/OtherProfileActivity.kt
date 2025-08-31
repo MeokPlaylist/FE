@@ -13,25 +13,27 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.Interaction.OtherFollowListFragment
-import com.example.meokpli.Main.SocialInteractionApi
+import com.example.meokpli.Main.Interaction.FollowApi   // ✅ FollowApi 패키지에 주의
 import com.example.meokpli.R
 import com.example.meokpli.User.UserApi
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
 class OtherProfileActivity : AppCompatActivity() {
 
-    private val userApi: UserApi by lazy { Network.userApi(this) }
+    private val userApi: UserApi by lazy { Network.userApi(this) }                 // (예비)
     private val socialApi: SocialInteractionApi by lazy { Network.socialApi(this) }
+    private val followApi: FollowApi by lazy { Network.followApi(this) }           // ✅ C안용
 
     private lateinit var nickname: String
     private var isMe = false
-    private var isFollowing = false
-    private var followsMe = false
-    private var followersCount = 0L
+    private var isFollowing = false   // 내가 그를 팔로우 중?
+    private var followsMe = false     // 그가 나를 팔로우 중?
+    private var followersCount = 0L   // Long 일관
 
     // Views (fragment_profile.xml 재사용)
     private lateinit var btnBack: ImageView
@@ -48,7 +50,6 @@ class OtherProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 프로필 프래그먼트 레이아웃 재사용
         setContentView(R.layout.fragment_profile)
 
         nickname = intent.getStringExtra(EXTRA_NICKNAME).orEmpty()
@@ -91,18 +92,17 @@ class OtherProfileActivity : AppCompatActivity() {
     private fun loadProfile() {
         lifecycleScope.launch {
             try {
-                // ✅ 다른 사람 프로필: 닉네임으로 조회 (SocialInteractionApi 인스턴스 호출)
+                // 1) 타인 프로필 조회
                 val res = withContext(Dispatchers.IO) { socialApi.getUserPage(nickname) }
 
-                // 공통 바인딩
+                // 2) 바인딩 (널 안전)
                 tvNickname.text = res.userNickname ?: nickname
                 tvIntro.text = res.userIntro.orEmpty()
-                tvPost.text = (res.feedNum ?: 0).toString()
-                tvFollowing.text = (res.followingNum ?: 0).toString()
-                tvFollowers.text = (res.followerNum ?: 0).toString()
-                followersCount = res.followerNum ?: 0
+                tvPost.text = (res.feedNum ?: 0L).toString()
+                tvFollowing.text = (res.followingNum ?: 0L).toString()
+                tvFollowers.text = (res.followerNum ?: 0L).toString()
+                followersCount = res.followerNum ?: 0L
 
-                // 아바타
                 val avatarUrl = res.profileUrl
                 if (!avatarUrl.isNullOrBlank()) {
                     ivAvatar.load(avatarUrl) {
@@ -114,41 +114,67 @@ class OtherProfileActivity : AppCompatActivity() {
                     ivAvatar.setImageResource(R.drawable.ic_profile_red)
                 }
 
-                // 내 계정 여부
+                // 3) 내 계정 여부
                 isMe = res.isMe == true
                 if (isMe) {
-                    // 내 계정 UI
                     tvTitle.text = "내 계정"
                     tvSettings.visibility = View.VISIBLE
                     viewSettingsLine.visibility = View.VISIBLE
                     btnFollow.visibility = View.GONE
-                } else {
-                    // 남의 계정 UI
-                    tvTitle.text = "${res.userNickname ?: nickname}의 계정"
-                    tvSettings.visibility = View.GONE
-                    viewSettingsLine.visibility = View.GONE
-
-                    // (옵션) 관계 조회 API가 있다면 여기서 실제 상태를 받아와 반영
-                    // runCatching {
-                    //     val rel = withContext(Dispatchers.IO) { socialApi.getRelationship(nickname) }
-                    //     isFollowing = rel.isFollowing
-                    //     followsMe = rel.followsMe
-                    // }.onFailure { /* 무시하고 기본값 유지 */ }
-
-                    // 초기 기본값
-                    isFollowing = false
-                    followsMe = false
-                    btnFollow.visibility = View.VISIBLE
-                    renderFollowUi()
+                    return@launch
                 }
 
+                // 4) 타인 계정 UI
+                tvTitle.text = "${res.userNickname ?: nickname}의 계정"
+                tvSettings.visibility = View.GONE
+                viewSettingsLine.visibility = View.GONE
+                btnFollow.visibility = View.VISIBLE
+
+                // 5) ✅ 관계 C안: 내 팔로잉/팔로워 목록 일부 페이지를 훑어 상태 추정
+                val (f1, f2) = resolveRelationshipSlow(nickname, maxPages = 2, pageSize = 10)
+                isFollowing = f1
+                followsMe = f2
+                renderFollowUi()
+
             } catch (e: HttpException) {
+                val body = e.response()?.errorBody()?.string()
+                android.util.Log.e("OtherProfile", "HTTP ${e.code()} body=$body", e)
                 val msg = if (e.code() == 401) "로그인이 필요합니다." else "프로필 로딩 실패 (${e.code()})"
                 Toast.makeText(this@OtherProfileActivity, msg, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
+                android.util.Log.e("OtherProfile", "Fail getUserPage", e)
                 Toast.makeText(this@OtherProfileActivity, "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    /** C안: 내 목록을 최대 N페이지까지 훑어 관계 추정 */
+    private suspend fun resolveRelationshipSlow(
+        otherNickname: String,
+        maxPages: Int = 2,
+        pageSize: Int = 10
+    ): Pair<Boolean, Boolean> = withContext(Dispatchers.IO) {
+        val followingJob = async {
+            var page = 0
+            while (page < maxPages) {
+                val resp = followApi.getFollowingList(page = page, size = pageSize)
+                if (resp.content.any { it.nickname == otherNickname }) return@async true
+                if (resp.last || resp.content.isEmpty()) break
+                page++
+            }
+            false
+        }
+        val followersJob = async {
+            var page = 0
+            while (page < maxPages) {
+                val resp = followApi.getFollowerList(page = page, size = pageSize)
+                if (resp.content.any { it.nickname == otherNickname }) return@async true
+                if (resp.last || resp.content.isEmpty()) break
+                page++
+            }
+            false
+        }
+        followingJob.await() to followersJob.await()
     }
 
     /** 팔로우 상태에 따른 버튼 스타일링 */
@@ -190,11 +216,11 @@ class OtherProfileActivity : AppCompatActivity() {
                 if (isFollowing) {
                     withContext(Dispatchers.IO) { socialApi.unFollow(nickname) }
                     isFollowing = false
-                    followersCount = (followersCount - 1).coerceAtLeast(0)
+                    followersCount = (followersCount - 1L).coerceAtLeast(0L)  // Long 보정
                 } else {
                     withContext(Dispatchers.IO) { socialApi.follow(nickname) }
                     isFollowing = true
-                    followersCount += 1
+                    followersCount = followersCount + 1L                    // Long 보정
                 }
                 tvFollowers.text = followersCount.toString()
                 renderFollowUi()
