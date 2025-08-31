@@ -312,13 +312,13 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             .filter { it.startsWith("regions:") }
             .map { it.removePrefix("regions:").trim() }   // "서울:구로구" 또는 "서울"
             .map { body ->
-                val idx = body.indexOf(':')               // 첫 ':' 기준 분리
+                val idx = body.indexOf(':')
                 if (idx >= 0) {
                     val sido = body.substring(0, idx).trim()
                     val sigungu = body.substring(idx + 1).trim()
-                    if (sigungu.isNotEmpty()) sigungu else sido
+                    "$sido:$sigungu"
                 } else {
-                    body                                   // 시군구가 없으면 시도 사용
+                    "$body:전체"   // "서울" → "서울:전체" 같은 placeholder 붙임
                 }
             }
             .filter { it.isNotEmpty() }

@@ -9,6 +9,8 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import com.example.meokpli.data.remote.response.MyPageResponse
+import com.example.meokpli.data.remote.response.PersonalInfoResponse
 
 interface UserApi {
     @POST("setupDetailInfo")
@@ -42,6 +44,7 @@ interface UserApi {
     //추가 필요
     @GET("/api/user/{nickname}")
     suspend fun getUserPage(@Path("nickname") nickname: String): UserPageResponse
+
 
 }
 
