@@ -11,7 +11,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.R
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.data.remote.response.PersonalInfoResponse
-import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

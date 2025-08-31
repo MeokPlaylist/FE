@@ -22,6 +22,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.meokpli.Main.MainActivity
 import com.example.meokpli.data.remote.response.MyPageResponse
 
 
@@ -33,6 +34,7 @@ class ProfileFragment : Fragment() {
     private lateinit var postCount: TextView
     private lateinit var following: TextView
     private lateinit var followers: TextView
+    private lateinit var backBtn: ImageView
     private lateinit var regionBtn: LinearLayout
     private lateinit var timeBtn: LinearLayout
     private lateinit var rvMyFeeds: RecyclerView
@@ -56,6 +58,7 @@ class ProfileFragment : Fragment() {
         postCount = view.findViewById(R.id.textPostCount)
         following = view.findViewById(R.id.textFollowing)
         followers = view.findViewById(R.id.textFollowers)
+        backBtn = view.findViewById(R.id.btnBack)
         regionBtn = view.findViewById(R.id.tabRegion)
         timeBtn = view.findViewById(R.id.tabPeriod)
         rvMyFeeds = view.findViewById(R.id.rvMyFeeds)
@@ -83,7 +86,7 @@ class ProfileFragment : Fragment() {
             )
             findNavController().navigate(R.id.followListFragment, args)
         }
-
+        backBtn.setOnClickListener { (requireActivity() as? MainActivity)?.handleSystemBack() }
         followers.setOnClickListener {
             val followersCnt = followers.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
             val followingCnt = following.text.toString().filter { it.isDigit() }.toIntOrNull() ?: 0
