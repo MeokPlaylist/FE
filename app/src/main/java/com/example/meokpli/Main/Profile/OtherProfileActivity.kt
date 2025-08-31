@@ -3,6 +3,7 @@ package com.example.meokpli.Main
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -94,7 +95,7 @@ class OtherProfileActivity : AppCompatActivity() {
             try {
                 // 1) 타인 프로필 조회
                 val res = withContext(Dispatchers.IO) { socialApi.getUserPage(nickname) }
-
+                Log.d("result!!",res.toString())
                 // 2) 바인딩 (널 안전)
                 tvNickname.text = res.userNickname ?: nickname
                 tvIntro.text = res.userIntro.orEmpty()

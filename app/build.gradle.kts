@@ -19,6 +19,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
     }
 
     buildTypes {
@@ -48,6 +51,8 @@ android {
 }
 
 dependencies {
+    //카카오맵
+    implementation("com.kakao.maps.open:android:2.9.5")
     implementation(libs.navigation.runtime.android)
     val nav_version = "2.7.7"  // 최신 확인 가능
 

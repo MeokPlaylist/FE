@@ -1,7 +1,6 @@
 package com.example.meokpli.Main.Profile
 
 import android.graphics.Color
-import com.example.meokpli.Main.Profile.MyFeedThumbnailAdapter
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
