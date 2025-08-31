@@ -45,6 +45,15 @@
                     android:textSize="18dp"
                     android:textColor="@color/black"
                     android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/textTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="내 계정"
+                    android:textSize="18dp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"/>
 
                 <!-- 오른쪽 끝에 딱 붙게 (marginEnd=0) -->
                 <ImageView

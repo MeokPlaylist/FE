@@ -3,13 +3,15 @@ package com.example.meokpli.Main
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.example.meokpli.R
+import com.google.android.material.button.MaterialButton
 // Coil을 쓰려면 주석 해제
 // import coil.load
 
@@ -18,50 +20,79 @@ data class FollowUserUi(
     val id: Long,
     val name: String,
     val subtitle: String,
-    val avatarUrl: String? = null
+    val avatarUrl: String?,
+    var isFollowing: Boolean = false, // 나 → 그
+    var followsMe: Boolean = false    // 그 → 나
 )
-
 class FollowUserAdapter(
     private val onItemClick: (FollowUserUi) -> Unit,
     private val onActionClick: (FollowUserUi) -> Unit
-) : ListAdapter<FollowUserUi, FollowUserAdapter.VH>(DIFF) {
+) : ListAdapter<FollowUserUi, FollowUserAdapter.ItemVH>(DIFF) {
 
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<FollowUserUi>() {
-            override fun areItemsTheSame(a: FollowUserUi, b: FollowUserUi) = a.id == b.id
-            override fun areContentsTheSame(a: FollowUserUi, b: FollowUserUi) = a == b
+            override fun areItemsTheSame(old: FollowUserUi, new: FollowUserUi) = old.id == new.id
+            override fun areContentsTheSame(old: FollowUserUi, new: FollowUserUi) = old == new
         }
     }
 
-    class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val avatar: ImageView = view.findViewById(R.id.imgAvatar)
-        val name: TextView = view.findViewById(R.id.tvName)
-        val subtitle: TextView = view.findViewById(R.id.tvSubtitle)
-        val btn: ImageButton = view.findViewById(R.id.btnAction)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemVH {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_user_follow, parent, false)
+        return ItemVH(v)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_user_follow, parent, false)
-        return VH(v)
+    override fun onBindViewHolder(holder: ItemVH, position: Int) {
+        holder.bind(getItem(position))
     }
 
-    override fun onBindViewHolder(h: VH, position: Int) {
-        val item = getItem(position)
-        h.name.text = item.name
-        h.subtitle.text = item.subtitle
+    inner class ItemVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val avatar: ImageView = itemView.findViewById(R.id.imgAvatar)
+        private val name: TextView = itemView.findViewById(R.id.tvName)
+        private val subtitle: TextView = itemView.findViewById(R.id.tvSubtitle)
+        private val btn: MaterialButton = itemView.findViewById(R.id.btnAction)
 
-        // 이미지 로더 (선택)
-        if (item.avatarUrl.isNullOrBlank()) {
-            h.avatar.setImageResource(R.drawable.ic_profile_red)
-        } else {
-            // Coil 사용 시:
-            // h.avatar.load(item.avatarUrl) { placeholder(R.drawable.ic_profile_red) }
-            h.avatar.setImageResource(R.drawable.ic_profile_red)
+        fun bind(u: FollowUserUi) {
+            val ctx = itemView.context
+
+            if (!u.avatarUrl.isNullOrBlank()) {
+                avatar.load(u.avatarUrl) {
+                    placeholder(R.drawable.ic_profile_red)
+                    error(R.drawable.ic_profile_red)
+                    crossfade(true)
+                }
+            } else {
+                avatar.setImageResource(R.drawable.ic_profile_red)
+            }
+
+            name.text = u.name
+            subtitle.text = u.subtitle
+
+            // ★ 상태별 텍스트 + 배경 drawable + 텍스트 색
+            when {
+                u.isFollowing && u.followsMe -> {
+                    btn.text = "맞팔로잉"
+                    btn.setBackgroundResource(R.drawable.btn_basic)
+                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                }
+                u.isFollowing -> {
+                    btn.text = "팔로잉"
+                    btn.setBackgroundResource(R.drawable.btn_basic)
+                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                }
+                u.followsMe -> {
+                    btn.text = "맞팔로우"
+                    btn.setBackgroundResource(R.drawable.btn_mutual_follow)
+                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
+                }
+                else -> {
+                    btn.text = "팔로우"
+                    btn.setBackgroundResource(R.drawable.btn_basic)
+                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                }
+            }
+
+            itemView.setOnClickListener { onItemClick(u) }
+            btn.setOnClickListener { onActionClick(u) }
         }
-
-        h.itemView.setOnClickListener { onItemClick(item) }
-        h.btn.setOnClickListener { onActionClick(item) }
     }
 }
-

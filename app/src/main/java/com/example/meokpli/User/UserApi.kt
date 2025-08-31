@@ -8,6 +8,7 @@ import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Path
 
 interface UserApi {
     @POST("setupDetailInfo")
@@ -38,6 +39,9 @@ interface UserApi {
 
     @GET("mypage")
     suspend fun  getMyPage(): myPageResponse
+    //추가 필요
+    @GET("/api/user/{nickname}")
+    suspend fun getUserPage(@Path("nickname") nickname: String): UserPageResponse
 
 }
 
@@ -65,4 +69,16 @@ data class PersonalInfoResponse(
     val birthDay: String?,    // ISO 문자열로 오면 화면에서 포맷팅
     val createdAt: String?,
     val OauthUser: Boolean// 필요 시 사용
+)
+
+data class UserPageResponse(
+    val feedNum: Long,
+    val followingNum: Long,
+    val followerNum: Long,
+    val userNickname: String,
+    val userIntro: String?,
+    val profileUrl: String?,
+    val feedId: List<Long>?,
+    val feedMainPhotoUrls: Map<Int, List<String>>?,
+    val isMe: Boolean
 )

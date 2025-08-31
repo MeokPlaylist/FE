@@ -17,8 +17,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.FollowUserAdapter
 import com.example.meokpli.Main.FollowUserUi
-import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.Main.OtherProfileActivity
+import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,11 +29,8 @@ class FollowListFragment : Fragment() {
     enum class FollowTab { FOLLOWERS, FOLLOWING }
 
     companion object {
-        // 외부에서 초기 탭을 지정하고 싶을 때만 사용(선택)
-        const val ARG_TAB = "arg_tab"
-        // 마지막에 보던 탭 저장/복원용
-        private const val KEY_TAB = "key_tab"
-
+        const val ARG_TAB = "arg_tab"         // 선택: 초기 탭
+        private const val KEY_TAB = "key_tab" // 마지막 탭 복원
     }
 
     // Views
@@ -57,17 +54,21 @@ class FollowListFragment : Fragment() {
     private var isLastPage = false
     private var currentTotalCount: Long = 0L
 
-    // 이미지 키 → 절대 URL 만들 때
+    // 이미지 키 → 절대 URL
     private val IMAGE_BASE = "https://meokplaylist.store/images/"
 
     // APIs
     private lateinit var api: FollowApi                 // /user/ 목록
     private lateinit var socialApi: SocialInteractionApi // /socialInteraction/ 액션
 
+    // ✅ 내 관계 캐시
+    private val myFollowingSet = mutableSetOf<String>() // 내가 팔로우 중
+    private val myFollowersSet = mutableSetOf<String>() // 나를 팔로우 중
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        api = Network.followApi(context)       // 토큰 포함
-        socialApi = Network.socialApi(context) // 토큰 포함
+        api = Network.followApi(context)
+        socialApi = Network.socialApi(context)
     }
 
     override fun onCreateView(
@@ -77,7 +78,7 @@ class FollowListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1) 마지막 탭 복원 > 인자 초기 탭 > 기본 FOLLOWING
+        // 마지막 탭 복원 > 인자 초기 탭 > 기본 FOLLOWING
         currentTab = savedInstanceState?.getString(KEY_TAB)?.let { FollowTab.valueOf(it) }
             ?: arguments?.getString(ARG_TAB)?.let { FollowTab.valueOf(it) }
                     ?: FollowTab.FOLLOWING
@@ -99,26 +100,54 @@ class FollowListFragment : Fragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = FollowUserAdapter(
             onItemClick = { user ->
-                Toast.makeText(requireContext(), "${user.name} 클릭", Toast.LENGTH_SHORT).show()
-                // TODO: 프로필 상세로 이동
-                OtherProfileActivity.Companion.start(requireContext(), user.name)
+                OtherProfileActivity.start(requireContext(), user.name)
             },
             onActionClick = { user ->
-                lifecycleScope.launch {
-                    try {
-                        // 서버는 @AuthenticationPrincipal로 내 userId를 읽음
-                        socialApi.unFollow(nickname = user.name) //2XX가 아니면 catch로 떨어짐
-                        val newList = adapter.currentList.filter { it.id != user.id }//리스트 제거
-                        adapter.submitList(newList)
-                        // 낙관적 카운트 감소
-                        if (currentTotalCount > 0) currentTotalCount -= 1//서버 안부르고 카운트줄이기 그래야 부드러움
-                        headerCount.text = "%,d".format(currentTotalCount)
-                        if (newList.isEmpty()) {
-                            showEmpty(if (currentTab == FollowTab.FOLLOWERS) "팔로워가 없습니다." else "팔로잉이 없습니다.")
+                // ✅ 탭에 따라 액션이 달라짐
+                if (currentTab == FollowTab.FOLLOWING) {
+                    // FOLLOWING 탭: 나는 이 사람을 팔로우 중 → 언팔하면 리스트에서 제거
+                    lifecycleScope.launch {
+                        try {
+                            withContext(Dispatchers.IO) { socialApi.unFollow(nickname = user.name) }
+                            myFollowingSet.remove(user.name) // Set 동기화
+                            val newList = adapter.currentList.filter { it.id != user.id }
+                            adapter.submitList(newList)
+                            if (currentTotalCount > 0) currentTotalCount -= 1
+                            headerCount.text = "%,d".format(currentTotalCount)
+                            if (newList.isEmpty()) {
+                                showEmpty("팔로잉이 없습니다.")
+                            }
+                            Toast.makeText(requireContext(), "언팔로우 완료", Toast.LENGTH_SHORT).show()
+                        } catch (_: Exception) {
+                            Toast.makeText(requireContext(), "언팔로우 실패", Toast.LENGTH_SHORT).show()
                         }
-                        Toast.makeText(requireContext(), "언팔로우 완료", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "언팔로우 실패", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    // FOLLOWERS 탭: 그가 나를 팔로우 중 → 내 상태에 따라 팔로우/언팔 토글, 행은 유지
+                    lifecycleScope.launch {
+                        try {
+                            val isFollowingNow = myFollowingSet.contains(user.name)
+                            if (isFollowingNow) {
+                                withContext(Dispatchers.IO) { socialApi.unFollow(nickname = user.name) }
+                                myFollowingSet.remove(user.name)
+                                // 상태만 false로
+                                val newList = adapter.currentList.map {
+                                    if (it.id == user.id) it.copy(isFollowing = false) else it
+                                }
+                                adapter.submitList(newList)
+                                Toast.makeText(requireContext(), "언팔로우 완료", Toast.LENGTH_SHORT).show()
+                            } else {
+                                withContext(Dispatchers.IO) { socialApi.follow(nickname = user.name) }
+                                myFollowingSet.add(user.name)
+                                val newList = adapter.currentList.map {
+                                    if (it.id == user.id) it.copy(isFollowing = true) else it
+                                }
+                                adapter.submitList(newList)
+                                Toast.makeText(requireContext(), "팔로우 완료", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (_: Exception) {
+                            Toast.makeText(requireContext(), "처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
@@ -146,13 +175,21 @@ class FollowListFragment : Fragment() {
         view.findViewById<View>(R.id.boxFollowers).setOnClickListener { switchTab(FollowTab.FOLLOWERS) }
         view.findViewById<View>(R.id.boxFollowing).setOnClickListener { switchTab(FollowTab.FOLLOWING) }
 
-        // 첫 진입/복원 탭으로 로드
-        switchTab(currentTab)
+        // ✅ 먼저 두 Set 1페이지 프리로드 → 이후 탭 로드 (초기 표시 정확도 ↑)
+        lifecycleScope.launch {
+            try {
+                val following0 = withContext(Dispatchers.IO) { api.getFollowingList(page = 0) }
+                myFollowingSet += following0.content.map { it.nickname }
+                val followers0 = withContext(Dispatchers.IO) { api.getFollowerList(page = 0) }
+                myFollowersSet += followers0.content.map { it.nickname }
+            } catch (_: Exception) { /* 무시해도 동작 */ }
+            switchTab(currentTab)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(KEY_TAB, currentTab.name) // 마지막 탭 저장
+        outState.putString(KEY_TAB, currentTab.name)
     }
 
     // 탭 전환
@@ -162,7 +199,7 @@ class FollowListFragment : Fragment() {
         isLoading = false
         isLastPage = false
         currentTotalCount = 0
-        headerCount.text = "—" // 응답 오면 갱신
+        headerCount.text = "—"
 
         val active = Color.BLACK
         val inactive = Color.parseColor("#E0E0E0")
@@ -171,10 +208,10 @@ class FollowListFragment : Fragment() {
         indicatorFollowers.visibility = if (tab == FollowTab.FOLLOWERS) View.VISIBLE else View.INVISIBLE
         indicatorFollowing.visibility = if (tab == FollowTab.FOLLOWING) View.VISIBLE else View.INVISIBLE
 
-        adapter.submitList(emptyList()) // 화면 비우고 새로 로드
+        adapter.submitList(emptyList())
         if (tab == FollowTab.FOLLOWERS) {
             headerTitle.text = "My\nFollowers"
-            loadFollowerPage(page = 0, append = false) // 스프링 페이지는 0부터
+            loadFollowerPage(page = 0, append = false)
         } else {
             headerTitle.text = "My\nFollowing"
             loadFollowingPage(page = 0, append = false)
@@ -188,11 +225,13 @@ class FollowListFragment : Fragment() {
             isLoading = true
             if (!append) showLoading(true)
             try {
-                val resp: PageResponse<GetFollowResponseDto> =
-                    withContext(Dispatchers.IO) { api.getFollowerList(page = page) }
+                val resp = withContext(Dispatchers.IO) { api.getFollowerList(page = page) }
+                // ✅ 내가 팔로워 목록을 본 김에 Set도 누적(정확도 ↑)
+                myFollowersSet += resp.content.map { it.nickname }
+
                 if (!append) showLoading(false)
                 applyPage(resp, append, emptyMsg = "팔로워가 없습니다.")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로워 정보를 불러올 수 없습니다.")
             } finally {
@@ -207,11 +246,13 @@ class FollowListFragment : Fragment() {
             isLoading = true
             if (!append) showLoading(true)
             try {
-                val resp: PageResponse<GetFollowResponseDto> =
-                    withContext(Dispatchers.IO) { api.getFollowingList(page = page) }
+                val resp = withContext(Dispatchers.IO) { api.getFollowingList(page = page) }
+                // ✅ 내가 팔로잉 목록을 본 김에 Set도 누적
+                myFollowingSet += resp.content.map { it.nickname }
+
                 if (!append) showLoading(false)
                 applyPage(resp, append, emptyMsg = "팔로잉이 없습니다.")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로잉 정보를 불러올 수 없습니다.")
             } finally {
@@ -220,19 +261,30 @@ class FollowListFragment : Fragment() {
         }
     }
 
-    // Page 응답 공통 반영
+    // Page 응답 공통 반영 (상태 보정 포함)
     private fun applyPage(
         page: PageResponse<GetFollowResponseDto>,
         append: Boolean,
         emptyMsg: String
     ) {
+        // ✅ 상태 보정: 내 Set 포함 여부로 isFollowing/followsMe 계산
         val newUi = page.content.map { dto ->
-            FollowUserUi(
-                id = dto.nickname.hashCode().toLong(), // ⚠️ 임시 키(가능하면 BE가 userId 제공)
+            val base = FollowUserUi(
+                id = dto.nickname.hashCode().toLong(), // 가능하면 BE userId 사용 권장
                 name = dto.nickname,
                 subtitle = dto.introduction.orEmpty(),
                 avatarUrl = dto.profileImgKey?.let { IMAGE_BASE + it }
             )
+            when (currentTab) {
+                FollowTab.FOLLOWING -> base.copy(
+                    isFollowing = true,
+                    followsMe  = myFollowersSet.contains(dto.nickname)
+                )
+                FollowTab.FOLLOWERS -> base.copy(
+                    isFollowing = myFollowingSet.contains(dto.nickname),
+                    followsMe  = true
+                )
+            }
         }
 
         val merged = if (append) adapter.currentList + newUi else newUi
@@ -244,7 +296,6 @@ class FollowListFragment : Fragment() {
             adapter.submitList(merged)
         }
 
-        // 페이지/마지막/총개수 갱신
         currentPage = page.number
         isLastPage = page.last
         currentTotalCount = page.totalElements ?: merged.size.toLong()
