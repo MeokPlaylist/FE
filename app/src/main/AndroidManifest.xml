@@ -52,7 +52,7 @@
         <activity android:name=".User.ResetPasswordActivity" />
         <activity android:name=".User.Region.RegionActivity" />
         <activity android:name=".User.WelcomeActivity"/>
-        <activity android:name=".Main.OtherProfileActivity"/>
+        <activity android:name=".Main.OtherProfileFragment"/>
         <activity
             android:name=".gallery.GalleryBottomSheet"
             android:exported="false" />

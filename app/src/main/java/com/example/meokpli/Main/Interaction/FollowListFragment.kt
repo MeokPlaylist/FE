@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,12 +18,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.FollowUserAdapter
 import com.example.meokpli.Main.FollowUserUi
-import com.example.meokpli.Main.OtherProfileActivity
+import com.example.meokpli.Main.OtherProfileFragment
 import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.navigation.fragment.findNavController
+
 
 class FollowListFragment : Fragment() {
 
@@ -100,7 +103,10 @@ class FollowListFragment : Fragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = FollowUserAdapter(
             onItemClick = { user ->
-                OtherProfileActivity.start(requireContext(), user.name)
+                findNavController().navigate(
+                    R.id.otherProfileFragment,
+                    bundleOf("arg_nickname" to user.name)
+                )
             },
             onActionClick = { user ->
                 // ✅ 탭에 따라 액션이 달라짐

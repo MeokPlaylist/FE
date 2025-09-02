@@ -1,23 +1,22 @@
 package com.example.meokpli.Main.Interaction
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.OtherProfileActivity
-import com.example.meokpli.Main.SocialInteractionApi
+import com.example.meokpli.Main.OtherProfileFragment
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -29,26 +28,9 @@ class OtherFollowListFragment : Fragment() {
     companion object {
         private const val ARG_NICKNAME = "arg_nickname"
         private const val ARG_TAB = "arg_tab" // "followers" or "following"
-
-        fun start(host: Context, nickname: String, tab: String) {
-            val fragment = OtherFollowListFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_NICKNAME, nickname)
-                    putString(ARG_TAB, tab)
-                }
-            }
-            // host 는 Activity 컨텍스트여야 함
-            val activity = host as androidx.appcompat.app.AppCompatActivity
-            activity.supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, fragment) // 필요시 전용 container id로 변경
-                .addToBackStack(null)
-                .commit()
-        }
     }
 
     private lateinit var api: FollowApi
-    private lateinit var socialApi: SocialInteractionApi
-
     private lateinit var recycler: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var emptyView: TextView
@@ -69,6 +51,7 @@ class OtherFollowListFragment : Fragment() {
     private var isLastPage = false
     private var currentPage = 0
     private var currentTotalCount = 0
+
     // 내 관계 캐시(1페이지 프리로드)
     private val myFollowingSet = mutableSetOf<String>()
     private val myFollowersSet = mutableSetOf<String>()
@@ -76,14 +59,13 @@ class OtherFollowListFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         api = Network.followApi(requireContext())
-        socialApi = Network.socialApi(requireContext())
-        targetNickname = requireArguments().getString(ARG_NICKNAME) ?: ""
-        currentTab = requireArguments().getString(ARG_TAB) ?: "following"
+        targetNickname = requireArguments().getString("arg_nickname").orEmpty()
+        currentTab = requireArguments().getString("arg_tab").orEmpty()
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        // XML 재사용
-        return inflater.inflate(R.layout.fragment_follow_list, container, false) // :contentReference[oaicite:6]{index=6}
+        return inflater.inflate(R.layout.fragment_follow_list, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -102,8 +84,12 @@ class OtherFollowListFragment : Fragment() {
 
         recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = OtherFollowUserAdapter(
-            onProfileClick = { user ->
-                OtherProfileActivity.start(requireContext(), user.nickname)
+            onProfileClick = { row ->
+                // ✅ 여기서 OtherProfileFragment로 네비게이션
+                findNavController().navigate(
+                    R.id.OtherProfileFragment,
+                    bundleOf("arg_nickname" to row.nickname)
+                )
             },
             onFollowToggle = { user, isFollowingNow, position ->
                 toggleFollow(user.nickname, isFollowingNow) { success, newState ->
@@ -118,15 +104,15 @@ class OtherFollowListFragment : Fragment() {
         btnBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
         tabFollowers.setOnClickListener { switchTab("followers") }
         tabFollowing.setOnClickListener { switchTab("following") }
-        // 내 관계 1페이지 프리로드 → UI 상태 보정
 
-        lifecycleScope.launch {
+        // 내 관계 1페이지 프리로드 → UI 상태 보정
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val f0 = withContext(Dispatchers.IO) { api.getFollowingList(page = 0) }
                 myFollowingSet += f0.content.map { it.nickname }
                 val r0 = withContext(Dispatchers.IO) { api.getFollowerList(page = 0) }
                 myFollowersSet += r0.content.map { it.nickname }
-            } catch (_: Exception) { /* 무시(없어도 동작) */ }
+            } catch (_: Exception) { /* 무시 */ }
             switchTab(currentTab)
         }
 
@@ -144,7 +130,6 @@ class OtherFollowListFragment : Fragment() {
                 }
             }
         })
-
     }
 
     private fun switchTab(tab: String) {
@@ -155,8 +140,7 @@ class OtherFollowListFragment : Fragment() {
         currentTotalCount = 0
         adapter.submitList(emptyList())
 
-        // 타이틀
-        val prefix = "${targetNickname}"
+        val prefix = targetNickname
         if (tab == "followers") {
             headerTitle.text = "${prefix}\nFollowers"
             tabFollowers.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
@@ -192,7 +176,6 @@ class OtherFollowListFragment : Fragment() {
         isLastPage = resp.last
         currentPage = resp.number
 
-        // 상태 보정: 내 팔로잉/팔로워 셋 기준으로 표시
         fun mapToUi(d: GetFollowResponseDto) = UserRowUi(
             nickname = d.nickname,
             profileImgUrl = d.profileImgKey,
@@ -209,22 +192,21 @@ class OtherFollowListFragment : Fragment() {
             else { emptyView.visibility = View.GONE; adapter.submitList(newList) }
         }
 
-        // 헤더 카운트(가능하면 서버 totalElements 사용)
         headerCount.text = (resp.totalElements ?: (adapter.itemCount)).toString()
     }
 
     private fun loadFollowerPage(page: Int, append: Boolean) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             if (isLoading) return@launch
             isLoading = true
             if (!append) showLoading(true)
             try {
                 val resp = withContext(Dispatchers.IO) {
-                    api.getFollowerListOf(nickname = targetNickname, page = page) // 신규 API
+                    api.getFollowerListOf(nickname = targetNickname, page = page)
                 }
                 if (!append) showLoading(false)
                 applyPage(resp, append, emptyMsg = "${targetNickname}의 팔로워가 없습니다.")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로워 정보를 불러올 수 없습니다.")
             } finally {
@@ -234,17 +216,17 @@ class OtherFollowListFragment : Fragment() {
     }
 
     private fun loadFollowingPage(page: Int, append: Boolean) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             if (isLoading) return@launch
             isLoading = true
             if (!append) showLoading(true)
             try {
                 val resp = withContext(Dispatchers.IO) {
-                    api.getFollowingListOf(nickname = targetNickname, page = page) // 신규 API
+                    api.getFollowingListOf(nickname = targetNickname, page = page)
                 }
                 if (!append) showLoading(false)
                 applyPage(resp, append, emptyMsg = "${targetNickname}의 팔로잉이 없습니다.")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로잉 정보를 불러올 수 없습니다.")
             } finally {
@@ -258,18 +240,18 @@ class OtherFollowListFragment : Fragment() {
         isFollowingNow: Boolean,
         onDone: (Boolean, Boolean) -> Unit
     ) {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 if (isFollowingNow) {
-                    withContext(Dispatchers.IO) { socialApi.unFollow(targetNickname) }
+                    Network.socialApi(requireContext()).unFollow(targetNickname)
                     myFollowingSet.remove(targetNickname)
                     onDone(true, false)
                 } else {
-                    withContext(Dispatchers.IO) { socialApi.follow(targetNickname) }
+                    Network.socialApi(requireContext()).follow(targetNickname)
                     myFollowingSet.add(targetNickname)
                     onDone(true, true)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 onDone(false, isFollowingNow)
             }
         }
@@ -282,9 +264,8 @@ class OtherFollowListFragment : Fragment() {
         val profileImgUrl: String?,
         val introduction: String?,
         var isFollowing: Boolean = false,   // 나 → 그
-        var followsMe: Boolean = false      // 그 → 나 (필요시 서버에서 내려주면 사용)
+        var followsMe: Boolean = false      // 그 → 나
     )
-
 
     class OtherFollowUserAdapter(
         private val onProfileClick: (UserRowUi) -> Unit,
@@ -315,7 +296,6 @@ class OtherFollowListFragment : Fragment() {
             fun bind(u: UserRowUi, pos: Int) {
                 val ctx = itemView.context
 
-                // 아바타
                 if (!u.profileImgUrl.isNullOrBlank()) {
                     avatar.load(u.profileImgUrl) {
                         placeholder(R.drawable.ic_profile_red)
@@ -327,31 +307,26 @@ class OtherFollowListFragment : Fragment() {
                 name.text = u.nickname
                 subtitle.text = u.introduction.orEmpty()
 
-                // 상태별 텍스트/배경/색상 (+아이콘 원하면 함께 지정)
                 when {
                     u.isFollowing && u.followsMe -> {
                         btn.text = "맞팔로잉"
                         btn.setBackgroundResource(R.drawable.btn_basic)
                         btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                        // btn.icon = ContextCompat.getDrawable(ctx, R.drawable.ic_check) // 선택
                     }
                     u.isFollowing -> {
                         btn.text = "팔로잉"
                         btn.setBackgroundResource(R.drawable.btn_basic)
                         btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                        // btn.icon = ContextCompat.getDrawable(ctx, R.drawable.ic_check)
                     }
                     u.followsMe -> {
                         btn.text = "맞팔로우"
                         btn.setBackgroundResource(R.drawable.btn_mutual_follow)
                         btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
-                        // btn.icon = ContextCompat.getDrawable(ctx, R.drawable.ic_add)
                     }
                     else -> {
                         btn.text = "팔로우"
                         btn.setBackgroundResource(R.drawable.btn_basic)
                         btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                        // btn.icon = ContextCompat.getDrawable(ctx, R.drawable.ic_add)
                     }
                 }
 
