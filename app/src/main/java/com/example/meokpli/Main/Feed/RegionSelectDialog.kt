@@ -190,7 +190,8 @@ class RegionSelectDialog : DialogFragment() {
         selectedPairs.forEach { code ->
             val (sido, sgg) = code.split(":", limit = 2)
             val chip = Chip(requireContext()).apply {
-                text = sgg
+                // ✅ "서울 강서구" 같이 보이도록 수정
+                text = "$sido $sgg"
                 isCloseIconVisible = true
                 setOnCloseIconClickListener {
                     selectedPairs.remove(code)
@@ -209,6 +210,7 @@ class RegionSelectDialog : DialogFragment() {
         }
         textSelectedCount.text = "${selectedPairs.size} / $MAX_SELECT"
     }
+
 
     // --- 어댑터들(간단 버전, row를 코드로 생성) ---
 

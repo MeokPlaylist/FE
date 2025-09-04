@@ -19,5 +19,8 @@
     <string name="likes">좋아요</string>
     <string name="notification">알림</string>
     <string name="policy">약관 및 개인정보</string>
+    <string name="edit_region"><u>수정하기</u></string>
+    <string name="delete">삭제</string>
+
 
 </resources>

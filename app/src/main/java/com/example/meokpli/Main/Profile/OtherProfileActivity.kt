@@ -25,9 +25,7 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
 class OtherProfileActivity : AppCompatActivity() {
-
-    private val userApi: UserApi by lazy { Network.userApi(this) }                 // (예비)
-    private val socialApi: SocialInteractionApi by lazy { Network.socialApi(this) }
+     private val socialApi: SocialInteractionApi by lazy { Network.socialApi(this) }
     private val followApi: FollowApi by lazy { Network.followApi(this) }           // ✅ C안용
 
     private lateinit var nickname: String

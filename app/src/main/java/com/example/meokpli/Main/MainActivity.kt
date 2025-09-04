@@ -1,6 +1,7 @@
 package com.example.meokpli.Main
 
 import android.os.Bundle
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -18,13 +19,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var navHome: LinearLayout
     private lateinit var navSearch: LinearLayout
-    private lateinit var navFeed: LinearLayout
+    private lateinit var navFeed: ImageButton
     private lateinit var navStar: LinearLayout
     private lateinit var navProfile: LinearLayout
 
     private lateinit var iconHome: ImageView
     private lateinit var iconSearch: ImageView
-    private lateinit var iconFeed: ImageView
     private lateinit var iconStar: ImageView
     private lateinit var iconProfile: ImageView
 
@@ -47,7 +47,6 @@ class MainActivity : AppCompatActivity() {
 
         iconHome = findViewById(R.id.icon_home)
         iconSearch = findViewById(R.id.icon_search)
-        iconFeed = findViewById(R.id.icon_feed)
         iconStar = findViewById(R.id.icon_star)
         iconProfile = findViewById(R.id.icon_profile)
 
@@ -61,7 +60,6 @@ class MainActivity : AppCompatActivity() {
             when (destination.id) {
                 R.id.homeFragment   -> setActiveIcon(iconHome)
                 R.id.searchFragment -> setActiveIcon(iconSearch)
-                R.id.feedFragment   -> setActiveIcon(iconFeed)
                 R.id.starFragment   -> setActiveIcon(iconStar)
                 R.id.profileFragment-> setActiveIcon(iconProfile)
             }
@@ -136,7 +134,6 @@ class MainActivity : AppCompatActivity() {
     private fun setActiveIcon(activeIcon: ImageView) {
         iconHome.alpha = 0.5f
         iconSearch.alpha = 0.5f
-        iconFeed.alpha = 0.5f
         iconStar.alpha = 0.5f
         iconProfile.alpha = 0.5f
         activeIcon.alpha = 1.0f

@@ -1,6 +1,5 @@
 package com.example.meokpli.User
 
-import com.google.android.gms.common.api.BooleanResult
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -11,6 +10,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import com.example.meokpli.data.remote.response.MyPageResponse
 import com.example.meokpli.data.remote.response.PersonalInfoResponse
+import retrofit2.http.Query
 
 interface UserApi {
     @POST("setupDetailInfo")
@@ -41,7 +41,13 @@ interface UserApi {
 
     @GET("mypage")
     suspend fun  getMyPage(): MyPageResponse
-    //추가 필요
+
+    @GET("/user/search")
+    suspend fun searchUsers(
+        @Query("nickname") nickname: String,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 10
+    ): UserSearchResponse
 
 
 }

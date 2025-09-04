@@ -1,50 +1,24 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:foreground="?attr/selectableItemBackground"
-    android:layout_gravity="center"
-    android:layout_marginEnd="8dp">
+    android:fitsSystemWindows="true">
 
-    <ImageView
-        android:id="@+id/img"
+    <!-- 상단 탭 -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"/>
+        android:layout_height="wrap_content"
+        app:tabIndicatorColor="@android:color/black"
+        app:tabSelectedTextColor="@android:color/black"
+        app:tabTextColor="@android:color/darker_gray"
+        app:tabIndicatorHeight="2dp"/>
 
-    <!-- 선택 테두리 -->
-    <View
-        android:id="@+id/selectedBorder"
+    <!-- ViewPager -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/bg_selected_border"
-        android:visibility="gone"/>
-
-    <!-- 선택 순서 배지 숫자 표시 -->
-    <TextView
-        android:id="@+id/badge"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:background="@drawable/bg_badge_red_oval"
-        android:textColor="@android:color/white"
-        android:textSize="11sp"
-        android:gravity="center"
-        android:layout_margin="6dp"
-        android:visibility="gone"/>
-
-    <!-- 우측 상단 체크 원(비선택 상태 표시용) -->
-    <ImageButton
-        android:id="@+id/btnRemove"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_gravity="top|end"
-        android:layout_margin="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_close_round"
-        android:contentDescription="@string/close"
-        app:tint="@android:color/white"
-        android:clickable="true"
-        android:focusable="true"
-        android:importantForAccessibility="yes"
-        android:elevation="8dp" />
-</FrameLayout>
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

@@ -30,7 +30,6 @@ import com.example.meokpli.Main.ClientPhoto
 import com.example.meokpli.Main.FeedRequestBuilder
 import com.example.meokpli.Main.MainActivity
 import com.example.meokpli.Main.MainApi
-import com.example.meokpli.Main.Feed.PresignedUploader
 import com.example.meokpli.R
 import com.example.meokpli.gallery.GalleryBottomSheet
 import com.google.android.material.chip.Chip
