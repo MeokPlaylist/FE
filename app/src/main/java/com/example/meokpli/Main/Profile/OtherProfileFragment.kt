@@ -1,22 +1,22 @@
 package com.example.meokpli.Main
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import coil.load
 import com.example.meokpli.Auth.Network
+import com.example.meokpli.Main.Interaction.FollowApi
 import com.example.meokpli.Main.Interaction.OtherFollowListFragment
-import com.example.meokpli.Main.Interaction.FollowApi   // ✅ FollowApi 패키지에 주의
 import com.example.meokpli.R
-import com.example.meokpli.User.UserApi
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -24,17 +24,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
-class OtherProfileActivity : AppCompatActivity() {
-     private val socialApi: SocialInteractionApi by lazy { Network.socialApi(this) }
-    private val followApi: FollowApi by lazy { Network.followApi(this) }           // ✅ C안용
+class OtherProfileFragment : Fragment() {
 
-    private lateinit var nickname: String
+    private val socialApi: SocialInteractionApi by lazy { Network.socialApi(requireContext()) }
+    private val followApi: FollowApi by lazy { Network.followApi(requireContext()) }
+
+    private var nickname: String = ""
     private var isMe = false
-    private var isFollowing = false   // 내가 그를 팔로우 중?
-    private var followsMe = false     // 그가 나를 팔로우 중?
-    private var followersCount = 0L   // Long 일관
+    private var isFollowing = false   // 나 → 그
+    private var followsMe = false     // 그 → 나
+    private var followersCount = 0L
 
-    // Views (fragment_profile.xml 재사용)
+    // Views
     private lateinit var btnBack: ImageView
     private lateinit var ivAvatar: ImageView
     private lateinit var tvTitle: TextView
@@ -49,51 +50,68 @@ class OtherProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.fragment_profile)
+        nickname = requireArguments().getString(ARG_NICKNAME).orEmpty()
+    }
 
-        nickname = intent.getStringExtra(EXTRA_NICKNAME).orEmpty()
-        bindViews()
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View = inflater.inflate(R.layout.fragment_profile, container, false)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        bindViews(view)
         bindClicks()
         loadProfile()
     }
 
-    private fun bindViews() {
-        btnBack = findViewById(R.id.btnBack)
-        ivAvatar = findViewById(R.id.imageAvatar)
-        tvTitle = findViewById(R.id.textTitle)
-        tvNickname = findViewById(R.id.textNickname)
-        tvIntro = findViewById(R.id.textBio)
-        tvPost = findViewById(R.id.textPostCount)
-        tvFollowing = findViewById(R.id.textFollowing)
-        tvFollowers = findViewById(R.id.textFollowers)
-        tvSettings = findViewById(R.id.textSettings)
-        viewSettingsLine = findViewById(R.id.viewSettingsLine)
-        btnFollow = findViewById(R.id.btnFollow)
+    private fun bindViews(root: View) {
+        btnBack = root.findViewById(R.id.btnBack)
+        ivAvatar = root.findViewById(R.id.imageAvatar)
+        tvTitle = root.findViewById(R.id.textTitle)
+        tvNickname = root.findViewById(R.id.textNickname)
+        tvIntro = root.findViewById(R.id.textBio)
+        tvPost = root.findViewById(R.id.textPostCount)
+        tvFollowing = root.findViewById(R.id.textFollowing)
+        tvFollowers = root.findViewById(R.id.textFollowers)
+        tvSettings = root.findViewById(R.id.textSettings)
+        viewSettingsLine = root.findViewById(R.id.viewSettingsLine)
+        btnFollow = root.findViewById(R.id.btnFollow)
     }
 
     private fun bindClicks() {
-        btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
 
-        tvPost.setOnClickListener {
-            // TODO: PostListActivity.start(this, nickname)
-        }
-
+        // 필요 시 '타인의 팔로워/팔로잉 리스트' 화면으로 이동
         tvFollowing.setOnClickListener {
-            OtherFollowListFragment.start(this, nickname, "following")
+            findNavController().navigate(
+                R.id.otherFollowListFragment,
+                bundleOf(
+                    "arg_nickname" to nickname,
+                    "arg_tab" to "following"
+                )
+            )
         }
         tvFollowers.setOnClickListener {
-            OtherFollowListFragment.start(this, nickname, "followers")
+            findNavController().navigate(
+                R.id.otherFollowListFragment,
+                bundleOf(
+                    "arg_nickname" to nickname,
+                    "arg_tab" to "followers"
+                )
+            )
         }
+
 
         btnFollow.setOnClickListener { toggleFollow() }
     }
 
     private fun loadProfile() {
-        lifecycleScope.launch {
+        view ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 // 1) 타인 프로필 조회
                 val res = withContext(Dispatchers.IO) { socialApi.getUserPage(nickname) }
-                Log.d("result!!",res.toString())
+
                 // 2) 바인딩 (널 안전)
                 tvNickname.text = res.userNickname ?: nickname
                 tvIntro.text = res.userIntro.orEmpty()
@@ -129,7 +147,7 @@ class OtherProfileActivity : AppCompatActivity() {
                 viewSettingsLine.visibility = View.GONE
                 btnFollow.visibility = View.VISIBLE
 
-                // 5) ✅ 관계 C안: 내 팔로잉/팔로워 목록 일부 페이지를 훑어 상태 추정
+                // 5) 관계 C안: 내 목록 일부 페이지를 훑어 상태 추정
                 val (f1, f2) = resolveRelationshipSlow(nickname, maxPages = 2, pageSize = 10)
                 isFollowing = f1
                 followsMe = f2
@@ -139,15 +157,14 @@ class OtherProfileActivity : AppCompatActivity() {
                 val body = e.response()?.errorBody()?.string()
                 android.util.Log.e("OtherProfile", "HTTP ${e.code()} body=$body", e)
                 val msg = if (e.code() == 401) "로그인이 필요합니다." else "프로필 로딩 실패 (${e.code()})"
-                Toast.makeText(this@OtherProfileActivity, msg, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 android.util.Log.e("OtherProfile", "Fail getUserPage", e)
-                Toast.makeText(this@OtherProfileActivity, "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    /** C안: 내 목록을 최대 N페이지까지 훑어 관계 추정 */
     private suspend fun resolveRelationshipSlow(
         otherNickname: String,
         maxPages: Int = 2,
@@ -176,28 +193,27 @@ class OtherProfileActivity : AppCompatActivity() {
         followingJob.await() to followersJob.await()
     }
 
-    /** 팔로우 상태에 따른 버튼 스타일링 */
     private fun renderFollowUi() {
         when {
             isFollowing && followsMe -> {
-                btnFollow.text = "맞팔로잉"
+                btnFollow.text = "팔로잉"
                 btnFollow.setBackgroundResource(R.drawable.btn_basic)
-                btnFollow.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
             }
             isFollowing -> {
                 btnFollow.text = "팔로잉"
                 btnFollow.setBackgroundResource(R.drawable.btn_basic)
-                btnFollow.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
             }
             followsMe -> {
                 btnFollow.text = "맞팔로우"
                 btnFollow.setBackgroundResource(R.drawable.btn_mutual_follow)
-                btnFollow.setTextColor(ContextCompat.getColor(this, android.R.color.black))
+                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
             }
             else -> {
                 btnFollow.text = "팔로우"
                 btnFollow.setBackgroundResource(R.drawable.btn_basic)
-                btnFollow.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
             }
         }
         btnFollow.isEnabled = true
@@ -210,26 +226,25 @@ class OtherProfileActivity : AppCompatActivity() {
         val prevFollowing = isFollowing
         val prevFollowersCount = followersCount
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 if (isFollowing) {
                     withContext(Dispatchers.IO) { socialApi.unFollow(nickname) }
                     isFollowing = false
-                    followersCount = (followersCount - 1L).coerceAtLeast(0L)  // Long 보정
+                    followersCount = (followersCount - 1L).coerceAtLeast(0L)
                 } else {
                     withContext(Dispatchers.IO) { socialApi.follow(nickname) }
                     isFollowing = true
-                    followersCount = followersCount + 1L                    // Long 보정
+                    followersCount = followersCount + 1L
                 }
                 tvFollowers.text = followersCount.toString()
                 renderFollowUi()
             } catch (e: Exception) {
-                // 실패 시 원복
                 isFollowing = prevFollowing
                 followersCount = prevFollowersCount
                 tvFollowers.text = followersCount.toString()
                 renderFollowUi()
-                Toast.makeText(this@OtherProfileActivity, "처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
             } finally {
                 btnFollow.isEnabled = true
             }
@@ -237,12 +252,9 @@ class OtherProfileActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val EXTRA_NICKNAME = "extra_nickname"
-        fun start(context: Context, nickname: String) {
-            context.startActivity(
-                Intent(context, OtherProfileActivity::class.java)
-                    .putExtra(EXTRA_NICKNAME, nickname)
-            )
+        private const val ARG_NICKNAME = "arg_nickname"
+        fun newInstance(nickname: String) = OtherProfileFragment().apply {
+            arguments = Bundle().apply { putString(ARG_NICKNAME, nickname) }
         }
     }
 }

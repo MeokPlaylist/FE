@@ -9,21 +9,19 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
-import coil.load
-// Coil을 쓰려면 주석 해제
-// import coil.load
 
-/** UI에서 쓰는 팔로우 사용자 모델 */
 data class FollowUserUi(
     val id: Long,
     val name: String,
     val subtitle: String,
     val avatarUrl: String?,
-    var isFollowing: Boolean = false, // 나 → 그
-    var followsMe: Boolean = false    // 그 → 나
+    var isFollowing: Boolean = false,
+    var followsMe: Boolean = false
 )
+
 class FollowUserAdapter(
     private val onItemClick: (FollowUserUi) -> Unit,
     private val onActionClick: (FollowUserUi) -> Unit
@@ -40,10 +38,7 @@ class FollowUserAdapter(
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_user_follow, parent, false)
         return ItemVH(v)
     }
-
-    override fun onBindViewHolder(holder: ItemVH, position: Int) {
-        holder.bind(getItem(position))
-    }
+    override fun onBindViewHolder(holder: ItemVH, position: Int) = holder.bind(getItem(position))
 
     inner class ItemVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val avatar: ImageView = itemView.findViewById(R.id.imgAvatar)
@@ -60,17 +55,14 @@ class FollowUserAdapter(
                     error(R.drawable.ic_profile_red)
                     crossfade(true)
                 }
-            } else {
-                avatar.setImageResource(R.drawable.ic_profile_red)
-            }
+            } else avatar.setImageResource(R.drawable.ic_profile_red)
 
             name.text = u.name
             subtitle.text = u.subtitle
 
-            // ★ 상태별 텍스트 + 배경 drawable + 텍스트 색
             when {
                 u.isFollowing && u.followsMe -> {
-                    btn.text = "맞팔로잉"
+                    btn.text = "팔로잉"
                     btn.setBackgroundResource(R.drawable.btn_basic)
                     btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
                 }
