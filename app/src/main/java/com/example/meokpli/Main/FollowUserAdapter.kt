@@ -23,6 +23,7 @@ data class FollowUserUi(
 )
 
 class FollowUserAdapter(
+
     private val onItemClick: (FollowUserUi) -> Unit,
     private val onActionClick: (FollowUserUi) -> Unit
 ) : ListAdapter<FollowUserUi, FollowUserAdapter.ItemVH>(DIFF) {

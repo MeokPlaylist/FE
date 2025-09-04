@@ -54,14 +54,3 @@ data class BaseResponse(val isAvailable: Boolean, val message: String?)
 data class ConsentAgreeRequest(
     val isAvailable: Boolean
 )
-data class UserPageResponse(
-    val feedNum: Long,
-    val followingNum: Long,
-    val followerNum: Long,
-    val userNickname: String,
-    val userIntro: String?,
-    val profileUrl: String?,
-    val feedId: List<Long>?,
-    val feedMainPhotoUrls: Map<Int, List<String>>?,
-    val isMe: Boolean
-)

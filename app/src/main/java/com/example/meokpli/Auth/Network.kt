@@ -26,7 +26,7 @@ object Network {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     private fun debugClient(context: Context, withAuth: Boolean): OkHttpClient {
-        val log = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.HEADERS }
+        val log = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
 
         val b = OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
