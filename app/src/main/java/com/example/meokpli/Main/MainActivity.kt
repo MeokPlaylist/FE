@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
@@ -129,7 +130,6 @@ class MainActivity : AppCompatActivity() {
             else -> false
         }
     }
-
     // 아이콘 강조
     private fun setActiveIcon(activeIcon: ImageView) {
         iconHome.alpha = 0.5f

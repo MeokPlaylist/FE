@@ -12,10 +12,11 @@ import android.widget.EditText
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.OtherProfileActivity
+import com.example.meokpli.Main.Profile.OtherProfileFragment
 import com.example.meokpli.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,11 +45,16 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user) {
 
         // 검색 결과 어댑터
         adapter = UserAdapter(mutableListOf()) { user ->
-            // ✅ 클릭 시 OtherProfileActivity 이동
-            val intent = Intent(requireContext(), OtherProfileActivity::class.java).apply {
-                putExtra("nickname", user.nickname)   // 닉네임 (옵션)
+
+            // user는 클릭한 item의 UserSearchDto
+            val bundle = Bundle().apply {
+                putString("nickname", user.nickname)
             }
-            startActivity(intent)
+
+            // NavController 이용해서 이동
+            requireParentFragment()
+                .findNavController()
+                .navigate(R.id.action_searchFragment_to_otherProfileFragment, bundle)
         }
         recyclerUsers.layoutManager = LinearLayoutManager(requireContext())
         recyclerUsers.adapter = adapter
