@@ -11,13 +11,10 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
+import com.example.meokpli.Main.Profile.OtherProfileFragment
 import com.example.meokpli.R
 
 class MainActivity : AppCompatActivity() {
-
-
-
-
     private lateinit var navHome: LinearLayout
     private lateinit var navSearch: LinearLayout
     private lateinit var navFeed: ImageButton
@@ -66,27 +63,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 4) 탭 클릭: 같은 목적지면 무시, 아니면 이동
-        val singleTopPopToStart = NavOptions.Builder()
-            .setLaunchSingleTop(true)
-            .setRestoreState(true)
-            .setPopUpTo(nav.graph.startDestinationId, inclusive = false, saveState = true)
-            .build()
-
         navHome.setOnClickListener {
-            navigateTopLevel(R.id.homeFragment, singleTopPopToStart)
+            handleTabReselection(R.id.homeFragment)
         }
         navSearch.setOnClickListener {
-            navigateTopLevel(R.id.searchFragment, singleTopPopToStart)
+            handleTabReselection(R.id.searchFragment)
         }
         navFeed.setOnClickListener {
-            navigateTopLevel(R.id.feedFragment, singleTopPopToStart)
+            handleTabReselection(R.id.feedFragment)
         }
         navStar.setOnClickListener {
-            navigateTopLevel(R.id.starFragment, singleTopPopToStart)
+            handleTabReselection(R.id.starFragment)
         }
         navProfile.setOnClickListener {
-            navigateTopLevel(R.id.profileFragment, singleTopPopToStart)
+            handleTabReselection(R.id.profileFragment)
         }
 
         // 5) 디바이스 뒤로가기
@@ -94,10 +84,50 @@ class MainActivity : AppCompatActivity() {
             handleSystemBack()
         }
     }
+    private fun handleTabReselection(destId: Int) {
+        val currentId = nav.currentDestination?.id
 
-    private fun navigateTopLevel(destId: Int, options: NavOptions) {
-        if (nav.currentDestination?.id != destId) {
+        // ✅ 같은 탭 (루트 or 하위 화면)
+        if (isInSameTab(currentId, destId)) {
+            // 현재 Search 트리에 있음 → 루트까지 popBackStack
+            val popped = nav.popBackStack(destId, false)
+            val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            navHost.view?.post {
+                val rootFragment = navHost.childFragmentManager.fragments.firstOrNull()
+                if (rootFragment is Resettable) {
+                    rootFragment.resetToDefault() // 검색어 초기화
+                }
+            }
+            if (!popped) {
+                // 혹시 실패하면 안전하게 navigate
+                nav.navigate(destId)
+            }
+        } else {
+            // ✅ 다른 탭 → 상태 유지하며 navigate
+            val options = NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setRestoreState(true)
+                .setPopUpTo(nav.graph.startDestinationId, inclusive = false, saveState = true)
+                .build()
             nav.navigate(destId, null, options)
+        }
+    }
+
+    // 현재 목적지가 해당 탭(루트 or 하위)에 속하는지 판별
+    private fun isInSameTab(currentId: Int?, tabRootId: Int): Boolean {
+        if (currentId == null) return false
+
+        return when (tabRootId) {
+            R.id.homeFragment -> currentId == R.id.homeFragment
+            R.id.searchFragment -> currentId == R.id.searchFragment || currentId == R.id.otherProfileFragment
+            R.id.feedFragment -> currentId == R.id.feedFragment
+            R.id.starFragment -> currentId == R.id.starFragment
+            R.id.profileFragment -> {
+                currentId == R.id.profileFragment ||
+                        currentId == R.id.fragmentSetting ||
+                        currentId == R.id.followListFragment
+            }
+            else -> false
         }
     }
 
@@ -138,4 +168,8 @@ class MainActivity : AppCompatActivity() {
         iconProfile.alpha = 0.5f
         activeIcon.alpha = 1.0f
     }
+}
+
+interface Resettable {
+    fun resetToDefault()
 }

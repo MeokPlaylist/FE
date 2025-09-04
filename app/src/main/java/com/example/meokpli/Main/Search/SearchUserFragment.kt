@@ -1,6 +1,5 @@
 package com.example.meokpli.Main.Search
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -16,13 +15,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.Profile.OtherProfileFragment
+import com.example.meokpli.Main.Resettable
 import com.example.meokpli.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SearchUserFragment : Fragment(R.layout.fragment_search_user) {
+class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
 
     private lateinit var etSearch: EditText
     private lateinit var recyclerUsers: RecyclerView
@@ -48,13 +47,13 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user) {
 
             // user는 클릭한 item의 UserSearchDto
             val bundle = Bundle().apply {
-                putString("nickname", user.nickname)
+                putString("arg_nickname", user.nickname)
             }
 
             // NavController 이용해서 이동
             requireParentFragment()
                 .findNavController()
-                .navigate(R.id.action_searchFragment_to_otherProfileFragment, bundle)
+                .navigate(R.id.action_searchUserFragment_to_otherProfileFragment, bundle)
         }
         recyclerUsers.layoutManager = LinearLayoutManager(requireContext())
         recyclerUsers.adapter = adapter
@@ -118,8 +117,15 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user) {
             }
         })
     }
+    //검색 초기화
+    override fun resetToDefault() {
+        etSearch.setText("") // 검색어 초기화
+        adapter.submitList(emptyList()) // 검색 결과 비우기
+        layoutRecent.visibility = View.VISIBLE // 최근 검색 다시 보이기
+        recyclerUsers.visibility = View.GONE
+    }
 
-    // ✅ Fragment 상태 저장
+    // Fragment 상태 저장
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         lastKeyword = etSearch.text.toString().trim()

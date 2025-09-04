@@ -18,7 +18,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
     private lateinit var feedApi: MainApi
     private lateinit var rv: RecyclerView
@@ -37,6 +37,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         // 실제 데이터 로드
         loadFeed()
+    }
+    override fun resetToDefault() {
+        rv.scrollToPosition(0) // 맨 위로 스크롤
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

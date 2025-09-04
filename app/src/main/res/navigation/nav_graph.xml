@@ -13,10 +13,11 @@
 
     <fragment
         android:id="@+id/searchFragment"
-        android:name="com.example.meokpli.Main.Search.SearchUserFragment"
+        android:name="com.example.meokpli.Main.Search.SearchFragment"
         android:label="검색">
+
         <action
-            android:id="@+id/action_searchFragment_to_otherProfileFragment"
+            android:id="@+id/action_searchUserFragment_to_otherProfileFragment"
             app:destination="@id/otherProfileFragment" />
     </fragment>
 
