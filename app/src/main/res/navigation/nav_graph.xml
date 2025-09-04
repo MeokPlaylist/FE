@@ -81,4 +81,14 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/otherProfileFragment"
+        android:name="com.example.meokpli.Main.Profile.OtherProfileFragment"
+        android:label="Other Profile"
+        tools:layout="@layout/fragment_profile">
+        <argument
+            android:name="arg_nickname"
+            app:argType="string" />
+    </fragment>
+
 </navigation>

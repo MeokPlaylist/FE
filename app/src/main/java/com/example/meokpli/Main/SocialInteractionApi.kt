@@ -12,8 +12,9 @@ interface SocialInteractionApi {
     @POST("unFollow")
     suspend fun unFollow(@Query("nickname") nickname: String)
 
+
     @GET("userPageDistinction")
-    suspend fun getUserPage(@Query("nickname") nickname: String): UserPageResponse
+    suspend fun getOtherUserPage(@Query("nickname") nickname: String): UserPageResponseWrapper
 }
 
 data class UserPageResponse(
@@ -28,3 +29,19 @@ data class UserPageResponse(
     val isMe: Boolean
 )
 
+data class UserPageResponseWrapper(
+    val userPageDto: OtherUserPageResponse
+)
+
+data class OtherUserPageResponse(
+    val feedNum: Long,
+    val followingNum: Long,
+    val followerNum: Long,
+    val userNickname: String,
+    val userIntro: String?,
+    val profileUrl: String?,
+    val feedIdsGroupedByYear: Map<Int, List<Long>>,
+    val feedIdsGroupedByRegion: Map<String, List<Long>>,
+    val urlMappedByFeedId: Map<Long, String>,
+    val isMe: Boolean // BE가 보내주면 활용(옵션)
+)

@@ -1,41 +1,55 @@
-package com.example.meokpli.Main
+package com.example.meokpli.Main.Profile
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.meokpli.Auth.Network
+import com.example.meokpli.Main.OtherUserPageResponse
+import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.Main.Interaction.FollowApi
-import com.example.meokpli.Main.Interaction.OtherFollowListFragment
+import com.example.meokpli.Main.Interaction.PageResponse
+import com.example.meokpli.Main.Interaction.GetFollowResponseDto
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
+/**
+ * 남의 프로필 화면 (V2 응답만 사용)
+ * - 기간/지역 탭
+ * - 연도 헤더 + 2열 그리드, 지역별 가로 썸네일
+ * - 팔로우 토글
+ * - 팔로워/팔로잉 이동
+ * - '관계 API'가 없으므로, 내 팔로잉/팔로워 일부 페이지를 훑어 관계를 추정
+ */
 class OtherProfileFragment : Fragment() {
 
     private val socialApi: SocialInteractionApi by lazy { Network.socialApi(requireContext()) }
     private val followApi: FollowApi by lazy { Network.followApi(requireContext()) }
 
     private var nickname: String = ""
-    private var isMe = false
-    private var isFollowing = false   // 나 → 그
-    private var followsMe = false     // 그 → 나
-    private var followersCount = 0L
+    private var isMe: Boolean = false
+    private var isFollowing: Boolean = false   // 내가 그를 팔로우 중?
+    private var followsMe: Boolean = false     // 그가 나를 팔로우 중?
+    private var followersCount: Long = 0L
 
-    // Views
+    // 상단 뷰
     private lateinit var btnBack: ImageView
     private lateinit var ivAvatar: ImageView
     private lateinit var tvTitle: TextView
@@ -48,9 +62,23 @@ class OtherProfileFragment : Fragment() {
     private lateinit var viewSettingsLine: View
     private lateinit var btnFollow: MaterialButton
 
+    // 탭/리스트
+    private lateinit var rvMyFeeds: RecyclerView
+    private lateinit var textTabPeriod: TextView
+    private lateinit var textTabRegion: TextView
+    private lateinit var indicatorPeriod: View
+    private lateinit var indicatorRegion: View
+    private lateinit var tabPeriod: LinearLayout
+    private lateinit var tabRegion: LinearLayout
+    private lateinit var feedsAdapter: MyFeedThumbnailAdapter
+    private var isPeriodTab = true
+
+    // 마지막으로 받아온 V2 페이지
+    private var lastOtherPage: OtherUserPageResponse? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        nickname = requireArguments().getString(ARG_NICKNAME).orEmpty()
+        nickname = requireArguments().getString(ARG_NICKNAME)?.trim().orEmpty()
     }
 
     override fun onCreateView(
@@ -61,10 +89,19 @@ class OtherProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         bindViews(view)
         bindClicks()
+        setupList()
+        if (nickname.isBlank()) {
+            Toast.makeText(requireContext(), "잘못된 접근입니다(닉네임 없음).", Toast.LENGTH_SHORT).show()
+            findNavController().popBackStack()
+            return
+        }
+        android.util.Log.d("OtherProfile", "open for nickname='${nickname}'")
         loadProfile()
+
     }
 
     private fun bindViews(root: View) {
+        // 상단
         btnBack = root.findViewById(R.id.btnBack)
         ivAvatar = root.findViewById(R.id.imageAvatar)
         tvTitle = root.findViewById(R.id.textTitle)
@@ -76,49 +113,85 @@ class OtherProfileFragment : Fragment() {
         tvSettings = root.findViewById(R.id.textSettings)
         viewSettingsLine = root.findViewById(R.id.viewSettingsLine)
         btnFollow = root.findViewById(R.id.btnFollow)
+
+        // 남의 프로필: 설정 영역 숨김, 팔로우 버튼 노출
+        tvSettings.visibility = View.GONE
+        viewSettingsLine.visibility = View.GONE
+        btnFollow.visibility = View.VISIBLE
+
+        // 리스트 / 탭
+        rvMyFeeds = root.findViewById(R.id.rvMyFeeds)
+        rvMyFeeds.isNestedScrollingEnabled = false
+
+        textTabPeriod = root.findViewById(R.id.textTabPeriod)
+        textTabRegion = root.findViewById(R.id.textTabRegion)
+        indicatorPeriod = root.findViewById(R.id.indicatorPeriod)
+        indicatorRegion = root.findViewById(R.id.indicatorRegion)
+        tabPeriod = root.findViewById(R.id.tabPeriod)
+        tabRegion = root.findViewById(R.id.tabRegion)
     }
 
-    private fun bindClicks() {
-        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
 
-        // 필요 시 '타인의 팔로워/팔로잉 리스트' 화면으로 이동
+
+    private fun bindClicks() {
+        btnBack.setOnClickListener { findNavController().popBackStack() }
+
+        // 타인의 팔로잉/팔로워 리스트로 이동
         tvFollowing.setOnClickListener {
-            findNavController().navigate(
-                R.id.otherFollowListFragment,
-                bundleOf(
-                    "arg_nickname" to nickname,
-                    "arg_tab" to "following"
-                )
+            val args = bundleOf(
+                "arg_nickname" to nickname,
+                "arg_tab" to "following",
+                "arg_followers" to parseIntSafe(tvFollowers.text.toString()),
+                "arg_following" to parseIntSafe(tvFollowing.text.toString())
             )
+            findNavController().navigate(R.id.otherFollowListFragment, args)
         }
         tvFollowers.setOnClickListener {
-            findNavController().navigate(
-                R.id.otherFollowListFragment,
-                bundleOf(
-                    "arg_nickname" to nickname,
-                    "arg_tab" to "followers"
-                )
+            val args = bundleOf(
+                "arg_nickname" to nickname,
+                "arg_tab" to "followers",
+                "arg_followers" to parseIntSafe(tvFollowers.text.toString()),
+                "arg_following" to parseIntSafe(tvFollowing.text.toString())
             )
+            findNavController().navigate(R.id.otherFollowListFragment, args)
         }
 
+        // 탭 전환
+        tabPeriod.setOnClickListener { switchToPeriodTab() }
+        tabRegion.setOnClickListener { switchToRegionTab() }
 
+        // 팔로우 토글
         btnFollow.setOnClickListener { toggleFollow() }
     }
 
+    private fun setupList() {
+        feedsAdapter = MyFeedThumbnailAdapter()
+        rvMyFeeds.adapter = feedsAdapter
+    }
+
+    /** V2만 사용 + 관계 추정까지 포함 */
     private fun loadProfile() {
         view ?: return
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                android.util.Log.d("OtherProfile", "call getOtherUserPage nickname='${nickname}'")
                 // 1) 타인 프로필 조회
-                val res = withContext(Dispatchers.IO) { socialApi.getUserPage(nickname) }
+                val wrapper = withContext(Dispatchers.IO) { socialApi.getOtherUserPage(nickname) }
+                val res = wrapper.userPageDto
 
-                // 2) 바인딩 (널 안전)
-                tvNickname.text = res.userNickname ?: nickname
-                tvIntro.text = res.userIntro.orEmpty()
-                tvPost.text = (res.feedNum ?: 0L).toString()
-                tvFollowing.text = (res.followingNum ?: 0L).toString()
-                tvFollowers.text = (res.followerNum ?: 0L).toString()
-                followersCount = res.followerNum ?: 0L
+                android.util.Log.d(
+                    "OtherProfile",
+                    "resp userNickname='${res.userNickname}', isMe=${res.isMe}"
+                )
+                lastOtherPage = res
+
+// 2) 바인딩
+                tvNickname.text   = res.userNickname
+                tvIntro.text      = res.userIntro
+                tvPost.text       = res.feedNum.toString()
+                tvFollowing.text  = res.followingNum.toString()
+                tvFollowers.text  = res.followerNum.toString()
+                followersCount    = res.followerNum
 
                 val avatarUrl = res.profileUrl
                 if (!avatarUrl.isNullOrBlank()) {
@@ -131,8 +204,11 @@ class OtherProfileFragment : Fragment() {
                     ivAvatar.setImageResource(R.drawable.ic_profile_red)
                 }
 
-                // 3) 내 계정 여부
-                isMe = res.isMe == true
+                // 3) 기본 탭 = 기간
+                switchToPeriodTab()
+
+                // 4) 내 계정 여부
+                isMe = res.isMe
                 if (isMe) {
                     tvTitle.text = "내 계정"
                     tvSettings.visibility = View.VISIBLE
@@ -141,115 +217,166 @@ class OtherProfileFragment : Fragment() {
                     return@launch
                 }
 
-                // 4) 타인 계정 UI
+                // 5) 타인 계정 UI
                 tvTitle.text = "${res.userNickname ?: nickname}의 계정"
                 tvSettings.visibility = View.GONE
                 viewSettingsLine.visibility = View.GONE
                 btnFollow.visibility = View.VISIBLE
 
-                // 5) 관계 C안: 내 목록 일부 페이지를 훑어 상태 추정
-                val (f1, f2) = resolveRelationshipSlow(nickname, maxPages = 2, pageSize = 10)
-                isFollowing = f1
-                followsMe = f2
+                // 6) 관계 API가 없으므로, 내 목록 일부 페이지를 훑어 상태 추정
+                val (iFollowHim, heFollowsMe) = resolveRelationshipSlow(
+                    targetNickname = nickname,
+                    maxPages = 2,
+                    pageSize = 10
+                )
+                isFollowing = iFollowHim
+                followsMe = heFollowsMe
                 renderFollowUi()
 
             } catch (e: HttpException) {
-                val body = e.response()?.errorBody()?.string()
-                android.util.Log.e("OtherProfile", "HTTP ${e.code()} body=$body", e)
                 val msg = if (e.code() == 401) "로그인이 필요합니다." else "프로필 로딩 실패 (${e.code()})"
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                android.util.Log.e("OtherProfile", "Fail getUserPage", e)
                 Toast.makeText(requireContext(), "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private suspend fun resolveRelationshipSlow(
-        otherNickname: String,
-        maxPages: Int = 2,
-        pageSize: Int = 10
-    ): Pair<Boolean, Boolean> = withContext(Dispatchers.IO) {
-        val followingJob = async {
-            var page = 0
-            while (page < maxPages) {
-                val resp = followApi.getFollowingList(page = page, size = pageSize)
-                if (resp.content.any { it.nickname == otherNickname }) return@async true
-                if (resp.last || resp.content.isEmpty()) break
-                page++
+    // ====== 탭 전환 ======
+    private fun switchToPeriodTab() {
+        isPeriodTab = true
+        val glm = GridLayoutManager(requireContext(), 2)
+        glm.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int {
+                // 헤더는 2칸, 사진은 1칸
+                // (어댑터의 헤더 타입 상수에 의존하지 않기 위해 viewType == 0 가정: TYPE_YEAR_HEADER=0)
+                return if (feedsAdapter.getItemViewType(position) == 0) 2 else 1
             }
-            false
         }
-        val followersJob = async {
-            var page = 0
-            while (page < maxPages) {
-                val resp = followApi.getFollowerList(page = page, size = pageSize)
-                if (resp.content.any { it.nickname == otherNickname }) return@async true
-                if (resp.last || resp.content.isEmpty()) break
-                page++
-            }
-            false
-        }
-        followingJob.await() to followersJob.await()
+        rvMyFeeds.layoutManager = glm
+        setTabSelected(true)
+
+        lastOtherPage?.let { feedsAdapter.updateItems(buildYearItemsV2(it)) }
     }
 
-    private fun renderFollowUi() {
-        when {
-            isFollowing && followsMe -> {
-                btnFollow.text = "팔로잉"
-                btnFollow.setBackgroundResource(R.drawable.btn_basic)
-                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-            }
-            isFollowing -> {
-                btnFollow.text = "팔로잉"
-                btnFollow.setBackgroundResource(R.drawable.btn_basic)
-                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-            }
-            followsMe -> {
-                btnFollow.text = "맞팔로우"
-                btnFollow.setBackgroundResource(R.drawable.btn_mutual_follow)
-                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-            }
-            else -> {
-                btnFollow.text = "팔로우"
-                btnFollow.setBackgroundResource(R.drawable.btn_basic)
-                btnFollow.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-            }
+    private fun switchToRegionTab() {
+        isPeriodTab = false
+        rvMyFeeds.layoutManager = LinearLayoutManager(requireContext())
+        setTabSelected(false)
+
+        val v2 = lastOtherPage ?: run {
+            feedsAdapter.updateItems(emptyList())
+            return
         }
-        btnFollow.isEnabled = true
+        feedsAdapter.updateItems(buildRegionItemsV2(v2))
     }
 
+    private fun setTabSelected(isPeriod: Boolean) {
+        val active = Color.BLACK
+        val inactive = Color.parseColor("#E8E8E8")
+        textTabPeriod.setTextColor(if (isPeriod) active else inactive)
+        textTabRegion.setTextColor(if (!isPeriod) active else inactive)
+        indicatorPeriod.visibility = if (isPeriod) View.VISIBLE else View.INVISIBLE
+        indicatorRegion.visibility = if (!isPeriod) View.VISIBLE else View.INVISIBLE
+    }
+
+    // ====== 아이템 빌더(V2) ======
+    private fun buildYearItemsV2(p: OtherUserPageResponse): List<MyPageItem> {
+        val out = mutableListOf<MyPageItem>()
+        p.feedIdsGroupedByYear
+            .toSortedMap(compareByDescending { it })
+            .forEach { (year, feedIds) ->
+                out += MyPageItem.YearHeader(year)
+                feedIds.forEach { fid ->
+                    p.urlMappedByFeedId[fid]?.let { url -> out += MyPageItem.Photo(url) }
+                }
+            }
+        return out
+    }
+
+    private fun buildRegionItemsV2(p: OtherUserPageResponse): List<MyPageItem> {
+        return p.feedIdsGroupedByRegion.mapNotNull { (regionKey, feedIds) ->
+            val urls = feedIds.mapNotNull { p.urlMappedByFeedId[it] }
+            if (urls.isEmpty()) null else MyPageItem.RegionRow(regionKey, urls)
+        }
+    }
+
+    // ===== 팔로우 토글 =====
     private fun toggleFollow() {
         if (isMe) return
         btnFollow.isEnabled = false
 
-        val prevFollowing = isFollowing
-        val prevFollowersCount = followersCount
+        val target = tvNickname.text?.toString().orEmpty()
+        val now = isFollowing
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                if (isFollowing) {
-                    withContext(Dispatchers.IO) { socialApi.unFollow(nickname) }
-                    isFollowing = false
-                    followersCount = (followersCount - 1L).coerceAtLeast(0L)
-                } else {
-                    withContext(Dispatchers.IO) { socialApi.follow(nickname) }
-                    isFollowing = true
-                    followersCount = followersCount + 1L
+                withContext(Dispatchers.IO) {
+                    if (now) socialApi.unFollow(target) else socialApi.follow(target)
                 }
+                isFollowing = !now
+                followersCount += if (isFollowing) 1 else -1
+                if (followersCount < 0) followersCount = 0
                 tvFollowers.text = followersCount.toString()
                 renderFollowUi()
-            } catch (e: Exception) {
-                isFollowing = prevFollowing
-                followersCount = prevFollowersCount
-                tvFollowers.text = followersCount.toString()
-                renderFollowUi()
+            } catch (e: Throwable) {
                 Toast.makeText(requireContext(), "처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
             } finally {
                 btnFollow.isEnabled = true
             }
         }
     }
+
+    private fun renderFollowUi() {
+        if (isMe) {
+            btnFollow.visibility = View.GONE
+            return
+        }
+        btnFollow.visibility = View.VISIBLE
+        btnFollow.text = if (isFollowing) "팔로잉" else "팔로우"
+        // 필요 시 맞팔 표시:
+        // if (!isFollowing && followsMe) btnFollow.text = "맞팔하기"
+    }
+
+    // ===== 관계 추정 (관계 API 없음 → 내 팔로잉/팔로워 일부 페이지만 훑음) =====
+    private suspend fun resolveRelationshipSlow(
+        targetNickname: String,
+        maxPages: Int = 2,
+        pageSize: Int = 10,
+        sort: String = "id,DESC"
+    ): Pair<Boolean, Boolean> = withContext(Dispatchers.IO) {
+        var iFollowHim = false   // 내가 그를 팔로우 중?
+        var heFollowsMe = false  // 그가 나를 팔로우 중?
+
+        // 1) 내 팔로잉 목록에서 target 찾기 → 내가 그를 팔로우 중?
+        run {
+            var page = 0
+            while (page < maxPages && !iFollowHim) {
+                val resp: PageResponse<GetFollowResponseDto> =
+                    followApi.getFollowingList(page = page, size = pageSize, sort = sort) // ← 메서드명 교정
+                iFollowHim = resp.content.any { it.nickname == targetNickname }
+                if (resp.content.size < pageSize) break
+                page++
+            }
+        }
+
+        // 2) "내 팔로워 목록"에서 찾기 → 그가 나를 팔로우 중?
+        run {
+            var page = 0
+            while (page < maxPages && !heFollowsMe) {
+                val resp: PageResponse<GetFollowResponseDto> =
+                    followApi.getFollowerList(page = page, size = pageSize, sort = sort)  // ← 메서드명 교정
+                heFollowsMe = resp.content.any { it.nickname == targetNickname }
+                if (resp.content.size < pageSize) break
+                page++
+            }
+        }
+
+        iFollowHim to heFollowsMe
+    }
+
+    private fun parseIntSafe(s: String): Int =
+        s.filter { it.isDigit() }.toIntOrNull() ?: 0
 
     companion object {
         private const val ARG_NICKNAME = "arg_nickname"

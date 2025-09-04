@@ -16,10 +16,13 @@ class MyFeedThumbnailAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
-        private const val TYPE_YEAR_HEADER = 0
-        private const val TYPE_PHOTO = 1
-        private const val TYPE_REGION_ROW = 2
+        const val TYPE_YEAR_HEADER = 0 //public으로 변경
+        const val TYPE_PHOTO = 1
+        const val TYPE_REGION_ROW = 2
     }
+    //프래그먼트에서 상수볼라도 되도록 헬퍼 추가
+    fun isHeaderPosition(position: Int): Boolean =
+        items.getOrNull(position) is MyPageItem.YearHeader
 
     inner class YearHeaderVH(v: View) : RecyclerView.ViewHolder(v) {
         val tvHeader: TextView = v.findViewById(R.id.tvYear)

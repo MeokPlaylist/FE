@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.FollowUserAdapter
 import com.example.meokpli.Main.FollowUserUi
-import com.example.meokpli.Main.OtherProfileFragment
 import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers

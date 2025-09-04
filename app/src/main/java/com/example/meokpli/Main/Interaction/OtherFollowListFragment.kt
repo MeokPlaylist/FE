@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.OtherProfileFragment
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -87,7 +86,7 @@ class OtherFollowListFragment : Fragment() {
             onProfileClick = { row ->
                 // ✅ 여기서 OtherProfileFragment로 네비게이션
                 findNavController().navigate(
-                    R.id.OtherProfileFragment,
+                    R.id.otherProfileFragment,
                     bundleOf("arg_nickname" to row.nickname)
                 )
             },
