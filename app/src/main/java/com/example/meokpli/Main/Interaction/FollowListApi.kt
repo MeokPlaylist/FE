@@ -1,5 +1,6 @@
 package com.example.meokpli.Main.Interaction
 
+import com.example.meokpli.Main.SlicedResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -11,16 +12,6 @@ data class GetFollowResponseDto(
     val introduction: String?
 )
 
-// ── Spring Data Page 래퍼 ───────────────────────────────────────────────
-data class PageResponse<T>(
-    val content: List<T>,
-    val number: Int,
-    val size: Int,
-    val last: Boolean,
-    val totalElements: Long? = null,
-    val totalPages: Int? = null
-)
-
 // ── API 인터페이스 ─────────────────────────────────────────────────────
 interface FollowApi {
     // /user/getFollowerList?page=0&size=10&sort=id,DESC
@@ -29,7 +20,7 @@ interface FollowApi {
         @Query("page") page: Int,
         @Query("size") size: Int = 10,
         @Query("sort") sort: String = "id,DESC"
-    ): PageResponse<GetFollowResponseDto>
+    ): SlicedResponse<GetFollowResponseDto>
 
     // /user/getFollowingList?page=0&size=10&sort=id,DESC
     @GET("getFollowingList")
@@ -37,7 +28,7 @@ interface FollowApi {
         @Query("page") page: Int,
         @Query("size") size: Int = 10,
         @Query("sort") sort: String = "id,DESC"
-    ): PageResponse<GetFollowResponseDto>
+    ): SlicedResponse<GetFollowResponseDto>
     //남의 계정 팔로우 리스트 엔드포인트 만들어야함
     @GET("getOtherUserFollowerList")
     suspend fun getFollowerListOf(
@@ -45,7 +36,7 @@ interface FollowApi {
         @Query("page") page: Int,
         @Query("size") size: Int = 10,
         @Query("sort") sort: String = "id,DESC"
-    ): PageResponse<GetFollowResponseDto>
+    ): SlicedResponse<GetFollowResponseDto>
 
     @GET("getOtherUserFollowingList")
     suspend fun getFollowingListOf(
@@ -53,7 +44,7 @@ interface FollowApi {
         @Query("page") page: Int,
         @Query("size") size: Int = 10,
         @Query("sort") sort: String = "id,DESC"
-    ): PageResponse<GetFollowResponseDto>
+    ): SlicedResponse<GetFollowResponseDto>
 
 
 }

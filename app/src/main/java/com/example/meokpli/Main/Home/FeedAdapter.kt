@@ -2,7 +2,6 @@ package com.example.meokpli.feed
 
 import android.content.Context
 import android.graphics.Color
-import android.media.Image
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextUtils
@@ -25,7 +24,7 @@ import com.facebook.shimmer.ShimmerDrawable
 import androidx.viewpager2.widget.ViewPager2
 
 
-class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdapter.VH>() {
+class FeedAdapter(private var items: MutableList<Feed>) : RecyclerView.Adapter<FeedAdapter.VH>() {
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
         val tvUser: TextView = v.findViewById(R.id.tvUserName)
@@ -37,6 +36,11 @@ class FeedAdapter(private var items: List<Feed>) : RecyclerView.Adapter<FeedAdap
         val likeCount: TextView = v.findViewById(R.id.likeCount)
         val commentCount: TextView = v.findViewById(R.id.commentCount)
         val viewPager: androidx.viewpager2.widget.ViewPager2 = v.findViewById(R.id.viewPagerPhotos)
+    }
+    fun addItems(newItems: List<Feed>) {
+        val start = items.size
+        items.addAll(newItems)
+        notifyItemRangeInserted(start, newItems.size)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {

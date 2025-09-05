@@ -21,8 +21,8 @@ import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.OtherUserPageResponse
 import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.Main.Interaction.FollowApi
-import com.example.meokpli.Main.Interaction.PageResponse
 import com.example.meokpli.Main.Interaction.GetFollowResponseDto
+import com.example.meokpli.Main.SlicedResponse
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -351,23 +351,25 @@ class OtherProfileFragment : Fragment() {
         // 1) 내 팔로잉 목록에서 target 찾기 → 내가 그를 팔로우 중?
         run {
             var page = 0
-            while (page < maxPages && !iFollowHim) {
-                val resp: PageResponse<GetFollowResponseDto> =
-                    followApi.getFollowingList(page = page, size = pageSize, sort = sort) // ← 메서드명 교정
+            var hasNext = true
+            while (page < maxPages && hasNext && !iFollowHim) {
+                val resp: SlicedResponse<GetFollowResponseDto> =
+                    followApi.getFollowingList(page = page, size = pageSize, sort = sort)
                 iFollowHim = resp.content.any { it.nickname == targetNickname }
-                if (resp.content.size < pageSize) break
+                hasNext = resp.hasNext
                 page++
             }
         }
 
-        // 2) "내 팔로워 목록"에서 찾기 → 그가 나를 팔로우 중?
+        // 2) 내 팔로워 목록에서 target 찾기 → 그가 나를 팔로우 중?
         run {
             var page = 0
-            while (page < maxPages && !heFollowsMe) {
-                val resp: PageResponse<GetFollowResponseDto> =
-                    followApi.getFollowerList(page = page, size = pageSize, sort = sort)  // ← 메서드명 교정
+            var hasNext = true
+            while (page < maxPages && hasNext && !heFollowsMe) {
+                val resp: SlicedResponse<GetFollowResponseDto> =
+                    followApi.getFollowerList(page = page, size = pageSize, sort = sort)
                 heFollowsMe = resp.content.any { it.nickname == targetNickname }
-                if (resp.content.size < pageSize) break
+                hasNext = resp.hasNext
                 page++
             }
         }

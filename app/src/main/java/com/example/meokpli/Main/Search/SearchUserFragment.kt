@@ -33,6 +33,11 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
     private var searchJob: Job? = null
     private var lastKeyword: String? = null // 마지막 검색어 저장용
 
+    private var currentPage = 0
+    private val pageSize = 10
+    private var isLoading = false
+    private var hasNext = true
+
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,19 +49,25 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
 
         // 검색 결과 어댑터
         adapter = UserAdapter(mutableListOf()) { user ->
-
-            // user는 클릭한 item의 UserSearchDto
-            val bundle = Bundle().apply {
-                putString("arg_nickname", user.nickname)
-            }
-
-            // NavController 이용해서 이동
-            requireParentFragment()
-                .findNavController()
+            val bundle = Bundle().apply { putString("arg_nickname", user.nickname) }
+            requireParentFragment().findNavController()
                 .navigate(R.id.action_searchUserFragment_to_otherProfileFragment, bundle)
         }
         recyclerUsers.layoutManager = LinearLayoutManager(requireContext())
         recyclerUsers.adapter = adapter
+
+        recyclerUsers.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(rv, dx, dy)
+                val lm = rv.layoutManager as LinearLayoutManager
+                val lastVisible = lm.findLastVisibleItemPosition()
+                val total = lm.itemCount
+
+                if (!isLoading && hasNext && lastVisible >= total - 3) {
+                    runSearch(lastKeyword ?: return, nextPage = true)
+                }
+            }
+        })
 
         // 최근 검색어 어댑터
         recentAdapter = RecentAdapter(
@@ -75,7 +86,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
         // 앱 시작 시 최근 검색 로드
         loadRecentSearches()
 
-        // ✅ savedInstanceState에서 복원
+        // savedInstanceState에서 복원
         savedInstanceState?.getString("lastKeyword")?.let { restored ->
             etSearch.setText(restored)
             runSearch(restored) // 검색 결과 다시 실행
@@ -133,22 +144,32 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
     }
 
     // 검색 실행
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
-    private fun runSearch(keyword: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun runSearch(keyword: String, resetPage: Boolean = false, nextPage: Boolean = false) {
         val api = Network.userApi(requireContext())
+
+        if (resetPage) {
+            currentPage = 0
+            hasNext = true
+            adapter.clearItems()
+        }
+        if (nextPage) currentPage++
+
+        isLoading = true
         lifecycleScope.launch {
             try {
-                val response = api.searchUsers(keyword)
+                val response = api.searchUsers(keyword, currentPage, pageSize)
 
-                // 최근검색 숨기고 결과 표시
                 layoutRecent.visibility = View.GONE
                 recyclerUsers.visibility = View.VISIBLE
 
-                adapter.submitList(response.content)
-                lastKeyword = keyword // 상태 저장
-
+                adapter.addItems(response.content)
+                hasNext = response.hasNext
+                lastKeyword = keyword
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                isLoading = false
             }
         }
     }

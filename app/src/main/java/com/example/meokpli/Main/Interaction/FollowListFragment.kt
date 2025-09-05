@@ -16,14 +16,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
-import com.example.meokpli.Main.FollowUserAdapter
-import com.example.meokpli.Main.FollowUserUi
+import com.example.meokpli.Main.Interaction.FollowUserAdapter
+import com.example.meokpli.Main.Interaction.FollowUserUi
 import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.navigation.fragment.findNavController
+import com.example.meokpli.Main.SlicedResponse
 
 
 class FollowListFragment : Fragment() {
@@ -230,12 +231,10 @@ class FollowListFragment : Fragment() {
             isLoading = true
             if (!append) showLoading(true)
             try {
-                val resp = withContext(Dispatchers.IO) { api.getFollowerList(page = page) }
-                // ✅ 내가 팔로워 목록을 본 김에 Set도 누적(정확도 ↑)
+                val resp = withContext(Dispatchers.IO) { api.getFollowerList(page, size = 20) }
                 myFollowersSet += resp.content.map { it.nickname }
-
                 if (!append) showLoading(false)
-                applyPage(resp, append, emptyMsg = "팔로워가 없습니다.")
+                applySlice(resp, append, "팔로워가 없습니다.")
             } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로워 정보를 불러올 수 없습니다.")
@@ -245,18 +244,17 @@ class FollowListFragment : Fragment() {
         }
     }
 
+
     private fun loadFollowingPage(page: Int, append: Boolean) {
         lifecycleScope.launch {
             if (isLoading) return@launch
             isLoading = true
             if (!append) showLoading(true)
             try {
-                val resp = withContext(Dispatchers.IO) { api.getFollowingList(page = page) }
-                // ✅ 내가 팔로잉 목록을 본 김에 Set도 누적
-                myFollowingSet += resp.content.map { it.nickname }
-
+                val resp = withContext(Dispatchers.IO) { api.getFollowingList(page, size = 20) }
+                myFollowersSet += resp.content.map { it.nickname }
                 if (!append) showLoading(false)
-                applyPage(resp, append, emptyMsg = "팔로잉이 없습니다.")
+                applySlice(resp, append, "팔로잉이 없습니다.")
             } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로잉 정보를 불러올 수 없습니다.")
@@ -266,16 +264,17 @@ class FollowListFragment : Fragment() {
         }
     }
 
+
     // Page 응답 공통 반영 (상태 보정 포함)
-    private fun applyPage(
-        page: PageResponse<GetFollowResponseDto>,
+    // SliceResponse 사용
+    private fun applySlice(
+        slice: SlicedResponse<GetFollowResponseDto>,
         append: Boolean,
         emptyMsg: String
     ) {
-        // ✅ 상태 보정: 내 Set 포함 여부로 isFollowing/followsMe 계산
-        val newUi = page.content.map { dto ->
+        val newUi = slice.content.map { dto ->
             val base = FollowUserUi(
-                id = dto.nickname.hashCode().toLong(), // 가능하면 BE userId 사용 권장
+                id = dto.nickname.hashCode().toLong(),
                 name = dto.nickname,
                 subtitle = dto.introduction.orEmpty(),
                 avatarUrl = dto.profileImgKey?.let { IMAGE_BASE + it }
@@ -283,17 +282,16 @@ class FollowListFragment : Fragment() {
             when (currentTab) {
                 FollowTab.FOLLOWING -> base.copy(
                     isFollowing = true,
-                    followsMe  = myFollowersSet.contains(dto.nickname)
+                    followsMe = myFollowersSet.contains(dto.nickname)
                 )
                 FollowTab.FOLLOWERS -> base.copy(
                     isFollowing = myFollowingSet.contains(dto.nickname),
-                    followsMe  = true
+                    followsMe = true
                 )
             }
         }
 
         val merged = if (append) adapter.currentList + newUi else newUi
-
         if (merged.isEmpty()) {
             showEmpty(emptyMsg)
         } else {
@@ -301,9 +299,9 @@ class FollowListFragment : Fragment() {
             adapter.submitList(merged)
         }
 
-        currentPage = page.number
-        isLastPage = page.last
-        currentTotalCount = page.totalElements ?: merged.size.toLong()
+        currentPage = slice.page
+        isLastPage = !slice.hasNext   // ✅ Slice는 last 대신 hasNext
+        currentTotalCount = merged.size.toLong() // ✅ totalElements 대신 지금까지 merge한 size
         headerCount.text = "%,d".format(currentTotalCount)
     }
 

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.meokpli.Auth.Network
+import com.example.meokpli.Main.SlicedResponse
 import com.example.meokpli.R
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -167,31 +168,38 @@ class OtherFollowListFragment : Fragment() {
         emptyView.visibility = View.VISIBLE
     }
 
-    private fun applyPage(
-        resp: PageResponse<GetFollowResponseDto>,
+    private fun applySlice(
+        resp: SlicedResponse<GetFollowResponseDto>,
         append: Boolean,
         emptyMsg: String
     ) {
-        isLastPage = resp.last
-        currentPage = resp.number
+        isLastPage = !resp.hasNext
+        currentPage = resp.page
 
         fun mapToUi(d: GetFollowResponseDto) = UserRowUi(
             nickname = d.nickname,
             profileImgUrl = d.profileImgKey,
             introduction = d.introduction,
             isFollowing = myFollowingSet.contains(d.nickname),
-            followsMe  = myFollowersSet.contains(d.nickname)
+            followsMe = myFollowersSet.contains(d.nickname)
         )
+
         val newList = resp.content.map(::mapToUi)
 
         if (append) {
             adapter.append(newList)
         } else {
-            if (newList.isEmpty()) showEmpty(emptyMsg)
-            else { emptyView.visibility = View.GONE; adapter.submitList(newList) }
+            if (newList.isEmpty()) {
+                showEmpty(emptyMsg)
+            } else {
+                emptyView.visibility = View.GONE
+                adapter.submitList(newList)
+            }
         }
 
-        headerCount.text = (resp.totalElements ?: (adapter.itemCount)).toString()
+        // Slice에는 totalElements 없음 → 지금까지 로드된 개수로 표시
+        currentTotalCount = adapter.itemCount
+        headerCount.text = "%,d".format(currentTotalCount)
     }
 
     private fun loadFollowerPage(page: Int, append: Boolean) {
@@ -201,10 +209,10 @@ class OtherFollowListFragment : Fragment() {
             if (!append) showLoading(true)
             try {
                 val resp = withContext(Dispatchers.IO) {
-                    api.getFollowerListOf(nickname = targetNickname, page = page)
+                    api.getFollowerListOf(nickname = targetNickname, page = page, size = 20)
                 }
                 if (!append) showLoading(false)
-                applyPage(resp, append, emptyMsg = "${targetNickname}의 팔로워가 없습니다.")
+                applySlice(resp, append, emptyMsg = "${targetNickname}의 팔로워가 없습니다.")
             } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로워 정보를 불러올 수 없습니다.")
@@ -221,10 +229,10 @@ class OtherFollowListFragment : Fragment() {
             if (!append) showLoading(true)
             try {
                 val resp = withContext(Dispatchers.IO) {
-                    api.getFollowingListOf(nickname = targetNickname, page = page)
+                    api.getFollowingListOf(nickname = targetNickname, page = page, size = 20)
                 }
                 if (!append) showLoading(false)
-                applyPage(resp, append, emptyMsg = "${targetNickname}의 팔로잉이 없습니다.")
+                applySlice(resp, append, emptyMsg = "${targetNickname}의 팔로잉이 없습니다.")
             } catch (_: Exception) {
                 if (!append) showLoading(false)
                 if (!append) showEmpty("팔로잉 정보를 불러올 수 없습니다.")
@@ -233,6 +241,7 @@ class OtherFollowListFragment : Fragment() {
             }
         }
     }
+
 
     private fun toggleFollow(
         targetNickname: String,

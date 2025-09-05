@@ -1,4 +1,4 @@
-package com.example.meokpli.Main
+package com.example.meokpli.Main.Interaction
 
 import android.view.LayoutInflater
 import android.view.View
@@ -26,7 +26,7 @@ class FollowUserAdapter(
 
     private val onItemClick: (FollowUserUi) -> Unit,
     private val onActionClick: (FollowUserUi) -> Unit
-) : ListAdapter<FollowUserUi, FollowUserAdapter.ItemVH>(DIFF) {
+) : androidx.recyclerview.widget.ListAdapter<FollowUserUi, FollowUserAdapter.ItemVH>(DIFF) {
 
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<FollowUserUi>() {

@@ -8,7 +8,7 @@
     <!-- 탑레벨 5개 -->
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.example.meokpli.Main.HomeFragment"
+        android:name="com.example.meokpli.Main.Home.HomeFragment"
         android:label="홈" />
 
     <fragment

@@ -13,6 +13,16 @@ class UserAdapter(
     private val items: MutableList<UserSearchDto>,
     private val onItemClick: (UserSearchDto) -> Unit // ✅ 클릭 콜백 추가
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+    fun addItems(newItems: List<UserSearchDto>) {
+        val start = items.size
+        items.addAll(newItems)
+        notifyItemRangeInserted(start, newItems.size)
+    }
+
+    fun clearItems() {
+        items.clear()
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val view = LayoutInflater.from(parent.context)
