@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.R
 
 class RestaurantAdapter(
-    private val restaurants: List<Restaurant>
+    private var restaurants: List<Restaurant>
 ) : RecyclerView.Adapter<RestaurantAdapter.RestaurantViewHolder>() {
 
     inner class RestaurantViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -29,6 +29,11 @@ class RestaurantAdapter(
     }
 
     override fun getItemCount() = restaurants.size
+
+    fun updateData(newItems: List<Restaurant>) {
+        restaurants = newItems    // var로 선언된 필드 갱신
+        notifyDataSetChanged()
+    }
 }
 
 data class Restaurant(
