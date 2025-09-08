@@ -1,0 +1,94 @@
+<!-- res/layout/activity_onboarding_step4.xml -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:paddingHorizontal="20dp">
+
+    <!-- 상단 진행바 (4칸 전부 활성) -->
+    <LinearLayout
+        android:id="@+id/progressBar"
+        android:layout_width="0dp"
+        android:layout_height="6dp"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+    </LinearLayout>
+
+    <!-- 경고 아이콘 -->
+    <ImageView
+        android:id="@+id/ivWarning"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="60dp"
+        android:src="@drawable/ic_warning"
+        android:contentDescription="@string/empty"
+        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+    <!-- 아이콘 벡터: ic_warning.xml 사용. :contentReference[oaicite:0]{index=0} -->
+
+    <!-- 안내 텍스트 -->
+    <TextView
+        android:id="@+id/tvGuide"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="앱 사용을 위해 카메라의 위치 정보가 반드시 활성화되어야 합니다.\n\n위치 정보가 비활성화된 경우,\n일부 기능 사용에 제한이 있을 수 있습니다."
+        android:textColor="#111111"
+        android:textSize="12sp"
+        android:fontFamily="@font/inter_semibold"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/ivWarning"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 하단 MaterialButton (완료) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonDone"
+        android:layout_width="350dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="60dp"
+        android:text="완료"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:fontFamily="@font/inter_semibold"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="0dp"
+        app:backgroundTint="@null"
+        android:background="@drawable/btn_basic"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
