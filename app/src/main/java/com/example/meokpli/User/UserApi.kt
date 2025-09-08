@@ -45,9 +45,12 @@ interface UserApi {
     @POST("duplicateCheck")
     suspend fun checkNickname(@Body request: NicknameCheckRequest): NicknameCheckResponse
 
-
-
-
+    @GET("/user/search")
+    suspend fun searchUsers(
+        @Query("nickname") nickname: String,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 10
+    ): UserSearchResponse
 }
 
 data class FindUserRequest(val name: String, val email: String)

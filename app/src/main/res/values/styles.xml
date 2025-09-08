@@ -17,11 +17,12 @@
         <item name="android:layout_height">1dp</item>
         <item name="android:background">#EEEEEE</item>
     </style>
-
-    <style name="AppBottomSheetDialogTheme" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
-        <!-- 선택: 라운드 모서리 등 전역 커스텀 -->
-        <!--<item name="shapeAppearanceSmallComponent">@style/AppShape.RoundTop20</item>-->
+    <style name="AppShape" parent="ShapeAppearance.Material3.Corner.Medium">
+        <!-- 필요하다면 각 모서리 라운드 값 지정 -->
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
     </style>
+
 
     <!-- 선택 커스텀 예시 -->
     <style name="AppShape.RoundTop20">

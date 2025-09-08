@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import androidx.annotation.RequiresApi
@@ -17,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.Resettable
 import com.example.meokpli.R
+import com.example.meokpli.databinding.FragmentSearchUserBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -37,6 +40,18 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
     private val pageSize = 10
     private var isLoading = false
     private var hasNext = true
+
+    private var _binding: FragmentSearchUserBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentSearchUserBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -163,7 +178,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
                 layoutRecent.visibility = View.GONE
                 recyclerUsers.visibility = View.VISIBLE
 
-                adapter.addItems(response.content)
+                adapter.submitList(response.content)
                 hasNext = response.hasNext
                 lastKeyword = keyword
             } catch (e: Exception) {

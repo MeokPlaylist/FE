@@ -31,6 +31,7 @@ import com.example.meokpli.Main.FeedRequestBuilder
 import com.example.meokpli.Main.MainActivity
 import com.example.meokpli.Main.MainApi
 import com.example.meokpli.R
+import com.example.meokpli.databinding.FragmentFeedBinding
 import com.example.meokpli.gallery.GalleryBottomSheet
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -55,17 +56,22 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     private val selectedUris = mutableListOf<Uri>()             // 사진 선택 목록
     private var sel = SelectedCategories(emptyList(), emptyList(), emptyList())
     private var selectedPayload: ArrayList<String> = arrayListOf() // 서버 전송용(moods/foods/companions/regions)
-    private lateinit var etContent: EditText
     private var hashtagWatcher: TextWatcher? = null
     private val HASHTAG_COLOR = Color.parseColor("#FF0000")
     private val STATE_CONTENT = "state_feed_content"
     // dp helper
     private fun View.dp(v: Float) = v * resources.displayMetrics.density
+    private var _binding: FragmentFeedBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View = inflater.inflate(R.layout.fragment_feed, container, false)
-
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFeedBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -79,12 +85,11 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         cameraBtn = view.findViewById(R.id.btnCamera)
         rvPhotos = view.findViewById(R.id.rvPhotos)
         uploadBtn = view.findViewById(R.id.btnUpload)
-        etContent = view.findViewById(R.id.etContent)
 
         // 내용 복원
         savedInstanceState?.getString(STATE_CONTENT)?.let { restored ->
-            etContent.setText(restored)
-            etContent.setSelection(restored.length)
+            binding.etContent.setText(restored)
+            binding.etContent.setSelection(restored.length)
         }
 
         // 리사이클러뷰
@@ -107,7 +112,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 }
             }
         }
-        etContent.addTextChangedListener(hashtagWatcher)
+        binding.etContent.addTextChangedListener(hashtagWatcher)
 
         // 1) ItemTouchHelper: 롱프레스 드래그 비활성화(아이템 내 핸들에서만)
         val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(
@@ -202,7 +207,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 Toast.makeText(requireContext(), "사진을 최소 1장 이상 선택해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val contentText = etContent.text?.toString()?.trim().orEmpty()
+            val contentText = binding.etContent.text?.toString()?.trim().orEmpty()
             val contentNullable = contentText.takeIf { it.isNotBlank() } // 비었으면 null
 
             val categoryReq = CategoryRequest(
@@ -402,7 +407,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
     /** EditText의 현재 내용을 깔끔하게 가져오기 */
     private fun getFeedContent(): String =
-        etContent.text?.toString()?.trim().orEmpty()
+        binding.etContent.text?.toString()?.trim().orEmpty()
 
     /** 실시간 색상 하이라이트: #부터 다음 공백 전까지 빨간색 */
     private fun highlightHashtags(editable: Editable) {
