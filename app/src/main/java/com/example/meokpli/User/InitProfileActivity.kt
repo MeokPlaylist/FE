@@ -9,15 +9,14 @@ import android.provider.MediaStore
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
+import android.view.View
 import android.widget.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.meokpli.Auth.Network
-import kotlinx.coroutines.*
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import com.example.meokpli.R
+import kotlinx.coroutines.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -32,12 +31,18 @@ class InitProfileActivity : AppCompatActivity() {
     private lateinit var textIntroCount: TextView
     private lateinit var editIntro: EditText
     private lateinit var buttonNext: Button
+    private lateinit var tvNicknameError: TextView
 
     private val PICK_IMAGE_REQUEST = 1
     private val NICKNAME_LIMIT = 10
     private val INTRO_LIMIT = 30
 
     private lateinit var api: UserApi
+
+    // 닉네임 실시간 중복검사 디바운싱용
+    private var checkJob: Job? = null
+    private var lastCheckedNickname: String = ""
+    private var lastIsAvailable: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +54,10 @@ class InitProfileActivity : AppCompatActivity() {
         textIntroCount = findViewById(R.id.textIntroCount)
         editIntro = findViewById(R.id.editIntro)
         buttonNext = findViewById(R.id.buttonNext)
+        tvNicknameError = findViewById(R.id.tvNicknameError)
 
-        api = Network.userApi(this)
+        // /user/ 베이스 API 사용 (AuthInterceptor로 토큰 자동 부착)
+        api = Network.userApi(this) // :contentReference[oaicite:2]{index=2}
 
         onBackPressedDispatcher.addCallback(this) {
             val intent = Intent(this@InitProfileActivity, ConsentFormActivity::class.java)
@@ -63,16 +70,35 @@ class InitProfileActivity : AppCompatActivity() {
         editNickname.filters = arrayOf(InputFilter.LengthFilter(NICKNAME_LIMIT))
         editIntro.filters = arrayOf(InputFilter.LengthFilter(INTRO_LIMIT))
 
-        // 닉네임 글자 수 실시간 표시
+        // 닉네임 글자 수 실시간 표시 + 중복 검사
         editNickname.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val count = s?.length ?: 0
                 textNicknameCount.text = "$count/$NICKNAME_LIMIT"
+
+                val nickname = s?.toString()?.trim().orEmpty()
+
+                // 비어있으면 에러 제거 및 상태 초기화
+                if (nickname.isEmpty()) {
+                    tvNicknameError.text = ""
+                    tvNicknameError.visibility = View.GONE
+                    lastCheckedNickname = ""
+                    lastIsAvailable = null
+                    return
+                }
+
+                // 이전 검사 취소 + 간단 디바운스
+                checkJob?.cancel()
+                checkJob = lifecycleScope.launch {
+                    delay(400)
+                    performDuplicateCheck(nickname)
+                }
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
-        //소개글 글자수 없데이트
+
+        // 소개글 글자수 업데이트
         editIntro.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val count = s?.length ?: 0
@@ -82,14 +108,13 @@ class InitProfileActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-
         // 갤러리에서 사진 선택
         imageProfile.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             startActivityForResult(intent, PICK_IMAGE_REQUEST)
         }
 
-        // 다음 버튼 클릭 시 서버 저장
+        // 다음 버튼 클릭 시: 최종 닉네임 중복 확인 후 저장
         buttonNext.setOnClickListener {
             val nickname = editNickname.text.toString().trim()
             val intro = editIntro.text.toString().trim()
@@ -98,9 +123,29 @@ class InitProfileActivity : AppCompatActivity() {
                 showToast("닉네임을 입력해주세요.")
                 return@setOnClickListener
             }
+
             lifecycleScope.launch(Dispatchers.IO) {
+                // 마지막 실시간 검사 결과 대신, 최종 한 번 더 서버 확인
+                val isAvailable = runCatching {
+                    api.checkNickname(NicknameCheckRequest(nickname)).isAvailable
+                }.getOrElse {
+                    withContext(Dispatchers.Main) {
+                        tvNicknameError.text = "중복 검사 실패: ${it.message}"
+                        tvNicknameError.visibility = View.VISIBLE
+                    }
+                    return@launch
+                }
+
+                if (!isAvailable) {
+                    withContext(Dispatchers.Main) {
+                        tvNicknameError.text = "이미 사용 중인 닉네임입니다."
+                        tvNicknameError.visibility = View.VISIBLE
+                    }
+                    return@launch
+                }
+
+                // 중복 아님 → 프로필 저장
                 runCatching {
-                    // ✅ 헤더 전달 불필요 (인터셉터가 Bearer 자동 부착)
                     api.saveDetail(UserDetailRequest(nickname, intro))
                 }.onSuccess {
                     withContext(Dispatchers.Main) {
@@ -115,6 +160,46 @@ class InitProfileActivity : AppCompatActivity() {
             }
         }
     }
+
+    private suspend fun performDuplicateCheck(nickname: String) {
+        // 같은 문자열에 대한 중복 호출 방지(선택)
+        if (lastCheckedNickname == nickname && lastIsAvailable != null) {
+            withContext(Dispatchers.Main) {
+                if (lastIsAvailable == false) {
+                    tvNicknameError.text = "이미 사용 중인 닉네임입니다."
+                    tvNicknameError.visibility = View.VISIBLE
+                } else {
+                    tvNicknameError.text = ""
+                    tvNicknameError.visibility = View.GONE
+                }
+            }
+            return
+        }
+
+        withContext(Dispatchers.IO) {
+            runCatching {
+                api.checkNickname(NicknameCheckRequest(nickname))
+            }.onSuccess { resp ->
+                lastCheckedNickname = nickname
+                lastIsAvailable = resp.isAvailable
+                withContext(Dispatchers.Main) {
+                    if (!resp.isAvailable) {
+                        tvNicknameError.text = "이미 사용 중인 닉네임입니다."
+                        tvNicknameError.visibility = View.VISIBLE
+                    } else {
+                        tvNicknameError.text = ""
+                        tvNicknameError.visibility = View.GONE
+                    }
+                }
+            }.onFailure { e ->
+                withContext(Dispatchers.Main) {
+                    tvNicknameError.text = "중복 검사 실패: ${e.message}"
+                    tvNicknameError.visibility = View.VISIBLE
+                }
+            }
+        }
+    }
+
     @Deprecated("Use ActivityResultContracts")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -127,7 +212,7 @@ class InitProfileActivity : AppCompatActivity() {
                     imageProfile.setImageBitmap(bmp)
                 }
 
-                val file = createTempFileFromUriSafe(imageUri) // ← 수정된 안전 함수
+                val file = createTempFileFromUriSafe(imageUri)
                 val part = MultipartBody.Part.createFormData(
                     name = "profileImg", // 서버 필드명과 동일해야 함
                     filename = file.name,
@@ -136,7 +221,6 @@ class InitProfileActivity : AppCompatActivity() {
 
                 lifecycleScope.launch(Dispatchers.IO) {
                     runCatching {
-                        // ✅ 헤더 전달 불필요
                         api.savePhoto(part)
                     }.onSuccess {
                         withContext(Dispatchers.Main) { showToast("이미지 업로드 성공!") }
@@ -150,7 +234,6 @@ class InitProfileActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun createTempFileFromUriSafe(uri: Uri): File {
         val suffix = when (contentResolver.getType(uri)) {
@@ -167,4 +250,5 @@ class InitProfileActivity : AppCompatActivity() {
 
     private fun showToast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }
+
 

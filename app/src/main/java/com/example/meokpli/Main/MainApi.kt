@@ -22,6 +22,8 @@ interface MainApi {
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 10
     ): SlicedResponse<Feed>
+
+
 }
 data class CreateFeedBody(
     val content: String?,

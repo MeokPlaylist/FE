@@ -24,7 +24,10 @@ import com.facebook.shimmer.ShimmerDrawable
 import androidx.viewpager2.widget.ViewPager2
 
 
-class FeedAdapter(private var items: MutableList<Feed>) : RecyclerView.Adapter<FeedAdapter.VH>() {
+class FeedAdapter(private var items: MutableList<Feed>,
+                  private val onCommentClick: (feedId: Long) -> Unit,
+                  private val onMoreClick: (Long) -> Unit
+    ) : RecyclerView.Adapter<FeedAdapter.VH>() {
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
         val tvUser: TextView = v.findViewById(R.id.tvUserName)
@@ -36,6 +39,7 @@ class FeedAdapter(private var items: MutableList<Feed>) : RecyclerView.Adapter<F
         val likeCount: TextView = v.findViewById(R.id.likeCount)
         val commentCount: TextView = v.findViewById(R.id.commentCount)
         val viewPager: androidx.viewpager2.widget.ViewPager2 = v.findViewById(R.id.viewPagerPhotos)
+        val btnMore: ImageView = v.findViewById(R.id.btnMore)
     }
     fun addItems(newItems: List<Feed>) {
         val start = items.size
@@ -57,6 +61,12 @@ class FeedAdapter(private var items: MutableList<Feed>) : RecyclerView.Adapter<F
             h.likeCount.text = item.likeCount.toString()
         if (item.commentCount != 0.toLong())
             h.commentCount.text = item.commentCount.toString()
+        // 댓글 바텀시트
+        h.btnComment.setOnClickListener { onCommentClick(item.feedId) }
+        h.commentCount.setOnClickListener { onCommentClick(item.feedId) }
+        // 점3개 → 피드 액션 바텀시트
+        h.btnMore.setOnClickListener { onMoreClick(item.feedId) }
+
 
         // 내용 + 해시태그
         val tags = item.hashTag?.filter { it.isNotBlank() }?.joinToString(" ") { "#$it" }.orEmpty()
@@ -151,6 +161,12 @@ class FeedAdapter(private var items: MutableList<Feed>) : RecyclerView.Adapter<F
             indicatorLayout.visibility = View.GONE
             h.tvPageBadge.text = "0/0"
         }
+        // ✅ 댓글 버튼/숫자 클릭 시 BottomSheet 열기
+        h.btnComment.setOnClickListener { onCommentClick(item.feedId) }
+        h.commentCount.setOnClickListener { onCommentClick(item.feedId) }
+
+
+
     }
     private fun preloadRemainingImages(context: Context, urls: List<String>) {
         val imageLoader = context.imageLoader
@@ -244,10 +260,20 @@ class FeedAdapter(private var items: MutableList<Feed>) : RecyclerView.Adapter<F
 
         override fun getItemCount(): Int = urls.size
     }
+    fun updateCommentCount(feedId: Long, newCount: Long) {
+        val idx = items.indexOfFirst { it.feedId == feedId }
+        if (idx != -1) {
+            items[idx] = items[idx].copy(commentCount = newCount)
+            notifyItemChanged(idx, "comment_count")
+        }
+    }
+
+
 
 }
 
     data class Feed(
+    val feedId: Long,
     val nickName: String,
     val content: String?,
     val hashTag: List<String>?,

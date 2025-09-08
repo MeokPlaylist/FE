@@ -1,6 +1,7 @@
 package com.example.meokpli.Auth
 
 import android.content.Context
+import com.example.meokpli.Main.Home.CommentApi
 import com.example.meokpli.Main.Interaction.FollowApi
 import com.example.meokpli.Main.MainApi
 import okhttp3.OkHttpClient
@@ -58,6 +59,10 @@ object Network {
     fun socialApi(context: Context): SocialInteractionApi =
         retrofit(SOCIAL_BASE_URL, debugClient(context, withAuth = true))
             .create(SocialInteractionApi::class.java)
+
+    fun commentApi(context: Context): CommentApi =
+        retrofit(FEED_BASE_URL, debugClient(context, withAuth = true))
+            .create(CommentApi::class.java)
 }
 /*
 4) Network (공용 Retrofit/OkHttp 팩토리)

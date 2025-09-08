@@ -42,12 +42,10 @@ interface UserApi {
     @GET("mypage")
     suspend fun  getMyPage(): MyPageResponse
 
-    @GET("/user/search")
-    suspend fun searchUsers(
-        @Query("nickname") nickname: String,
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 10
-    ): UserSearchResponse
+    @POST("duplicateCheck")
+    suspend fun checkNickname(@Body request: NicknameCheckRequest): NicknameCheckResponse
+
+
 
 
 }
@@ -60,3 +58,5 @@ data class BaseResponse(val isAvailable: Boolean, val message: String?)
 data class ConsentAgreeRequest(
     val isAvailable: Boolean
 )
+data class NicknameCheckRequest(val nickname: String)
+data class NicknameCheckResponse(val isAvailable: Boolean)
