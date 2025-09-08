@@ -218,10 +218,13 @@ class OtherProfileFragment : Fragment() {
                 }
 
                 // 5) 타인 계정 UI
-                tvTitle.text = "${res.userNickname ?: nickname}의 계정"
-                tvSettings.visibility = View.GONE
-                viewSettingsLine.visibility = View.GONE
-                btnFollow.visibility = View.VISIBLE
+                if(!isMe) {
+                    tvTitle.text = "${res.userNickname ?: nickname}의 계정"
+                    tvSettings.visibility = View.GONE
+                    viewSettingsLine.visibility = View.GONE
+                    btnFollow.visibility = View.VISIBLE
+                    return@launch
+                }
 
                 // 6) 관계 API가 없으므로, 내 목록 일부 페이지를 훑어 상태 추정
                 val (iFollowHim, heFollowsMe) = resolveRelationshipSlow(

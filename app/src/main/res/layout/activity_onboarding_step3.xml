@@ -1,0 +1,130 @@
+<!-- res/layout/activity_onboarding_step3.xml -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:paddingHorizontal="20dp">
+
+    <!-- 상단 진행바 (4칸 중 3칸 활성) -->
+    <LinearLayout
+        android:id="@+id/progressBar"
+        android:layout_width="0dp"
+        android:layout_height="6dp"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#D91717"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#E8E8E8"/>
+    </LinearLayout>
+
+    <!-- 빨간 원 안의 숫자 3 -->
+    <FrameLayout
+        android:id="@+id/badge"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_badge_red_oval"
+        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_gravity="center"/>
+    </FrameLayout>
+
+    <!-- 타이틀 -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="내가 다녀온 맛집, 로드맵으로 한눈에 정리"
+        android:textColor="#111111"
+        android:textSize="18sp"
+        android:fontFamily="@font/inter_semibold"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/badge"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 서브텍스트 -->
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="나만의 맛집 여정을 타임라인 형태로 간편하게 확인해보세요."
+        android:textColor="#6B6B6B"
+        android:textSize="13sp"
+        android:fontFamily="@font/inter_medium"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 일러스트 -->
+    <ImageView
+        android:id="@+id/ivIllustration"
+        android:layout_width="282dp"
+        android:layout_height="268dp"
+        android:layout_marginTop="40dp"
+        android:src="@drawable/ic_onboarding3"
+        android:contentDescription="@string/empty"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 하단 MaterialButton -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonNext"
+        android:layout_width="350dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="60dp"
+        android:layout_gravity="center_horizontal"
+        android:text="다음으로"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:fontFamily="@font/inter_semibold"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="0dp"
+        app:backgroundTint="@null"
+        android:background="@drawable/btn_basic"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
