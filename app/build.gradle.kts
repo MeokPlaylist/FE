@@ -55,6 +55,7 @@ dependencies {
     implementation("com.kakao.maps.open:android:2.9.5")
     implementation(libs.navigation.runtime.android)
     implementation(libs.google.material)
+    implementation(libs.material3.android)
     val nav_version = "2.7.7"  // 최신 확인 가능
 
     implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")

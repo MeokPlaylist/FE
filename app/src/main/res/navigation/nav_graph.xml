@@ -18,7 +18,11 @@
 
         <action
             android:id="@+id/action_searchUserFragment_to_otherProfileFragment"
-            app:destination="@id/otherProfileFragment" />
+            app:destination="@id/otherProfileFragment"
+            />
+        <action
+            android:id="@+id/action_searchFeedFragment_to_feedListFragment"
+            app:destination="@id/feedListFragment" />
     </fragment>
 
     <fragment
@@ -43,7 +47,10 @@
             android:id="@+id/action_profile_to_followList"
             app:destination="@id/followListFragment" />
     </fragment>
-
+    <fragment
+        android:id="@+id/feedListFragment"
+        android:name="com.example.meokpli.Main.Search.FeedListFragment"
+        android:label="Feed List" />
     <!-- 상세: 설정 -->
     <fragment
         android:id="@+id/fragmentSetting"

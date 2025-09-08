@@ -37,7 +37,7 @@
                 android:id="@+id/btn_edit_region"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="수정하기"
+                android:text="@string/edit_region"
                 android:textColor="#8C8C8C"
                 android:textSize="14sp" />
 
@@ -75,7 +75,9 @@
     <!-- 구분선 -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
+        android:layout_height="2dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:background="#E8E8E8"
         android:layout_marginVertical="8dp"/>
 

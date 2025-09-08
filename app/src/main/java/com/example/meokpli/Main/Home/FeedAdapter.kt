@@ -260,6 +260,11 @@ class FeedAdapter(private var items: MutableList<Feed>,
 
         override fun getItemCount(): Int = urls.size
     }
+    fun updateItems(newItems: List<Feed>) {
+        items = newItems as MutableList<Feed>
+        notifyDataSetChanged()
+    }
+
     fun updateCommentCount(feedId: Long, newCount: Long) {
         val idx = items.indexOfFirst { it.feedId == feedId }
         if (idx != -1) {
