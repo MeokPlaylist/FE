@@ -1,24 +1,55 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingVertical="12dp">
+    android:layout_margin="8dp"
+    card_view:cardCornerRadius="14dp"
+    card_view:cardElevation="5dp"
+    android:foreground="?attr/selectableItemBackground">
 
-    <TextView
-        android:id="@+id/tv_restaurant_name"
-        android:layout_width="wrap_content"
+    <!-- FrameLayout으로 텍스트와 별을 겹치게 -->
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="맛집 이름"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:textColor="#000000"/>
+        android:padding="12dp">
 
-    <TextView
-        android:id="@+id/tv_restaurant_address"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="서울특별시 강남구 ..."
-        android:textSize="13sp"
-        android:textColor="#666666"
-        android:layout_marginTop="4dp"/>
-</LinearLayout>
+        <!-- 텍스트 부분 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_restaurant_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="맥도날드"
+                android:textColor="#000000"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_restaurant_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="4dp"
+                android:text="경기도 수원시 영통구 아주로 46"
+                android:textColor="#666666"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- 우측 상단 별 아이콘 -->
+        <ImageView
+            android:id="@+id/iv_favorite_star"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="top|end"
+            android:src="@drawable/star_selector"
+            android:contentDescription="찜"
+            android:clickable="true"
+            android:focusable="true" />
+    </FrameLayout>
+
+</androidx.cardview.widget.CardView>

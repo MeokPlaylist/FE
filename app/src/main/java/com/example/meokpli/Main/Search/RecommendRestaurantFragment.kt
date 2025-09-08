@@ -26,6 +26,7 @@ class RecommendRestaurantFragment : Fragment(R.layout.fragment_recommend_restaur
     private lateinit var adapter: RestaurantAdapter
     private lateinit var api: SocialInteractionApi
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
