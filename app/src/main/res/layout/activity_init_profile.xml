@@ -2,6 +2,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="@android:color/white"
     android:paddingStart="45dp"
     android:paddingEnd="45dp"
@@ -76,16 +77,36 @@
             android:background="@drawable/edittext_background"
             android:padding="12dp" />
 
-        <TextView
-            android:id="@+id/textNicknameCount"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="0/10"
-            android:textSize="10sp"
-            android:textColor="#777777"
             android:layout_marginTop="4dp"
-            android:layout_gravity="end"
-            android:fontFamily="@font/inter_medium"/>
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical">
+
+            <!-- 에러 메시지 -->
+            <TextView
+                android:id="@+id/tvNicknameError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#C64132"
+                android:textSize="10sp"
+                android:fontFamily="@font/inter_medium"
+                android:visibility="gone"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="8dp"
+                tools:text="이미 사용 중인 닉네임입니다." />
+
+            <!-- 글자수 카운트 -->
+            <TextView
+                android:id="@+id/textNicknameCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0/10"
+                android:textSize="10sp"
+                android:textColor="#777777"
+                android:fontFamily="@font/inter_medium" />
+        </LinearLayout>
 
 
 

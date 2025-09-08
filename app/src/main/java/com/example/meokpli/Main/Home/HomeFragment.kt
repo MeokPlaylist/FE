@@ -15,6 +15,7 @@ import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.MainApi
 import com.example.meokpli.Main.Resettable
 import com.example.meokpli.R
+import com.example.meokpli.comments.CommentsBottomSheet
 import com.example.meokpli.feed.Feed
 import com.example.meokpli.feed.FeedAdapter
 import kotlinx.coroutines.launch
@@ -44,8 +45,52 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
         rv.layoutManager = LinearLayoutManager(requireContext())
 
         // 처음엔 빈 리스트로 어댑터 붙여두기(깜빡임/스냅샷 방지)
-        adapter = FeedAdapter(mutableListOf())
+        // ✅ 콜백 포함한 생성자로 교체
+        // 어댑터 생성부 교체
+        adapter = FeedAdapter(
+            mutableListOf(),
+            onCommentClick = { feedId ->
+                CommentsBottomSheet.newInstance(feedId)
+                    .show(childFragmentManager, "comments")
+            },
+            onMoreClick = { feedId ->
+                // 점3개 → 바텀시트
+                FeedActionsBottomSheet.newInstance(feedId)
+                    .show(childFragmentManager, "feed_actions")
+            }
+        )
         rv.adapter = adapter
+
+        // ✅ BottomSheet에서 댓글 수 갱신 전달 받기
+        childFragmentManager.setFragmentResultListener("comment_result", viewLifecycleOwner) { _, bundle ->
+            val feedId = bundle.getLong("feedId")
+            val newCount = bundle.getInt("count").toLong()
+            if (feedId != 0L) {
+                adapter.updateCommentCount(feedId, newCount)
+            }
+        }
+        // ★ 피드 액션 바텀시트 결과 리스너 추가 얘기해봐야할것
+        childFragmentManager.setFragmentResultListener(
+            FeedActionsBottomSheet.KEY_RESULT, viewLifecycleOwner
+        ) { _, bundle ->
+            val action = bundle.getString(FeedActionsBottomSheet.KEY_ACTION) ?: return@setFragmentResultListener
+            val feedId = bundle.getLong(FeedActionsBottomSheet.KEY_FEED_ID, 0L)
+            when (action) {
+                FeedActionsBottomSheet.ACTION_EDIT_POST -> {
+                    // TODO: 글 수정 화면으로 이동 (feedId 전달)
+                }
+                FeedActionsBottomSheet.ACTION_EDIT_COVER -> {
+                    // TODO: 대표사진 변경 흐름 시작
+                }
+                FeedActionsBottomSheet.ACTION_EDIT_CATEGORY -> {
+                    // TODO: 카테고리 수정 바텀시트/화면 열기
+                }
+                FeedActionsBottomSheet.ACTION_DELETE -> {
+                    // TODO: 삭제 확인 → 삭제 API 호출 → 목록 갱신
+                    // 예) adapter.removeItem(feedId) 같은 헬퍼가 있으면 여기서 호출
+                }
+            }
+        }
 
         // 실제 데이터 로드
         rv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -78,6 +123,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
                 val items = body.map { dto ->
                     Feed(
+                        feedId = dto.feedId,
                         nickName = dto.nickName,
                         createdAt = formatKST(dto.createdAt),
                         content = dto.content ?: "",
