@@ -25,7 +25,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.Main.CategoryRequest
-import com.example.meokpli.Main.CategorySelectDialog
 import com.example.meokpli.Main.ClientPhoto
 import com.example.meokpli.Main.FeedRequestBuilder
 import com.example.meokpli.Main.MainActivity
@@ -38,6 +37,8 @@ import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.Collections
+import com.example.meokpli.Main.CategorySelectDialog
+
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
 

@@ -26,7 +26,8 @@ import androidx.viewpager2.widget.ViewPager2
 
 class FeedAdapter(private var items: MutableList<Feed>,
                   private val onCommentClick: (feedId: Long) -> Unit,
-                  private val onMoreClick: (Long) -> Unit
+                  val onMoreClick: (View, Feed) -> Unit,
+                  private val onItemClick: (feedId: Long) -> Unit
     ) : RecyclerView.Adapter<FeedAdapter.VH>() {
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
@@ -47,6 +48,14 @@ class FeedAdapter(private var items: MutableList<Feed>,
         notifyItemRangeInserted(start, newItems.size)
     }
 
+    fun removeItem(feedId: Long) {
+        val idx = items.indexOfFirst { it.feedId == feedId }
+        if (idx != -1) {
+            items.removeAt(idx)
+            notifyItemRemoved(idx)
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_feed, parent, false)
         return VH(v)
@@ -65,7 +74,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
         h.btnComment.setOnClickListener { onCommentClick(item.feedId) }
         h.commentCount.setOnClickListener { onCommentClick(item.feedId) }
         // 점3개 → 피드 액션 바텀시트
-        h.btnMore.setOnClickListener { onMoreClick(item.feedId) }
+        h.btnMore.setOnClickListener { v -> onMoreClick(v, item) }  // ✅ 수정
 
 
         // 내용 + 해시태그
@@ -164,6 +173,9 @@ class FeedAdapter(private var items: MutableList<Feed>,
         // ✅ 댓글 버튼/숫자 클릭 시 BottomSheet 열기
         h.btnComment.setOnClickListener { onCommentClick(item.feedId) }
         h.commentCount.setOnClickListener { onCommentClick(item.feedId) }
+        h.viewPager.setOnClickListener {
+            onItemClick(item.feedId)
+        }
 
 
 

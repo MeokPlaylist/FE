@@ -1,9 +1,18 @@
 package com.example.meokpli.Main.Home
 
+
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
+import android.graphics.drawable.ColorDrawable
+import android.graphics.Color
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -19,10 +28,12 @@ import com.example.meokpli.comments.CommentsBottomSheet
 import com.example.meokpli.feed.Feed
 import com.example.meokpli.feed.FeedAdapter
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import android.app.AlertDialog
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
@@ -34,12 +45,20 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
     private var hasNext = true
     private var currentPage = 0
     private val pageSize = 10
-
+    private var myNickname: String? = null
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         feedApi = Network.feedApi(requireContext())
+
+
+        // 내 닉네임 1회 로드
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching { Network.userApi(requireContext()).getPersonalInfo() }
+                .onSuccess { myNickname = it.name }
+                .onFailure { myNickname = null }
+        }
 
         rv = view.findViewById(R.id.recyclerFeed)
         rv.layoutManager = LinearLayoutManager(requireContext())
@@ -53,10 +72,15 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                 CommentsBottomSheet.newInstance(feedId)
                     .show(childFragmentManager, "comments")
             },
-            onMoreClick = { feedId ->
-                // 점3개 → 바텀시트
-                FeedActionsBottomSheet.newInstance(feedId)
-                    .show(childFragmentManager, "feed_actions")
+            onMoreClick = { anchor, item ->
+                val isMine = !myNickname.isNullOrBlank() && (myNickname == item.nickName)
+                if (isMine) showMyFeedPopup(anchor, item.feedId)
+                else showReportPopup(anchor, item.feedId)
+            },
+            onItemClick = { feedId ->
+                val intent = Intent(requireContext(), FeedDetailActivity::class.java)
+                intent.putExtra("feedId", feedId)
+                startActivity(intent)
             }
         )
         rv.adapter = adapter
@@ -69,28 +93,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                 adapter.updateCommentCount(feedId, newCount)
             }
         }
-        // ★ 피드 액션 바텀시트 결과 리스너 추가 얘기해봐야할것
-        childFragmentManager.setFragmentResultListener(
-            FeedActionsBottomSheet.KEY_RESULT, viewLifecycleOwner
-        ) { _, bundle ->
-            val action = bundle.getString(FeedActionsBottomSheet.KEY_ACTION) ?: return@setFragmentResultListener
-            val feedId = bundle.getLong(FeedActionsBottomSheet.KEY_FEED_ID, 0L)
-            when (action) {
-                FeedActionsBottomSheet.ACTION_EDIT_POST -> {
-                    // TODO: 글 수정 화면으로 이동 (feedId 전달)
-                }
-                FeedActionsBottomSheet.ACTION_EDIT_COVER -> {
-                    // TODO: 대표사진 변경 흐름 시작
-                }
-                FeedActionsBottomSheet.ACTION_EDIT_CATEGORY -> {
-                    // TODO: 카테고리 수정 바텀시트/화면 열기
-                }
-                FeedActionsBottomSheet.ACTION_DELETE -> {
-                    // TODO: 삭제 확인 → 삭제 API 호출 → 목록 갱신
-                    // 예) adapter.removeItem(feedId) 같은 헬퍼가 있으면 여기서 호출
-                }
-            }
-        }
+
 
         // 실제 데이터 로드
         rv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -180,5 +183,145 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
         return if (tags.isBlank()) base else {
             if (base.isBlank()) tags else "$base\n$tags"
         }
+    }
+    /** 내 피드 팝업 */
+    private fun showMyFeedPopup(anchor: View, feedId: Long) {
+        val v = LayoutInflater.from(anchor.context)
+            .inflate(R.layout.popup_feed_actions_home, null, false)
+
+        val popup = PopupWindow(
+            v,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isFocusable = true
+            isOutsideTouchable = true
+            elevation = 20f
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+
+        v.findViewById<TextView>(R.id.itemEditPost).setOnClickListener {
+            popup.dismiss()
+            // TODO: 글 수정 화면 이동 (임시로 상세로 이동)
+            openDetail(feedId)
+        }
+        v.findViewById<TextView>(R.id.itemEditCover).setOnClickListener {
+            popup.dismiss()
+            // 대표사진 변경은 상세에서(이미지 컨텍스트가 상세에 있음)
+            openDetail(feedId)
+        }
+        v.findViewById<TextView>(R.id.itemEditCategory).setOnClickListener {
+            popup.dismiss()
+            // TODO: 카테고리 수정 화면/바텀시트 (여기도 상세로 임시 이동)
+            openDetail(feedId)
+        }
+        v.findViewById<TextView>(R.id.itemDelete).setOnClickListener {
+            popup.dismiss()
+            // TODO: 삭제 흐름(확인 → API → 목록 갱신)
+            confirmDelete(feedId)
+        }
+
+        showPopupBelowRight(popup, anchor, v)
+    }
+
+    /** 남의 피드 팝업(신고 1개) */
+    private fun showReportPopup(anchor: View, feedId: Long) {
+        val v = LayoutInflater.from(anchor.context)
+            .inflate(R.layout.popup_feed_report, null, false)
+
+        val popup = PopupWindow(
+            v,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isFocusable = true
+            isOutsideTouchable = true
+            elevation = 20f
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+
+        v.findViewById<TextView>(R.id.tvReport).setOnClickListener {
+            popup.dismiss()
+            showReportConfirm(feedId)
+        }
+
+        showPopupBelowRight(popup, anchor, v)
+    }
+
+    /** 공통: anchor 우측 정렬로 아래 표시 */
+    private fun showPopupBelowRight(popup: PopupWindow, anchor: View, contentView: View) {
+        val location = IntArray(2)
+        anchor.getLocationOnScreen(location)
+        contentView.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val popupW = contentView.measuredWidth
+        val x = location[0] - (popupW - anchor.width)
+        val y = location[1] + anchor.height
+        popup.showAtLocation(anchor, Gravity.TOP or Gravity.START, x, y)
+    }
+
+    private fun showReportConfirm(feedId: Long) {
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("정말로 신고하시겠습니까?")
+            .setMessage("한번 신고한 게시물은 되돌릴 수 없습니다.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("신고") { d, _ ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        Network.feedApi(requireContext()).reportFeed(feedId)
+                        Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                    } catch (e: HttpException) {
+                        Toast.makeText(requireContext(), "신고 실패: ${e.code()}", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "신고 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                d.dismiss()
+            }
+            .show()
+    }
+
+    private fun openDetail(feedId: Long) {
+        val intent = Intent(requireContext(), FeedDetailActivity::class.java)
+        intent.putExtra("feedId", feedId)
+        startActivity(intent)
+    }
+
+    /** 삭제 확인 다이얼로그 → 서버 호출 → 리스트에서 아이템 제거 */
+    private fun confirmDelete(feedId: Long) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("게시글을 삭제할까요?")
+            .setMessage("한번 삭제한 게시물은 되돌릴 수 없습니다.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("삭제") { d, _ ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val res = Network.feedApi(requireContext()).deleteFeed(feedId)
+                        if (res.isSuccessful) {
+                            adapter.removeItem(feedId) // ← 어댑터에 아래 메서드 추가 필요
+                            Toast.makeText(requireContext(), "삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "삭제 실패: ${res.code()}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: HttpException) {
+                        Toast.makeText(requireContext(), "삭제 실패: ${e.code()}", Toast.LENGTH_SHORT)
+                            .show()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "삭제 실패: ${e.message}", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+                d.dismiss()
+            }
+            .show()
+
     }
 }

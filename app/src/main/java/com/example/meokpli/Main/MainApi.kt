@@ -23,6 +23,39 @@ interface MainApi {
         @Query("size") size: Int = 10
     ): SlicedResponse<Feed>
 
+    // ✅ 피드 상세 조회
+    @GET("detail")
+    suspend fun getFeedDetail(
+        @Query("feedId") feedId: Long
+    ): FeedDetailResponse
+
+    // ✅ 피드 신고
+    @POST("report")
+    suspend fun reportFeed(
+        @Query("feedId") feedId: Long
+    ): Response<Void>
+
+    // ✅ 대표사진 변경
+    @POST("modifyMainPhoto")
+    suspend fun modifyMainFeedPhoto(
+        @Body body: ModifyMainFeedPhotoRequest
+    ): BooleanResponse
+
+    @POST("modifyCategory")
+    suspend fun modifyFeedCategory(
+        @Body req: ModifyFeedCategoryRequest
+    ): Response<Void>
+
+    @POST("modifyContent")
+    suspend fun modifyFeedContent(
+        @Body req: ModifyFeedContentRequest
+    ): Response<Unit>
+
+    @POST("delete")
+    suspend fun deleteFeed(@Query("feedId") feedId: Long): Response<Void>
+
+
+
 
 }
 data class CreateFeedBody(
@@ -54,6 +87,39 @@ data class SlicedResponse<T>(
     val last: Boolean,
     val empty: Boolean,
     val hasNext: Boolean
+)
+
+/* 2) 상세 DTO */
+data class FeedDetailResponse(
+    val feedId: Long,
+    val nickName: String,
+    val profileImgUrl: String?,
+    val createdAt: String,
+    val content: String,
+    val hashTag: List<String>,
+    val images: List<String>,
+    val authorId: Long? = null // 서버가 주면 더 안전한 소유자 판별 가능
+)
+
+data class ModifyMainFeedPhotoRequest(
+    val feedId: Long,
+    val newMainFeedPhotoSequence: Int,
+    val oldMainFeedPhotoSequence: Int
+)
+
+// 서버: com.meokplaylist.api.dto.Boolean.BooleanResponse { Boolean isAvailable; }
+data class BooleanResponse(
+    val isAvailable: Boolean
+)
+
+data class ModifyFeedCategoryRequest(
+    val feedId: Long,
+    val categories: List<String>,
+    val regions: List<String>
+)
+data class ModifyFeedContentRequest(
+    val feedId: Long,
+    val content: String
 )
 
 /* 2) 클라 내부 표현 (그대로 사용) */

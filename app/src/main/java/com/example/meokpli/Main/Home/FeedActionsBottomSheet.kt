@@ -12,7 +12,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 class FeedActionsBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
-        const val KEY_RESULT = "feed_actions_result"
+        const val REQUEST_KEY = "feed_actions_result"
         const val KEY_ACTION = "action"
         const val KEY_FEED_ID = "feedId"
 
@@ -22,7 +22,7 @@ class FeedActionsBottomSheet : BottomSheetDialogFragment() {
         const val ACTION_DELETE = "delete"
 
         fun newInstance(feedId: Long) = FeedActionsBottomSheet().apply {
-            arguments = bundleOf(KEY_FEED_ID to feedId)
+            arguments = Bundle().apply { putLong(KEY_FEED_ID, feedId) }
         }
     }
 
@@ -56,7 +56,7 @@ class FeedActionsBottomSheet : BottomSheetDialogFragment() {
 
     private fun setResult(action: String) {
         parentFragmentManager.setFragmentResult(
-            KEY_RESULT,
+            REQUEST_KEY,
             bundleOf(KEY_ACTION to action, KEY_FEED_ID to feedId)
         )
         dismiss()

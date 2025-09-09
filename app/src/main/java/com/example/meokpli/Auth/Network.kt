@@ -61,7 +61,7 @@ object Network {
             .create(SocialInteractionApi::class.java)
 
     fun commentApi(context: Context): CommentApi =
-        retrofit(FEED_BASE_URL, debugClient(context, withAuth = true))
+        retrofit(SOCIAL_BASE_URL, debugClient(context, withAuth = true))
             .create(CommentApi::class.java)
 }
 /*
