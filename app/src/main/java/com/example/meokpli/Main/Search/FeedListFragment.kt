@@ -7,19 +7,32 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.meokpli.Auth.Network
+import com.example.meokpli.Main.SocialInteractionApi
 import com.example.meokpli.R
-import com.example.meokpli.feed.FeedAdapter
+import com.example.meokpli.data.remote.response.SearchFeedResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: FeedAdapter
+    private lateinit var adapter: SearchFeedAdapter
+    private lateinit var api: SocialInteractionApi
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        api = Network.socialApi(requireContext())
         recyclerView = view.findViewById(R.id.rvMyFeeds)
-        adapter = FeedAdapter(emptyList())
+        adapter = SearchFeedAdapter(
+            mutableListOf(),
+            onFeedClick = { feedId ->
+                // 클릭 시 동작
+                // 상세 게시물로 이동
+            }
+        )
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         recyclerView.adapter = adapter
 
@@ -27,18 +40,34 @@ class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
 
         val editBtn = view.findViewById<TextView>(R.id.btn_edit_region)
         editBtn.setOnClickListener {
-            // Navigation Component 사용
             findNavController().navigate(R.id.action_feedListFragment_to_searchFeedFragment)
         }
     }
 
-    private fun loadFeeds() {
-        // TODO: 서버에서 카테고리 기반 피드 가져오기
-        val dummy = listOf(
-            Feed("카페 A", "https://placehold.co/300x300"),
-            Feed("분위기 좋은 술집", "https://placehold.co/300x300"),
-            Feed("한식 맛집", "https://placehold.co/300x300")
-        )
-        adapter.updateItems(dummy)
+    private fun loadFeeds(page: Int = 0, size: Int = 10) {
+        api.searchFeed(page, size).enqueue(object : Callback<SearchFeedResponse> {
+            override fun onResponse(
+                call: Call<SearchFeedResponse>,
+                response: Response<SearchFeedResponse>
+            ) {
+                if (response.isSuccessful) {
+                    response.body()?.let { body ->
+                        val feeds = body.urlsMappedByFeedIds.map { map ->
+                            val entry = map.entries.first()
+                            SearchedFeed(feedId = entry.key, photoUrl = entry.value)
+                        }
+                        adapter.updateItems(feeds)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<SearchFeedResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
     }
 }
+data class SearchedFeed(
+    val feedId: String,
+    val photoUrl: String
+)

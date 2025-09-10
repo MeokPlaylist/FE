@@ -26,6 +26,11 @@
     </fragment>
 
     <fragment
+        android:id="@+id/searchFeedFragment"
+        android:name="com.example.meokpli.Main.Search.SearchFeedFragment"
+        android:label="피드 검색" />
+
+    <fragment
         android:id="@+id/feedFragment"
         android:name="com.example.meokpli.Main.Feed.FeedFragment"
         android:label="피드" />
@@ -50,7 +55,11 @@
     <fragment
         android:id="@+id/feedListFragment"
         android:name="com.example.meokpli.Main.Search.FeedListFragment"
-        android:label="Feed List" />
+        android:label="Feed List">
+        <action
+            android:id="@+id/action_feedListFragment_to_searchFeedFragment"
+            app:destination="@id/searchFeedFragment" />
+    </fragment>
     <!-- 상세: 설정 -->
     <fragment
         android:id="@+id/fragmentSetting"

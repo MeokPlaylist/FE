@@ -22,6 +22,7 @@ import com.example.meokpli.R
 import com.facebook.shimmer.Shimmer
 import com.facebook.shimmer.ShimmerDrawable
 import androidx.viewpager2.widget.ViewPager2
+import com.example.meokpli.Main.Search.SearchedFeed
 
 
 class FeedAdapter(private var items: MutableList<Feed>,
@@ -260,7 +261,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
 
         override fun getItemCount(): Int = urls.size
     }
-    fun updateItems(newItems: List<Feed>) {
+    fun updateItems(newItems: List<SearchedFeed>) {
         items = newItems as MutableList<Feed>
         notifyDataSetChanged()
     }
@@ -272,9 +273,6 @@ class FeedAdapter(private var items: MutableList<Feed>,
             notifyItemChanged(idx, "comment_count")
         }
     }
-
-
-
 }
 
     data class Feed(

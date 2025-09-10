@@ -1,9 +1,10 @@
 package com.example.meokpli.Main
 
 import android.R
+import com.example.meokpli.data.remote.response.SearchFeedResponse
+import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.GET
 interface SocialInteractionApi {
@@ -25,6 +26,12 @@ interface SocialInteractionApi {
     suspend fun getRecommendRestaurant(
         @Body request: RecommendRestaurantRequest // ex) ["서울:강남구","서울:용산구"]
     ): Map<String, List<String>>
+
+    @GET("/searchFeed")
+    fun searchFeed(
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Call<SearchFeedResponse>
 }
 
 data class RecommendRestaurantRequest (val regions: List<String>)
