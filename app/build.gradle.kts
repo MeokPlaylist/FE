@@ -9,11 +9,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.example.meokpli"
+    namespace = "com.meokpli.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.meokpli"
+        applicationId = "com.meokpli.app"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

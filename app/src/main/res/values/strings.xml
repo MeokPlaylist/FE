@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">meokpli</string>
+    <string name="app_name">Meokpli</string>
 
     <!-- Google Cloud Console › OAuth 2.0 클라이언트(웹 애플리케이션) ID -->
     <string name="server_client_id">

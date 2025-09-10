@@ -1,4 +1,4 @@
-package com.example.meokpli.User
+package com.example.meokpli.user
 
 data class UserSearchResponse(
     val content: List<UserSearchDto>,
