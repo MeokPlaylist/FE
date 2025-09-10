@@ -51,7 +51,7 @@ class CategoryActivity : AppCompatActivity() {
 
     private val foodMap = mapOf(
         "분식" to "BUNSIK",
-        "카페/디저트" to "CAFEDESERT",
+        "카페/디저트" to "CAFE_DESSERT",
         "치킨" to "CHICKEN",
         "중식" to "CHINESE",
         "한식" to "KOREAN",

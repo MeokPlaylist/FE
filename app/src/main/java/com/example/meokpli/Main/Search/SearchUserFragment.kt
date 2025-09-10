@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 
 class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
 
-    private lateinit var etSearch: EditText
+    private var etSearch: EditText? = null
     private lateinit var recyclerUsers: RecyclerView
     private lateinit var recyclerRecent: RecyclerView
     private lateinit var layoutRecent: View
@@ -87,7 +87,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
         // 최근 검색어 어댑터
         recentAdapter = RecentAdapter(
             onClick = { keyword: String ->
-                etSearch.setText(keyword)
+                etSearch?.setText(keyword)
                 runSearch(keyword)
                 saveRecentSearch(keyword)
             },
@@ -103,14 +103,14 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
 
         // savedInstanceState에서 복원
         savedInstanceState?.getString("lastKeyword")?.let { restored ->
-            etSearch.setText(restored)
+            etSearch?.setText(restored)
             runSearch(restored) // 검색 결과 다시 실행
         }
 
         // 엔터 입력 이벤트 감지
-        etSearch.setOnEditorActionListener { _, actionId, _ ->
+        etSearch?.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
-                val keyword = etSearch.text.toString().trim()
+                val keyword = etSearch?.text.toString().trim()
                 if (keyword.isNotEmpty()) {
                     runSearch(keyword)
                     saveRecentSearch(keyword) // 엔터 누를 때만 저장
@@ -120,7 +120,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
         }
 
         // 검색창 입력 이벤트 감지
-        etSearch.addTextChangedListener(object : TextWatcher {
+        etSearch?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -145,7 +145,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
     }
     //검색 초기화
     override fun resetToDefault() {
-        etSearch.setText("") // 검색어 초기화
+        etSearch?.setText("") // 검색어 초기화
         adapter.submitList(emptyList()) // 검색 결과 비우기
         layoutRecent.visibility = View.VISIBLE // 최근 검색 다시 보이기
         recyclerUsers.visibility = View.GONE
@@ -154,7 +154,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
     // Fragment 상태 저장
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        lastKeyword = etSearch.text.toString().trim()
+        lastKeyword = etSearch?.text.toString().trim()
         outState.putString("lastKeyword", lastKeyword)
     }
 

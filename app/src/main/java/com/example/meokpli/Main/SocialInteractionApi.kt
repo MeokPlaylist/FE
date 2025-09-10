@@ -27,7 +27,7 @@ interface SocialInteractionApi {
         @Body request: RecommendRestaurantRequest // ex) ["서울:강남구","서울:용산구"]
     ): Map<String, List<String>>
 
-    @GET("/searchFeed")
+    @GET("searchFeed")
     fun searchFeed(
         @Query("page") page: Int,
         @Query("size") size: Int

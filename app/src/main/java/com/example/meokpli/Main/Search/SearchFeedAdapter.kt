@@ -28,7 +28,7 @@ class SearchFeedAdapter(
 
     override fun onBindViewHolder(holder: VH, pos: Int) {
         val item = items[pos]
-        // shimmer placeholder
+
         val shimmer = Shimmer.AlphaHighlightBuilder()
             .setDuration(1000)
             .setBaseAlpha(0.7f)
@@ -38,14 +38,15 @@ class SearchFeedAdapter(
             .build()
         val shimmerDrawable = ShimmerDrawable().apply { setShimmer(shimmer) }
 
-        // Coil 로드
-        holder.img.load(item) {
+        // ✅ photoUrl만 Coil에 넘겨야 함
+        holder.img.load(item.photoUrl) {
             crossfade(true)
-            memoryCachePolicy(CachePolicy.ENABLED)   // 메모리 캐시 사용
-            diskCachePolicy(CachePolicy.ENABLED)     // 디스크 캐시 사용
-            placeholder(shimmerDrawable)             // 로딩 중 효과
+            memoryCachePolicy(CachePolicy.ENABLED)
+            diskCachePolicy(CachePolicy.ENABLED)
+            placeholder(shimmerDrawable)
         }
     }
+
 
     override fun getItemCount(): Int = items.size
 

@@ -45,14 +45,16 @@ interface UserApi {
     @POST("duplicateCheck")
     suspend fun checkNickname(@Body request: NicknameCheckRequest): NicknameCheckResponse
 
-    @GET("/user/search")
+    @GET("search")
     suspend fun searchUsers(
         @Query("nickname") nickname: String,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 10
     ): UserSearchResponse
+    @GET("getCategories")
+    suspend fun getCategories() : GetCategoriesResponse
 }
-
+data class GetCategoriesResponse(val categoryNames: List<String>)
 data class FindUserRequest(val name: String, val email: String)
 data class FindUserResponse(val userId: Long)
 data class ResetPasswordRequest(val userId: Long,val newPassword: String)

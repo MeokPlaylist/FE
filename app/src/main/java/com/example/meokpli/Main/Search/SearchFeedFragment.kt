@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import com.example.meokpli.Auth.Network
 import com.example.meokpli.User.Category.CategoryApi
 import com.example.meokpli.User.Category.CategorySetUpRequest
@@ -20,7 +19,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
+    private var onComplete: (() -> Unit)? = null
 
+    fun setOnCompleteListener(listener: () -> Unit) {
+        onComplete = listener
+    }
     private lateinit var chipGroupMood: ChipGroup
     private lateinit var chipGroupFood: ChipGroup
     private lateinit var chipGroupCompanion: ChipGroup
@@ -47,7 +50,7 @@ class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
     )
     private val foodMap = mapOf(
         "분식" to "BUNSIK",
-        "카페/디저트" to "CAFEDESERT",
+        "카페/디저트" to "CAFE_DESSERT",
         "치킨" to "CHICKEN",
         "중식" to "CHINESE",
         "한식" to "KOREAN",
@@ -87,6 +90,8 @@ class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
         createChips(chipGroupFood, foodList)
         createChips(chipGroupCompanion, companionList)
 
+        // ✅ childFragmentManager 관련 부분 제거 (SearchFeedFragment는 카테고리 설정만 담당)
+
         submitButton.setOnClickListener {
             if (!hasAllSelected()) {
                 Toast.makeText(requireContext(), "분위기·음식·동반자에서 각각 1개 이상 선택해주세요.", Toast.LENGTH_SHORT).show()
@@ -103,9 +108,11 @@ class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
 
             val request = CategorySetUpRequest(
                 categories = categories,
-                regions = selectedRegions // region 선택 기능 필요시 매핑 추가
+                regions = selectedRegions // TODO: 필요 시 지역 매핑 로직 추가
             )
-            Log.d("request",request.toString())
+
+            Log.d("request", request.toString())
+
             lifecycleScope.launch {
                 val api: CategoryApi = Network.categoryApi(requireContext())
                 runCatching {
@@ -113,7 +120,7 @@ class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
                 }
                     .onSuccess {
                         Toast.makeText(requireContext(), "카테고리 설정 완료!", Toast.LENGTH_SHORT).show()
-                        findNavController().navigate(R.id.action_searchFeedFragment_to_feedListFragment)
+                        onComplete?.invoke()  // ✅ 완료 후 FeedListFragment로 전환
                     }
                     .onFailure { e ->
                         Toast.makeText(requireContext(), "카테고리 설정 실패: ${e.message}", Toast.LENGTH_SHORT).show()

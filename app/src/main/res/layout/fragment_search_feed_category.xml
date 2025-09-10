@@ -89,49 +89,7 @@
             app:chipSpacingHorizontal="8dp"
             app:chipSpacingVertical="0dp" />
 
-        <!-- 지역 -->
-        <TextView
-            android:id="@+id/textRegionTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="지역"
-            android:textSize="16sp"
-            android:textColor="#000000"
-            android:layout_marginTop="16dp"
-            android:fontFamily="@font/inter_semibold"/>
 
-        <HorizontalScrollView
-            android:id="@+id/scrollRegions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:overScrollMode="never">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupRegions"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:singleLine="true"
-                app:chipSpacingHorizontal="8dp"
-                app:chipSpacingVertical="0dp" />
-        </HorizontalScrollView>
-
-        <Button
-            android:id="@+id/PlusRegionButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="32dp"
-            android:background="@drawable/btn_black_border"
-            android:text="+ 추가하기"
-            android:textColor="#000000"
-            android:textSize="15sp"
-            android:fontFamily="@font/inter_semibold"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:insetLeft="0dp"
-            android:insetRight="0dp"
-            app:backgroundTint="@null" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/submitButton"
