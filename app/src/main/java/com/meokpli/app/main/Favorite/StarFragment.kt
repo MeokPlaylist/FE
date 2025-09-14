@@ -53,9 +53,14 @@ class StarFragment : Fragment() {
             override fun onMapReady(map: KakaoMap) {
                 kakaoMap = map
 
-                val center = LatLng.from(37.28355, 127.04372)
-                map.moveCamera(CameraUpdateFactory.newCenterPosition(center))
-                map.moveCamera(CameraUpdateFactory.zoomTo(4))
+                if (lastCameraPosition != null) {
+                    map.moveCamera(CameraUpdateFactory.newCameraPosition(lastCameraPosition))
+                } else {
+                    val center = LatLng.from(37.28355, 127.04372)
+                    map.moveCamera(CameraUpdateFactory.newCenterPosition(center))
+                    map.moveCamera(CameraUpdateFactory.zoomTo(4))
+                }
+
 
                 // POI 클릭 시 → 풍선 띄우기
                 map.setOnPoiClickListener { _, position, name, layerId ->
@@ -67,7 +72,9 @@ class StarFragment : Fragment() {
                 map.setOnMapClickListener { _, _, _, _ ->
                     balloonContainer.removeAllViews()
                     currentBalloonLatLng = null
+                    balloonContainer.visibility = View.GONE
                 }
+
 
                 // 카메라 이동 시작 → 풍선 숨김
                 map.setOnCameraMoveStartListener(object : KakaoMap.OnCameraMoveStartListener {
@@ -125,6 +132,14 @@ class StarFragment : Fragment() {
 
         val balloonView = layoutInflater.inflate(R.layout.custom_balloon, balloonContainer, false)
 
+        // 항상 wrap_content 고정
+        val params = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        balloonView.layoutParams = params
+
+        // 텍스트 채우기
         balloonView.findViewById<TextView>(R.id.place_name).text = place.place_name
         balloonView.findViewById<TextView>(R.id.place_road_address).text =
             place.road_address_name ?: "-"
@@ -158,16 +173,23 @@ class StarFragment : Fragment() {
         )
         val w = balloonView.measuredWidth
         val h = balloonView.measuredHeight
-
-        val params = balloonView.layoutParams as FrameLayout.LayoutParams
-        params.leftMargin = pt.x - w / 2
-        params.topMargin = pt.y - h
-        balloonView.layoutParams = params
+        val offsetY = 30
+        // margin 대신 translation 사용
+        balloonView.translationX = (pt.x - w / 2).toFloat()
+        balloonView.translationY = (pt.y - h - offsetY).toFloat()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        kakaoMap?.let {
+            lastCameraPosition = it.cameraPosition
+        }
         kakaoMap = null
         currentBalloonLatLng = null
     }
+    companion object {
+        var lastCameraPosition: com.kakao.vectormap.camera.CameraPosition? = null
+    }
+
+
 }
