@@ -61,6 +61,12 @@
         <activity android:name=".user.TermsActivity" />
         <activity android:name=".user.AccountCenterActivity" />
         <activity android:name=".user.AccountInfoActivity" />
+        <activity
+            android:name=".user.OnboardingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".main.Home.FeedDetailActivity"
+            android:exported="false" />
 
 
         <!-- 사전 로딩할 폰트 설정 -->

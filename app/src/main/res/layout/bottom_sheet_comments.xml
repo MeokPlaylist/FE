@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:text="댓글"
         android:paddingHorizontal="16dp"
+        android:gravity="center"
         android:paddingBottom="8dp"
         android:textSize="16sp"
         android:textStyle="bold"/>

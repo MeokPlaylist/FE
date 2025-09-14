@@ -37,14 +37,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="내 계정"
-                    android:textSize="18dp"
-                    android:textColor="@color/black"
-                    android:textStyle="bold"/>
+
                 <TextView
                     android:id="@+id/textTitle"
                     android:layout_width="match_parent"
@@ -135,7 +128,7 @@
                         android:text="팔로우"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
-                        android:backgroundTint="@null"
+                        app:backgroundTint="@null"
                         android:background="@drawable/btn_basic"
                         app:cornerRadius="24dp"
                         app:rippleColor="@android:color/transparent"

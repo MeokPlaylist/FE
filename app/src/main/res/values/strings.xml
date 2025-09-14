@@ -22,6 +22,8 @@
     <string name="edit_region"><u>수정하기</u></string>
     <string name="delete">삭제</string>
     <string name="empty"></string>
+    <string name="detail" ><u>상세보기</u></string>
+    <string name="favorite" />
 
 
 </resources>
