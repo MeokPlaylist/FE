@@ -29,7 +29,15 @@
             android:padding="2dp"/>
     </LinearLayout>
 
-    <!-- 주소 -->
+    <!-- 도로명주소 -->
+    <TextView
+        android:id="@+id/place_road_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#666"/>
+
+    <!--지명주소-->
     <TextView
         android:id="@+id/place_address"
         android:layout_width="wrap_content"

@@ -6,29 +6,29 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.google.gson.JsonParser
+import androidx.lifecycle.lifecycleScope
 import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.meokpli.app.R
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.io.IOException
-import java.net.URLEncoder
-import kotlin.concurrent.thread
+import com.meokpli.app.auth.Network
+import com.meokpli.app.data.remote.request.SearchPlaceRequest
+import com.meokpli.app.data.remote.response.SearchPlaceResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class StarFragment : Fragment() {
 
     private var kakaoMap: KakaoMap? = null
     private lateinit var mapView: MapView
     private lateinit var balloonContainer: FrameLayout
-    private val client = OkHttpClient()
 
-    // 카카오 REST API 키 (반드시 "KakaoAK " 접두어 포함)
-    private val restApiKey = "d8fd3cc299e7921ad9cbce305123c7a8"
+    private lateinit var placeApi: PlaceApi
+
+    // 풍선 좌표 저장
+    private var currentBalloonLatLng: LatLng? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -41,6 +41,8 @@ class StarFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        placeApi = Network.placeApi(requireContext())
 
         mapView.start(object : MapLifeCycleCallback() {
             override fun onMapDestroy() {}
@@ -55,118 +57,101 @@ class StarFragment : Fragment() {
                 map.moveCamera(CameraUpdateFactory.newCenterPosition(center))
                 map.moveCamera(CameraUpdateFactory.zoomTo(4))
 
-                // 👉 기본 POI 클릭 이벤트
-                map.setOnPoiClickListener { kakaoMap, position, name, layerId ->
-                    balloonContainer.removeAllViews()
-                    Log.d("POI", "클릭: $name, 좌표: $position, layer=$layerId")
+                // POI 클릭 시 → 풍선 띄우기
+                map.setOnPoiClickListener { _, position, name, layerId ->
+                    Log.d("POI", "POI 클릭: name=$name, layerId=$layerId at $position")
+                    sendToBackend(name, position.latitude, position.longitude)
+                }
 
-                    fetchPlaceDetail(name, position.latitude, position.longitude) { placeDto ->
-                        requireActivity().runOnUiThread {
-                            if (placeDto != null) {
-                                showBalloon(position, placeDto)
-                            }
+                // 지도 빈 곳 클릭 시 → 풍선 제거
+                map.setOnMapClickListener { _, _, _, _ ->
+                    balloonContainer.removeAllViews()
+                    currentBalloonLatLng = null
+                }
+
+                // 카메라 이동 시작 → 풍선 숨김
+                map.setOnCameraMoveStartListener(object : KakaoMap.OnCameraMoveStartListener {
+                    override fun onCameraMoveStart(kakaoMap: KakaoMap, gestureType: GestureType) {
+                        if (balloonContainer.childCount > 0) {
+                            balloonContainer.visibility = View.GONE
                         }
                     }
-                }
+                })
+
+                // 카메라 이동 끝 → 풍선 다시 보이기 + 위치 보정
+                map.setOnCameraMoveEndListener(object : KakaoMap.OnCameraMoveEndListener {
+                    override fun onCameraMoveEnd(
+                        kakaoMap: KakaoMap,
+                        position: com.kakao.vectormap.camera.CameraPosition,
+                        gestureType: GestureType
+                    ) {
+                        currentBalloonLatLng?.let {
+                            updateBalloonPosition(it)
+                            balloonContainer.visibility = View.VISIBLE
+                        }
+                    }
+                })
             }
         })
     }
 
-    // Kakao Local API로 상세 정보 요청
-    private fun fetchPlaceDetail(
-        name: String, lat: Double, lng: Double,
-        callback: (KakaoPlaceDto?) -> Unit
-    ) {
-        thread {
+    /**
+     * 좌표 + placeId를 서버로 보내서 상세 정보 조회
+     */
+    private fun sendToBackend(name: String, lat: Double, lng: Double) {
+        lifecycleScope.launch {
             try {
-                val query = URLEncoder.encode(name, "UTF-8")
-                val url =
-                    "https://dapi.kakao.com/v2/local/search/keyword.json" +
-                            "?query=$query&x=$lng&y=$lat&radius=100&sort=distance"
-
-                val request = Request.Builder()
-                    .url(url)
-                    .addHeader("Authorization", "KakaoAK $restApiKey")
-                    .build()
-
-                client.newCall(request).execute().use { response ->
-                    Log.d("StarFragment", "HTTP 응답: code=${response.code}, body=${response.body}")
-
-                    if (!response.isSuccessful) {
-                        callback(null)
-                        return@use
-                    }
-
-                    val body = response.body?.string()
-                    if (body == null) {
-                        callback(null)
-                        return@use
-                    }
-
-                    val json = JsonParser.parseString(body).asJsonObject
-                    val documents = json.getAsJsonArray("documents")
-
-                    if (documents.size() > 0) {
-                        val obj = documents[0].asJsonObject
-                        val place = KakaoPlaceDto(
-                            id = obj["id"].asString,
-                            name = obj["place_name"].asString,
-                            category = obj["category_group_name"]?.asString,
-                            phone = obj["phone"]?.asString,
-                            roadAddress = obj["road_address_name"]?.asString,
-                            jibunAddress = obj["address_name"]?.asString,
-                            lat = obj["y"].asString.toDouble(),
-                            lng = obj["x"].asString.toDouble(),
-                            placeUrl = obj["place_url"].asString
-                        )
-                        callback(place)
-                    } else {
-                        callback(null)
-                    }
+                val request = SearchPlaceRequest(lat = lat, lng = lng)
+                Log.d("StarFragment", "request:$request")
+                val response: SearchPlaceResponse = withContext(Dispatchers.IO) {
+                    placeApi.searchPlace(request)
                 }
+                Log.d("StarFragment", "백엔드 응답: $response")
+
+                showBalloon(LatLng.from(lat, lng), response)
+
             } catch (e: Exception) {
-                Log.e("StarFragment", "API 호출 에러", e)
-                callback(null)
+                Log.e("StarFragment", "백엔드 호출 실패", e)
             }
         }
     }
 
-    // 풍선 뷰 표시
-    private fun showBalloon(position: LatLng, place: KakaoPlaceDto) {
+    /**
+     * 풍선 표시 (항상 하나만 유지)
+     */
+    private fun showBalloon(position: LatLng, place: SearchPlaceResponse) {
         balloonContainer.removeAllViews()
+        currentBalloonLatLng = position
 
         val balloonView = layoutInflater.inflate(R.layout.custom_balloon, balloonContainer, false)
 
-        balloonView.findViewById<TextView>(R.id.place_name).text = place.name
+        balloonView.findViewById<TextView>(R.id.place_name).text = place.place_name
+        balloonView.findViewById<TextView>(R.id.place_road_address).text =
+            place.road_address_name ?: "-"
         balloonView.findViewById<TextView>(R.id.place_address).text =
-            place.roadAddress ?: place.jibunAddress ?: "-"
+            place.address_name ?: "-"
         balloonView.findViewById<TextView>(R.id.place_phone).text =
             place.phone ?: "-"
 
         balloonView.findViewById<TextView>(R.id.tv_detail).setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(place.placeUrl))
-            startActivity(intent)
-        }
-
-        val favBtn = balloonView.findViewById<ImageView>(R.id.btn_favorite)
-        favBtn.tag = false
-        favBtn.setOnClickListener {
-            val isChecked = favBtn.tag as Boolean
-            if (isChecked) {
-                favBtn.setImageResource(R.drawable.ic_star_unchecked)
-                favBtn.tag = false
-                removeFavorite(place)
-            } else {
-                favBtn.setImageResource(R.drawable.ic_star_filled)
-                favBtn.tag = true
-                saveFavorite(place)
+            if (!place.place_url.isNullOrEmpty()) {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(place.place_url))
+                startActivity(intent)
             }
         }
 
-        // 좌표 -> 스크린 좌표
-        val pt = kakaoMap?.toScreenPoint(position) ?: return
+        balloonContainer.addView(balloonView)
+        updateBalloonPosition(position) // 초기 위치 반영
+        balloonContainer.visibility = View.VISIBLE
+    }
 
-        // 뷰 크기 미리 측정
+    /**
+     * 풍선 위치 갱신
+     */
+    private fun updateBalloonPosition(latLng: LatLng) {
+        val pt = kakaoMap?.toScreenPoint(latLng) ?: return
+        val balloonView = balloonContainer.getChildAt(0) ?: return
+
         balloonView.measure(
             View.MeasureSpec.UNSPECIFIED,
             View.MeasureSpec.UNSPECIFIED
@@ -174,43 +159,15 @@ class StarFragment : Fragment() {
         val w = balloonView.measuredWidth
         val h = balloonView.measuredHeight
 
-        // 마커 위 중앙에 위치하도록 보정
-        val params = FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply {
-            leftMargin = pt.x - w / 2
-            topMargin = pt.y - h
-        }
-
-        balloonContainer.addView(balloonView, params)
-    }
-
-
-    // 찜 저장 (DB/서버 연동 자리)
-    private fun saveFavorite(place: KakaoPlaceDto) {
-        Log.d("Favorite", "찜 저장: ${place.name}")
-        // TODO: Room DB insert or 서버 API 호출
-    }
-    private fun removeFavorite(place: KakaoPlaceDto){
-        Log.d("Favorite", "찜삭제: ${place.name}")
+        val params = balloonView.layoutParams as FrameLayout.LayoutParams
+        params.leftMargin = pt.x - w / 2
+        params.topMargin = pt.y - h
+        balloonView.layoutParams = params
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         kakaoMap = null
+        currentBalloonLatLng = null
     }
 }
-
-// DTO
-data class KakaoPlaceDto(
-    val id: String,
-    val name: String,
-    val category: String?,
-    val phone: String?,
-    val roadAddress: String?,
-    val jibunAddress: String?,
-    val lat: Double,
-    val lng: Double,
-    val placeUrl: String
-)

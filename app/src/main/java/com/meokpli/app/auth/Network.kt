@@ -1,6 +1,7 @@
 package com.meokpli.app.auth
 
 import android.content.Context
+import com.meokpli.app.main.Favorite.PlaceApi
 import com.meokpli.app.main.Home.CommentApi
 import com.meokpli.app.main.Interaction.FollowApi
 import com.meokpli.app.main.MainApi
@@ -18,8 +19,7 @@ object Network {
     private const val USER_BASE_URL = "https://meokplaylist.store/user/"
     private const val FEED_BASE_URL = "https://meokplaylist.store/feed/"
     private const val SOCIAL_BASE_URL = "https://meokplaylist.store/socialInteraction/"
-
-
+    private const val PLACE_BASE_URL = "https://meokplaylist.store/place/"
     private fun retrofit(baseUrl: String, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -63,6 +63,9 @@ object Network {
     fun commentApi(context: Context): CommentApi =
         retrofit(SOCIAL_BASE_URL, debugClient(context, withAuth = true))
             .create(CommentApi::class.java)
+    fun placeApi(context: Context): PlaceApi =
+        retrofit(PLACE_BASE_URL, debugClient(context, withAuth = true))
+            .create(PlaceApi::class.java)
 }
 /*
 4) Network (공용 Retrofit/OkHttp 팩토리)
