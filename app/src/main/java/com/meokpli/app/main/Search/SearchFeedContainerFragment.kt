@@ -7,13 +7,14 @@ import com.meokpli.app.R
 
 class SearchFeedContainerFragment : Fragment(R.layout.fragment_feed_container) {
 
-    private var isCategorySet = false // 서버 상태나 SharedPref로 체크 가능
+    private var selectedCategories: MutableList<String> = mutableListOf()
+    private var selectedRegions: MutableList<String> = mutableListOf()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         if (savedInstanceState == null) {
-            if (isCategorySet) {
+            if (selectedCategories.isNotEmpty() || selectedRegions.isNotEmpty()) {
                 showFeedList()
             } else {
                 showCategorySetup()
@@ -23,8 +24,11 @@ class SearchFeedContainerFragment : Fragment(R.layout.fragment_feed_container) {
 
     fun showCategorySetup() {
         val searchFeedFragment = SearchFeedFragment().apply {
-            setOnCompleteListener {
-                isCategorySet = true
+            setOnCompleteListener { categories, regions ->
+                selectedCategories.clear()
+                selectedCategories.addAll(categories)
+                selectedRegions.clear()
+                selectedRegions.addAll(regions)
                 showFeedList()
             }
         }
@@ -36,6 +40,17 @@ class SearchFeedContainerFragment : Fragment(R.layout.fragment_feed_container) {
 
     fun showFeedList() {
         val feedListFragment = FeedListFragment().apply {
+            arguments = Bundle().apply {
+                putStringArrayList("categories", ArrayList(selectedCategories))
+                putStringArrayList("regions", ArrayList(selectedRegions))
+            }
+            setOnCategoriesChangedListener { updatedCategories, updatedRegions ->
+                selectedCategories.clear()
+                selectedCategories.addAll(updatedCategories)
+                selectedRegions.clear()
+                selectedRegions.addAll(updatedRegions)
+                showFeedList()
+            }
             setOnEditClickListener {
                 showCategorySetup()
             }

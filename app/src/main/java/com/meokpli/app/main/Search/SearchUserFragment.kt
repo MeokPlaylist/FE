@@ -108,13 +108,16 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
         }
 
         // 엔터 입력 이벤트 감지
-        etSearch?.setOnEditorActionListener { _, actionId, _ ->
+        etSearch?.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                 val keyword = etSearch?.text.toString().trim()
                 if (keyword.isNotEmpty()) {
                     runSearch(keyword)
                     saveRecentSearch(keyword) // 엔터 누를 때만 저장
                 }
+                val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+
                 true
             } else false
         }

@@ -1,5 +1,6 @@
 package com.meokpli.app.main
 
+import com.meokpli.app.data.remote.request.FeedSearchRequest
 import com.meokpli.app.data.remote.response.SearchFeedResponse
 import retrofit2.Call
 import retrofit2.http.Body
@@ -26,8 +27,9 @@ interface SocialInteractionApi {
         @Body request: RecommendRestaurantRequest // ex) ["서울:강남구","서울:용산구"]
     ): Map<String, List<String>>
 
-    @GET("searchFeed")
+    @POST("searchFeed")
     fun searchFeed(
+        @Body request: FeedSearchRequest,
         @Query("page") page: Int,
         @Query("size") size: Int
     ): Call<SearchFeedResponse>
