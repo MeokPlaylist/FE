@@ -5,6 +5,7 @@ import com.meokpli.app.main.Favorite.PlaceApi
 import com.meokpli.app.main.Home.CommentApi
 import com.meokpli.app.main.Interaction.FollowApi
 import com.meokpli.app.main.MainApi
+import com.meokpli.app.main.Roadmap.RoadmapApi
 import okhttp3.OkHttpClient
 import com.meokpli.app.user.UserApi
 import com.meokpli.app.user.Category.CategoryApi
@@ -66,6 +67,10 @@ object Network {
     fun placeApi(context: Context): PlaceApi =
         retrofit(PLACE_BASE_URL, debugClient(context, withAuth = true))
             .create(PlaceApi::class.java)
+
+    fun roadmapApi(context: Context): RoadmapApi =
+        retrofit(PLACE_BASE_URL, debugClient(context, withAuth = true))
+            .create(RoadmapApi::class.java)
 }
 /*
 4) Network (공용 Retrofit/OkHttp 팩토리)

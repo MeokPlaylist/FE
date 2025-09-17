@@ -1,5 +1,6 @@
 package com.meokpli.app.comments
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,19 +10,18 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import com.meokpli.app.main.Home.UiComment
 import com.meokpli.app.R
+import com.meokpli.app.main.Home.UiComment
 
 class CommentAdapter(
     private val onReplyClick: (UiComment) -> Unit
 ) : RecyclerView.Adapter<CommentAdapter.VH>() {
 
-    // DiffUtil 변경: UiComment 전용
+    companion object { private const val TAG = "CommentAdapter" }
+
     private val diff = object : DiffUtil.ItemCallback<UiComment>() {
-        override fun areItemsTheSame(old: UiComment, new: UiComment): Boolean {
-            return (old.author + old.content + old.createdAt) ==
-                    (new.author + new.content + new.createdAt)
-        }
+        override fun areItemsTheSame(old: UiComment, new: UiComment) =
+            (old.author + old.content + old.createdAt) == (new.author + new.content + new.createdAt)
         override fun areContentsTheSame(old: UiComment, new: UiComment) = old == new
     }
 
@@ -43,20 +43,22 @@ class CommentAdapter(
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        val comment = currentList[position]
-        holder.name.text = comment.author
-        holder.date.text = comment.createdAt
-        holder.body.text = comment.content
+        val c = currentList[position]
+        Log.v(TAG, "bind pos=$position author='${c.author}' len=${c.content.length}")
 
-        // 프로필 이미지 로드
-        if (comment.avatarUrl.isNullOrBlank()) {
+        holder.name.text = c.author
+        holder.date.text = c.createdAt
+        holder.body.text = c.content
+
+        if (c.avatarUrl.isNullOrBlank()) {
+            Log.d(TAG, "avatar none for '${c.author}'")
             holder.avatar.setImageResource(R.drawable.ic_profile_red)
         } else {
-            holder.avatar.load(comment.avatarUrl)
+            Log.d(TAG, "avatar load url=${c.avatarUrl}")
+            holder.avatar.load(c.avatarUrl)
         }
 
-        // 답글 클릭 이벤트
-        holder.tvReplyHint.setOnClickListener { onReplyClick(comment) }
+        holder.tvReplyHint.setOnClickListener { onReplyClick(c) }
     }
 
     override fun getItemCount() = currentList.size

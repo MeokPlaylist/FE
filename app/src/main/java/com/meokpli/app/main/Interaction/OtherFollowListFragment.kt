@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Interaction
 
+import android.util.Log
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,12 +24,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class OtherFollowListFragment : Fragment() {
+private const val TAG_OFL = "OtherFollowList"
 
-    companion object {
-        private const val ARG_NICKNAME = "arg_nickname"
-        private const val ARG_TAB = "arg_tab" // "followers" or "following"
-    }
+class OtherFollowListFragment : Fragment() {
 
     private lateinit var api: FollowApi
     private lateinit var recycler: RecyclerView
@@ -46,27 +44,28 @@ class OtherFollowListFragment : Fragment() {
     private lateinit var adapter: OtherFollowUserAdapter
 
     private var targetNickname: String = ""
-    private var currentTab: String = "following" // default
+    private var currentTab: String = "following"
     private var isLoading = false
     private var isLastPage = false
     private var currentPage = 0
     private var currentTotalCount = 0
 
-    // 내 관계 캐시(1페이지 프리로드)
-    private val myFollowingSet = mutableSetOf<String>()
-    private val myFollowersSet = mutableSetOf<String>()
+    // 내 관계 캐시 (1페이지 프리로드)
+    private val myFollowingSet = mutableSetOf<String>() // 내가 팔로우 중
+    private val myFollowersSet = mutableSetOf<String>() // 나를 팔로우함
+
+    // 내 닉네임 (내 항목은 버튼 숨김)
+    private var myNickname: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         api = Network.followApi(requireContext())
         targetNickname = requireArguments().getString("arg_nickname").orEmpty()
         currentTab = requireArguments().getString("arg_tab").orEmpty()
-
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return inflater.inflate(R.layout.fragment_follow_list, container, false)
-    }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        inflater.inflate(R.layout.fragment_follow_list, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -85,16 +84,20 @@ class OtherFollowListFragment : Fragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = OtherFollowUserAdapter(
             onProfileClick = { row ->
-                // ✅ 여기서 OtherProfileFragment로 네비게이션
+                Log.d(TAG_OFL, "navigate to profile of ${row.nickname}")
                 findNavController().navigate(
                     R.id.otherProfileFragment,
                     bundleOf("arg_nickname" to row.nickname)
                 )
             },
             onFollowToggle = { user, isFollowingNow, position ->
+                Log.d(TAG_OFL, "toggle follow target=${user.nickname} now=$isFollowingNow pos=$position")
                 toggleFollow(user.nickname, isFollowingNow) { success, newState ->
                     if (success) {
                         adapter.updateFollowState(position, newState)
+                        Log.d(TAG_OFL, "toggle success target=${user.nickname} newState=$newState")
+                    } else {
+                        Log.e(TAG_OFL, "toggle failed target=${user.nickname}")
                     }
                 }
             }
@@ -105,17 +108,36 @@ class OtherFollowListFragment : Fragment() {
         tabFollowers.setOnClickListener { switchTab("followers") }
         tabFollowing.setOnClickListener { switchTab("following") }
 
-        // 내 관계 1페이지 프리로드 → UI 상태 보정
+        // 초기 데이터/닉네임/관계 캐시 로드
         viewLifecycleOwner.lifecycleScope.launch {
+            // 내 닉네임 로드 → 어댑터에 주입 (내 항목 버튼 숨김)
+            runCatching {
+                withContext(Dispatchers.IO) { Network.userApi(requireContext()).getPersonalInfo() }
+            }.onSuccess {
+                myNickname = it.name
+                Log.d(TAG_OFL, "myNickname=$myNickname")
+                adapter.setMyNickname(myNickname)
+            }.onFailure {
+                myNickname = null
+                adapter.setMyNickname(null)
+                Log.w(TAG_OFL, "failed to load personal info", it)
+            }
+
+            // 관계 캐시 1페이지 프리로드
             try {
                 val f0 = withContext(Dispatchers.IO) { api.getFollowingList(page = 0) }
                 myFollowingSet += f0.content.map { it.nickname }
                 val r0 = withContext(Dispatchers.IO) { api.getFollowerList(page = 0) }
                 myFollowersSet += r0.content.map { it.nickname }
-            } catch (_: Exception) { /* 무시 */ }
+                Log.d(TAG_OFL, "prefetch following=${myFollowingSet.size} followers=${myFollowersSet.size}")
+            } catch (e: Exception) {
+                Log.w(TAG_OFL, "prefetch failed", e)
+            }
+
             switchTab(currentTab)
         }
 
+        // 무한 스크롤
         recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
                 if (dy <= 0) return
@@ -124,8 +146,8 @@ class OtherFollowListFragment : Fragment() {
                 val total = adapter.itemCount
                 if (!isLoading && !isLastPage && lastVisible >= total - 3) {
                     when (currentTab) {
-                        "followers" -> loadFollowerPage(currentPage + 1, append = true)
-                        else -> loadFollowingPage(currentPage + 1, append = true)
+                        "followers" -> loadFollowerPage(currentPage + 1, true)
+                        else -> loadFollowingPage(currentPage + 1, true)
                     }
                 }
             }
@@ -140,21 +162,16 @@ class OtherFollowListFragment : Fragment() {
         currentTotalCount = 0
         adapter.submitList(emptyList())
 
-        val prefix = targetNickname
         if (tab == "followers") {
-            headerTitle.text = "${prefix}\nFollowers"
-            tabFollowers.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-            tabFollowing.setTextColor(0xFFE0E0E0.toInt())
+            headerTitle.text = "${targetNickname}\nFollowers"
             indicatorFollowers.visibility = View.VISIBLE
             indicatorFollowing.visibility = View.INVISIBLE
-            loadFollowerPage(page = 0, append = false)
+            loadFollowerPage(0, false)
         } else {
-            headerTitle.text = "${prefix}\nFollowing"
-            tabFollowing.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-            tabFollowers.setTextColor(0xFFE0E0E0.toInt())
+            headerTitle.text = "${targetNickname}\nFollowing"
             indicatorFollowing.visibility = View.VISIBLE
             indicatorFollowers.visibility = View.INVISIBLE
-            loadFollowingPage(page = 0, append = false)
+            loadFollowingPage(0, false)
         }
     }
 
@@ -185,6 +202,7 @@ class OtherFollowListFragment : Fragment() {
         )
 
         val newList = resp.content.map(::mapToUi)
+        Log.d(TAG_OFL, "applySlice tab=$currentTab page=${resp.page} size=${newList.size} hasNext=${resp.hasNext}")
 
         if (append) {
             adapter.append(newList)
@@ -197,7 +215,6 @@ class OtherFollowListFragment : Fragment() {
             }
         }
 
-        // Slice에는 totalElements 없음 → 지금까지 로드된 개수로 표시
         currentTotalCount = adapter.itemCount
         headerCount.text = "%,d".format(currentTotalCount)
     }
@@ -213,12 +230,13 @@ class OtherFollowListFragment : Fragment() {
                 }
                 if (!append) showLoading(false)
                 applySlice(resp, append, emptyMsg = "${targetNickname}의 팔로워가 없습니다.")
-            } catch (_: Exception) {
-                if (!append) showLoading(false)
-                if (!append) showEmpty("팔로워 정보를 불러올 수 없습니다.")
-            } finally {
-                isLoading = false
-            }
+            } catch (e: Exception) {
+                Log.e(TAG_OFL, "loadFollowerPage error p=$page", e)
+                if (!append) {
+                    showLoading(false)
+                    showEmpty("팔로워 정보를 불러올 수 없습니다.")
+                }
+            } finally { isLoading = false }
         }
     }
 
@@ -233,15 +251,15 @@ class OtherFollowListFragment : Fragment() {
                 }
                 if (!append) showLoading(false)
                 applySlice(resp, append, emptyMsg = "${targetNickname}의 팔로잉이 없습니다.")
-            } catch (_: Exception) {
-                if (!append) showLoading(false)
-                if (!append) showEmpty("팔로잉 정보를 불러올 수 없습니다.")
-            } finally {
-                isLoading = false
-            }
+            } catch (e: Exception) {
+                Log.e(TAG_OFL, "loadFollowingPage error p=$page", e)
+                if (!append) {
+                    showLoading(false)
+                    showEmpty("팔로잉 정보를 불러올 수 없습니다.")
+                }
+            } finally { isLoading = false }
         }
     }
-
 
     private fun toggleFollow(
         targetNickname: String,
@@ -259,13 +277,14 @@ class OtherFollowListFragment : Fragment() {
                     myFollowingSet.add(targetNickname)
                     onDone(true, true)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e(TAG_OFL, "toggleFollow error target=$targetNickname", e)
                 onDone(false, isFollowingNow)
             }
         }
     }
 
-    // ======== Adapter/Item ========
+    // ============== Adapter/Item ==============
 
     data class UserRowUi(
         val nickname: String,
@@ -281,11 +300,21 @@ class OtherFollowListFragment : Fragment() {
     ) : RecyclerView.Adapter<OtherFollowUserAdapter.ItemVH>() {
 
         private val data = mutableListOf<UserRowUi>()
+        private var myNickname: String? = null   // 내 닉네임 저장 (내 항목 버튼 숨김)
+
+        fun setMyNickname(nick: String?) {
+            myNickname = nick
+            notifyDataSetChanged()
+            Log.d(TAG_OFL, "adapter.setMyNickname=$myNickname")
+        }
 
         fun submitList(list: List<UserRowUi>) { data.clear(); data.addAll(list); notifyDataSetChanged() }
         fun append(list: List<UserRowUi>) { val s=data.size; data.addAll(list); notifyItemRangeInserted(s, list.size) }
         fun updateFollowState(position: Int, isFollowing: Boolean) {
-            if (position in data.indices) { data[position].isFollowing = isFollowing; notifyItemChanged(position) }
+            if (position in data.indices) {
+                data[position].isFollowing = isFollowing
+                notifyItemChanged(position)
+            }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemVH {
@@ -315,31 +344,44 @@ class OtherFollowListFragment : Fragment() {
                 name.text = u.nickname
                 subtitle.text = u.introduction.orEmpty()
 
-                when {
-                    u.isFollowing && u.followsMe -> {
-                        btn.text = "팔로잉"
-                        btn.setBackgroundResource(R.drawable.btn_basic)
-                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                    }
-                    u.isFollowing -> {
-                        btn.text = "팔로잉"
-                        btn.setBackgroundResource(R.drawable.btn_basic)
-                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                    }
-                    u.followsMe -> {
-                        btn.text = "맞팔로우"
-                        btn.setBackgroundResource(R.drawable.btn_mutual_follow)
-                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
-                    }
-                    else -> {
-                        btn.text = "팔로우"
-                        btn.setBackgroundResource(R.drawable.btn_basic)
-                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                val isSelf = !myNickname.isNullOrBlank() && u.nickname == myNickname
+                Log.d(TAG_OFL, "bind pos=$pos user=${u.nickname} isSelf=$isSelf following=${u.isFollowing} followsMe=${u.followsMe}")
+
+                if (isSelf) {
+                    // 내 항목이면 버튼 숨김
+                    btn.visibility = View.GONE
+                } else {
+                    btn.visibility = View.VISIBLE
+                    when {
+                        u.isFollowing && u.followsMe -> {
+                            btn.text = "팔로잉"
+                            btn.setBackgroundResource(R.drawable.btn_basic)
+                            btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                        }
+                        u.isFollowing -> {
+                            btn.text = "팔로잉"
+                            btn.setBackgroundResource(R.drawable.btn_basic)
+                            btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                        }
+                        u.followsMe -> {
+                            btn.text = "맞팔로우"
+                            btn.setBackgroundResource(R.drawable.btn_mutual_follow)
+                            btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
+                        }
+                        else -> {
+                            btn.text = "팔로우"
+                            btn.setBackgroundResource(R.drawable.btn_basic)
+                            btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                        }
                     }
                 }
 
-                itemView.setOnClickListener { onProfileClick(u) }
+                itemView.setOnClickListener {
+                    Log.d(TAG_OFL, "row click user=${u.nickname}")
+                    onProfileClick(u)
+                }
                 btn.setOnClickListener {
+                    Log.d(TAG_OFL, "action click user=${u.nickname} isFollowing=${u.isFollowing} pos=$pos")
                     btn.isEnabled = false
                     onFollowToggle(u, u.isFollowing, pos)
                     btn.isEnabled = true

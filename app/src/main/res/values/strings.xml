@@ -24,6 +24,9 @@
     <string name="empty"></string>
     <string name="detail" ><u>상세보기</u></string>
     <string name="favorite" />
+    <string name="saving">저장 중…</string>
+    <string name="send"></string>
+
 
 
 </resources>

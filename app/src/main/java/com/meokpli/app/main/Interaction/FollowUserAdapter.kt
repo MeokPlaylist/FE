@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Interaction
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,22 +8,22 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.meokpli.app.R
 import com.google.android.material.button.MaterialButton
+
+private const val TAG_FUA = "FollowUserAdapter"
 
 data class FollowUserUi(
     val id: Long,
     val name: String,
     val subtitle: String,
     val avatarUrl: String?,
-    var isFollowing: Boolean = false,
-    var followsMe: Boolean = false
+    var isFollowing: Boolean = false,   // 나 → 그
+    var followsMe: Boolean = false      // 그 → 나
 )
 
 class FollowUserAdapter(
-
     private val onItemClick: (FollowUserUi) -> Unit,
     private val onActionClick: (FollowUserUi) -> Unit
 ) : androidx.recyclerview.widget.ListAdapter<FollowUserUi, FollowUserAdapter.ItemVH>(DIFF) {
@@ -34,13 +35,22 @@ class FollowUserAdapter(
         }
     }
 
+    // 내 닉네임 (내 항목이면 버튼 숨김)
+    private var myNickname: String? = null
+    fun setMyNickname(nick: String?) {
+        myNickname = nick
+        notifyDataSetChanged()
+        Log.d(TAG_FUA, "setMyNickname=$myNickname")
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemVH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_user_follow, parent, false)
         return ItemVH(v)
     }
+
     override fun onBindViewHolder(holder: ItemVH, position: Int) = holder.bind(getItem(position))
 
-    inner class ItemVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ItemVH(itemView: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
         private val avatar: ImageView = itemView.findViewById(R.id.imgAvatar)
         private val name: TextView = itemView.findViewById(R.id.tvName)
         private val subtitle: TextView = itemView.findViewById(R.id.tvSubtitle)
@@ -60,31 +70,50 @@ class FollowUserAdapter(
             name.text = u.name
             subtitle.text = u.subtitle
 
-            when {
-                u.isFollowing && u.followsMe -> {
-                    btn.text = "팔로잉"
-                    btn.setBackgroundResource(R.drawable.btn_basic)
-                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                }
-                u.isFollowing -> {
-                    btn.text = "팔로잉"
-                    btn.setBackgroundResource(R.drawable.btn_basic)
-                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                }
-                u.followsMe -> {
-                    btn.text = "맞팔로우"
-                    btn.setBackgroundResource(R.drawable.btn_mutual_follow)
-                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
-                }
-                else -> {
-                    btn.text = "팔로우"
-                    btn.setBackgroundResource(R.drawable.btn_basic)
-                    btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+            val isSelf = !myNickname.isNullOrBlank() && u.name == myNickname
+            Log.d(
+                TAG_FUA,
+                "bind pos=$bindingAdapterPosition user=${u.name} isSelf=$isSelf following=${u.isFollowing} followsMe=${u.followsMe}"
+            )
+
+            if (isSelf) {
+                // 내 항목이면 버튼 숨김
+                btn.visibility = View.GONE
+            } else {
+                btn.visibility = View.VISIBLE
+                // 표시 상태 (팔로우 / 맞팔로우 / 팔로잉)
+                when {
+                    u.isFollowing && u.followsMe -> {
+                        btn.text = "팔로잉"
+                        btn.setBackgroundResource(R.drawable.btn_basic)
+                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                    }
+                    u.isFollowing -> {
+                        btn.text = "팔로잉"
+                        btn.setBackgroundResource(R.drawable.btn_basic)
+                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                    }
+                    u.followsMe -> {
+                        btn.text = "맞팔로우"
+                        btn.setBackgroundResource(R.drawable.btn_mutual_follow)
+                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
+                    }
+                    else -> {
+                        btn.text = "팔로우"
+                        btn.setBackgroundResource(R.drawable.btn_basic)
+                        btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                    }
                 }
             }
 
-            itemView.setOnClickListener { onItemClick(u) }
-            btn.setOnClickListener { onActionClick(u) }
+            itemView.setOnClickListener {
+                Log.d(TAG_FUA, "row click user=${u.name}")
+                onItemClick(u)
+            }
+            btn.setOnClickListener {
+                Log.d(TAG_FUA, "action click user=${u.name} isFollowing=${u.isFollowing}")
+                onActionClick(u) // 실제 follow/unFollow API는 Fragment에서 처리
+            }
         }
     }
 }

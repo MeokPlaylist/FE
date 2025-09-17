@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
@@ -17,26 +18,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- 뒤로가기 -->
         <ImageButton
             android:id="@+id/btnBack"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="start|center_vertical"
             android:layout_marginStart="16dp"
+            android:paddingTop="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@android:color/black"
-            android:src="@drawable/ic_arrow_left"/>
+            android:src="@drawable/ic_arrow_left"
+            app:tint="@android:color/white"/>
 
+        <!-- 타이틀 -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:paddingTop="12dp"
             android:text="로드맵"
-            android:textColor="@android:color/black"
+            android:textColor="#ffffff"
             android:textSize="17sp"
             android:textStyle="bold"/>
 
+        <!-- 더보기 -->
         <ImageButton
             android:id="@+id/btnMore"
             android:layout_width="32dp"
@@ -44,10 +50,12 @@
             android:layout_gravity="end|center_vertical"
             android:layout_marginEnd="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@android:color/black"
-            android:src="@drawable/ic_more_horiz"/>
+            android:src="@drawable/ic_more_horiz"
+            android:paddingTop="12dp"
+            app:tint="@android:color/white"/>
     </FrameLayout>
-    <!-- 여행 제목/기간 (데이터로 교체 필요) -->
+
+    <!-- 여행 제목/기간 -->
     <TextView
         android:id="@+id/tvTripTitle"
         android:layout_width="0dp"
@@ -55,14 +63,15 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginTop="12dp"
-        android:text="ㅇㅇ 여행  ( 2025.04.23 ~ 2025.04.27 )"
+        android:text="부산 여행  ( 2025.04.23 ~ 2025.04.27 )"
         android:textStyle="bold"
-        android:textSize="12sp"
+        android:textSize="14sp"
+        android:textColor="#000000"
         app:layout_constraintTop_toBottomOf="@id/topBar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 동적 리스트 -->
+    <!-- 로드맵 리스트 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRoadmap"
         android:layout_width="0dp"
@@ -70,11 +79,11 @@
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
         android:paddingTop="8dp"
-        android:paddingBottom="@dimen/bottom_bar_height"
         android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/tvTripTitle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_roadmap_timeline"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

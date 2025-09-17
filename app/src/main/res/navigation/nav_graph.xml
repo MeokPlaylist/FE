@@ -102,4 +102,31 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/roadmapPreview"
+        android:name="com.meokpli.app.main.Roadmap.RoadmapPreviewFragment"
+        android:label="로드맵 미리보기"
+        tools:layout="@layout/fragment_roadmap_preview">
+        <argument android:name="feedId" app:argType="long" />
+        <action
+            android:id="@+id/action_roadmapPreview_to_roadmapView"
+            app:destination="@id/roadmapView" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/roadmapView"
+        android:name="com.meokpli.app.main.Roadmap.RoadmapViewFragment"
+        android:label="로드맵"
+        tools:layout="@layout/fragment_roadmap_view">
+        <argument android:name="feedId" app:argType="long" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/roadmapPhotoDialog"
+        android:name="com.meokpli.app.main.Roadmap.RoadmapPhotoDialogFragment"
+        tools:layout="@layout/dialog_roadmap_photo" />
+
+
+
+
 </navigation>

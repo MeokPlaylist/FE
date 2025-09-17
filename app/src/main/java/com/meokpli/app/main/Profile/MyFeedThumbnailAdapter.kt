@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Profile
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,8 +11,14 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.meokpli.app.R
 
+private const val TAG_THUMB = "ThumbAdapter"
+private const val CLICK_DEBOUNCE_MS = 400L
+private var lastClickTs = 0L
+
+
 class MyFeedThumbnailAdapter(
-    private val items: MutableList<MyPageItem> = mutableListOf()
+    private val items: MutableList<MyPageItem> = mutableListOf(),
+    private val onPhotoClick: (Long) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -70,9 +77,22 @@ class MyFeedThumbnailAdapter(
 
             is MyPageItem.Photo -> {
                 val vh = holder as PhotoVH
+                Log.d(TAG_THUMB, "bind PHOTO pos=$position feedId=${item.feedId} url=${item.url.take(60)}")
                 vh.ivThumb.load(item.url) {
                     crossfade(true)
                     placeholder(R.drawable.ic_placeholder)
+                }
+                vh.itemView.setOnClickListener {
+                    val now = System.currentTimeMillis()
+                    if (now - lastClickTs < CLICK_DEBOUNCE_MS) return@setOnClickListener
+                    lastClickTs = now
+
+                    if (item.feedId <= 0) {
+                        Log.e(TAG_THUMB, "Invalid feedId: ${item.feedId}")
+                        return@setOnClickListener
+                    }
+                    Log.d(TAG_THUMB, "click PHOTO feedId=${item.feedId}")
+                    onPhotoClick(item.feedId)
                 }
             }
 
@@ -81,7 +101,7 @@ class MyFeedThumbnailAdapter(
                 vh.tvRegion.text = translateRegion(item.region)
                 vh.rvPhotos.layoutManager =
                     LinearLayoutManager(holder.itemView.context, LinearLayoutManager.HORIZONTAL, false)
-                vh.rvPhotos.adapter = PhotoAdapter(item.photoUrls, isRegionMode = true)
+                vh.rvPhotos.adapter = RowPhotoAdapter(item.photos, onPhotoClick)
             }
         }
     }
@@ -92,6 +112,31 @@ class MyFeedThumbnailAdapter(
         items.clear()
         items.addAll(newItems)
         notifyDataSetChanged()
+    }
+
+    private class RowPhotoAdapter(
+        private val photos: List<MyPageItem.Photo>,
+        private val onClick: (Long) -> Unit
+    ) : RecyclerView.Adapter<RowPhotoAdapter.VH>() {
+
+        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val iv: ImageView = v.findViewById(R.id.ivThumbnail)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
+            VH(LayoutInflater.from(parent.context).inflate(R.layout.item_my_feed_thumbnail, parent, false))
+
+        override fun getItemCount() = photos.size
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val p = photos[position]
+            holder.iv.load(p.url) {
+                crossfade(true)
+                placeholder(R.drawable.ic_placeholder)
+                error(R.drawable.ic_placeholder)
+            }
+            holder.itemView.setOnClickListener { onClick(p.feedId) }
+        }
     }
 
     private fun translateRegion(region: String): String {

@@ -29,6 +29,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import android.content.Intent
+import android.util.Log
 
 /**
  * 남의 프로필 화면 (V2 응답만 사용)
@@ -39,6 +41,7 @@ import retrofit2.HttpException
  * - '관계 API'가 없으므로, 내 팔로잉/팔로워 일부 페이지를 훑어 관계를 추정
  */
 class OtherProfileFragment : Fragment() {
+
 
     private val socialApi: SocialInteractionApi by lazy { Network.socialApi(requireContext()) }
     private val followApi: FollowApi by lazy { Network.followApi(requireContext()) }
@@ -62,6 +65,7 @@ class OtherProfileFragment : Fragment() {
     private lateinit var viewSettingsLine: View
     private lateinit var btnFollow: MaterialButton
 
+
     // 탭/리스트
     private lateinit var rvMyFeeds: RecyclerView
     private lateinit var textTabPeriod: TextView
@@ -72,6 +76,8 @@ class OtherProfileFragment : Fragment() {
     private lateinit var tabRegion: LinearLayout
     private lateinit var feedsAdapter: MyFeedThumbnailAdapter
     private var isPeriodTab = true
+
+
 
     // 마지막으로 받아온 V2 페이지
     private var lastOtherPage: OtherUserPageResponse? = null
@@ -165,7 +171,14 @@ class OtherProfileFragment : Fragment() {
     }
 
     private fun setupList() {
-        feedsAdapter = MyFeedThumbnailAdapter()
+        feedsAdapter = MyFeedThumbnailAdapter(
+            items = mutableListOf(),
+            onPhotoClick = { feedId ->
+                val i = Intent(requireContext(), com.meokpli.app.main.Home.FeedDetailActivity::class.java)
+                i.putExtra("feedId", feedId)
+                startActivity(i)
+            }
+        )
         rvMyFeeds.adapter = feedsAdapter
     }
 
@@ -247,31 +260,38 @@ class OtherProfileFragment : Fragment() {
 
     // ====== 탭 전환 ======
     private fun switchToPeriodTab() {
-        isPeriodTab = true
-        val glm = GridLayoutManager(requireContext(), 2)
-        glm.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-            override fun getSpanSize(position: Int): Int {
-                // 헤더는 2칸, 사진은 1칸
-                // (어댑터의 헤더 타입 상수에 의존하지 않기 위해 viewType == 0 가정: TYPE_YEAR_HEADER=0)
-                return if (feedsAdapter.getItemViewType(position) == 0) 2 else 1
+        val p = lastOtherPage ?: return
+        rvMyFeeds.layoutManager = GridLayoutManager(requireContext(), 2).apply {
+            spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                override fun getSpanSize(position: Int): Int =
+                    when (feedsAdapter.getItemViewType(position)) { 0 -> 2 else -> 1 }
             }
         }
-        rvMyFeeds.layoutManager = glm
+        val items = mutableListOf<MyPageItem>()
+        p.feedIdsGroupedByYear.toSortedMap(compareByDescending { it }).forEach { (year, ids) ->
+            items += MyPageItem.YearHeader(year)
+            ids.forEach { fid ->
+                p.urlMappedByFeedId[fid]?.let { url ->
+                    items += MyPageItem.Photo(fid, url) // ★
+                }
+            }
+        }
+        feedsAdapter.updateItems(items)
         setTabSelected(true)
-
-        lastOtherPage?.let { feedsAdapter.updateItems(buildYearItemsV2(it)) }
     }
 
     private fun switchToRegionTab() {
-        isPeriodTab = false
+        val p = lastOtherPage ?: return
         rvMyFeeds.layoutManager = LinearLayoutManager(requireContext())
-        setTabSelected(false)
-
-        val v2 = lastOtherPage ?: run {
-            feedsAdapter.updateItems(emptyList())
-            return
+        val items = mutableListOf<MyPageItem>()
+        p.feedIdsGroupedByRegion.toSortedMap().forEach { (region, ids) ->
+            val photos = ids.mapNotNull { fid ->
+                p.urlMappedByFeedId[fid]?.let { url -> MyPageItem.Photo(fid, url) } // ★
+            }
+            if (photos.isNotEmpty()) items += MyPageItem.RegionRow(region, photos)
         }
-        feedsAdapter.updateItems(buildRegionItemsV2(v2))
+        feedsAdapter.updateItems(items)
+        setTabSelected(false)
     }
 
     private fun setTabSelected(isPeriod: Boolean) {
@@ -291,7 +311,9 @@ class OtherProfileFragment : Fragment() {
             .forEach { (year, feedIds) ->
                 out += MyPageItem.YearHeader(year)
                 feedIds.forEach { fid ->
-                    p.urlMappedByFeedId[fid]?.let { url -> out += MyPageItem.Photo(url) }
+                    p.urlMappedByFeedId[fid]?.let { url ->
+                        out += MyPageItem.Photo(fid, url) // ✅ feedId + url
+                    }
                 }
             }
         return out
@@ -299,11 +321,12 @@ class OtherProfileFragment : Fragment() {
 
     private fun buildRegionItemsV2(p: OtherUserPageResponse): List<MyPageItem> {
         return p.feedIdsGroupedByRegion.mapNotNull { (regionKey, feedIds) ->
-            val urls = feedIds.mapNotNull { p.urlMappedByFeedId[it] }
-            if (urls.isEmpty()) null else MyPageItem.RegionRow(regionKey, urls)
+            val photos: List<MyPageItem.Photo> = feedIds.mapNotNull { fid ->
+                p.urlMappedByFeedId[fid]?.let { url -> MyPageItem.Photo(fid, url) } // ✅ Photo 리스트
+            }
+            if (photos.isEmpty()) null else MyPageItem.RegionRow(regionKey, photos) // ✅ List<Photo>
         }
     }
-
     // ===== 팔로우 토글 =====
     private fun toggleFollow() {
         if (isMe) return

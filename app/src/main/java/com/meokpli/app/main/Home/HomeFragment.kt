@@ -79,9 +79,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                 else showReportPopup(anchor, item.feedId)
             },
             onItemClick = { feedId ->
-                val intent = Intent(requireContext(), FeedDetailActivity::class.java)
-                intent.putExtra("feedId", feedId)
-                startActivity(intent)
+                Toast.makeText(requireContext(),
+                    "홈에서는 상세보기를 지원하지 않아요.\n프로필 또는 검색 결과에서 열어주세요.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         )
         rv.adapter = adapter
