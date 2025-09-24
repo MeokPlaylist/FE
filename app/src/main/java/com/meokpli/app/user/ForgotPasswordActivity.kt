@@ -33,7 +33,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         // Retrofit 초기화
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/user/") // 실제 서버 주소
+            .baseUrl("https://meokplaylist.shop/user/") // 실제 서버 주소
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(UserApi::class.java)
