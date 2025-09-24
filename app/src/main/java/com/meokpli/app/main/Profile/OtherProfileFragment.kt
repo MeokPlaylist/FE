@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Profile
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -236,7 +237,7 @@ class OtherProfileFragment : Fragment() {
                     tvSettings.visibility = View.GONE
                     viewSettingsLine.visibility = View.GONE
                     btnFollow.visibility = View.VISIBLE
-                    return@launch
+
                 }
 
                 // 6) 관계 API가 없으므로, 내 목록 일부 페이지를 훑어 상태 추정
@@ -335,11 +336,21 @@ class OtherProfileFragment : Fragment() {
     // ===== 팔로우 토글 =====
     private fun toggleFollow() {
         if (isMe) return
-        btnFollow.isEnabled = false
 
         val target = tvNickname.text?.toString().orEmpty()
-        val now = isFollowing
 
+        if (isFollowing) {
+            // ✅ 언팔로우 → 다이얼로그 먼저 띄움
+            showUnfollowConfirmDialog(target, lastOtherPage?.profileUrl) {
+                performToggleFollow(target, true)
+            }
+        } else {
+            // ✅ 팔로우는 즉시 실행
+            performToggleFollow(target, false)
+        }
+    }
+    private fun performToggleFollow(target: String, now: Boolean) {
+        btnFollow.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -366,8 +377,38 @@ class OtherProfileFragment : Fragment() {
         btnFollow.visibility = View.VISIBLE
         btnFollow.text = if (isFollowing) "팔로잉" else "팔로우"
         // 필요 시 맞팔 표시:
-        // if (!isFollowing && followsMe) btnFollow.text = "맞팔하기"
+        if (!isFollowing && followsMe) btnFollow.text = "맞팔로우"
     }
+    private fun showUnfollowConfirmDialog(
+        nickname: String,
+        avatarUrl: String?,
+        onConfirm: () -> Unit
+    ) {
+        val v = layoutInflater.inflate(R.layout.dialog_unfollow_confirm, null, false)
+        val iv = v.findViewById<ImageView>(R.id.ivProfile)
+        val btnCancel = v.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnUnfollow = v.findViewById<MaterialButton>(R.id.btnUnfollow)
+
+        if (!avatarUrl.isNullOrBlank()) {
+            iv.load(avatarUrl)
+        } else {
+            iv.setImageResource(R.drawable.ic_profile_red)
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(v)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnUnfollow.setOnClickListener {
+            btnUnfollow.isEnabled = false
+            onConfirm()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
 
     // ===== 관계 추정 (관계 API 없음 → 내 팔로잉/팔로워 일부 페이지만 훑음) =====
     private suspend fun resolveRelationshipSlow(

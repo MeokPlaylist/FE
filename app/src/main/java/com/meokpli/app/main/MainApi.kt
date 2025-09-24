@@ -22,10 +22,10 @@ interface MainApi {
     ): SlicedResponse<Feed>
 
     // 피드 상세 조회
-    @GET("detail")
+    @GET("getdDetailInfor")
     suspend fun getFeedDetail(
         @Query("feedId") feedId: Long
-    ): FeedDetailResponse
+    ): GetDetailInforResponse
 
     // ✅ 피드 신고
     @POST("report")
@@ -99,16 +99,22 @@ data class SlicedResponse<T>(
     val hasNext: Boolean
 )
 
-/* 2) 상세 DTO */
-data class FeedDetailResponse(
-    val feedId: Long,
+
+/* 서버 응답 DTO 반영 */
+data class GetDetailInforResponse(
+    val detailInforDto: GetDetailInforDto
+)
+
+data class GetDetailInforDto(
     val nickName: String,
-    val profileImgUrl: String?,
-    val createdAt: String,
     val content: String,
     val hashTag: List<String>,
-    val images: List<String>,
-    val authorId: Long? = null // 서버가 주면 더 안전한 소유자 판별 가능
+    val createdAt: String,              // OffsetDateTime → String 파싱
+    val feedPhotoUrl: List<String>,
+    val feedCategories: List<String>,   // FeedCategory enum → String
+    val feedLike: Boolean,
+    val likeCount: Long,
+    val commentCount: Long
 )
 
 data class ModifyMainFeedPhotoRequest(

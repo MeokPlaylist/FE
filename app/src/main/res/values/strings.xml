@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Meokpli</string>
+    <string name="app_name">먹플리</string>
 
     <!-- Google Cloud Console › OAuth 2.0 클라이언트(웹 애플리케이션) ID -->
     <string name="server_client_id">
@@ -26,7 +26,8 @@
     <string name="favorite" />
     <string name="saving">저장 중…</string>
     <string name="send"></string>
-    <string name="unfollow"></string>
+    <string name="unfollow">언팔로우</string>
+    <string name="edit_roadmap"></string>
 
 
 

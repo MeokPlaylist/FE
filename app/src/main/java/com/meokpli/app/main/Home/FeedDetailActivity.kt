@@ -25,7 +25,6 @@ import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.main.CategorySelectDialog
 import com.meokpli.app.main.EditContentDialog
-import com.meokpli.app.main.FeedDetailResponse
 import com.meokpli.app.main.MainApi
 import com.meokpli.app.main.ModifyFeedCategoryRequest
 import com.meokpli.app.main.ModifyFeedContentRequest
@@ -45,26 +44,28 @@ class FeedDetailActivity : AppCompatActivity() {
     private lateinit var tvCaption: TextView
     private lateinit var btnComment: ImageView
     private lateinit var tvPageBadge: TextView
+    private lateinit var ivLike: ImageView
+    private lateinit var tvLikeCount: TextView
+    private lateinit var tvCommentCount: TextView
 
     private var feedId: Long = 0L
 
     // 소유자 판별용
     private var myNickname: String? = null
     private var feedAuthorNickname: String? = null
-    private var authorId: Long? = null
+
 
     // 상세에서 가져온 현재 선택(있으면 프리셋)
     private var currentCategories: List<String> = emptyList()
     private var currentRegions: ArrayList<String> = arrayListOf()
 
-    private fun isMineNow(): Boolean {
-        return if (authorId != null && authorId!! >= 0) {
-            // TODO: userId 비교가 가능해지면 여기 구현
-            false
-        } else {
-            !myNickname.isNullOrBlank() && myNickname == feedAuthorNickname
-        }
-    }
+    private var isLikedByMe: Boolean = false
+    private var likeCount: Long = 0
+    private var commentCount: Long = 0
+
+    private fun isMineNow(): Boolean =
+        !myNickname.isNullOrBlank() && !feedAuthorNickname.isNullOrBlank() &&
+                (myNickname == feedAuthorNickname)
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +83,9 @@ class FeedDetailActivity : AppCompatActivity() {
         tvCaption = findViewById(R.id.tvCaption)
         btnComment = findViewById(R.id.btnComment)
         tvPageBadge = findViewById(R.id.tvPageBadge)
+        ivLike = findViewById(R.id.ivLike)
+        tvLikeCount = findViewById(R.id.tvLikeCount)
+        tvCommentCount = findViewById(R.id.tvCommentCount)
 
         // 내 닉네임 로드
         lifecycleScope.launch {
@@ -108,8 +112,23 @@ class FeedDetailActivity : AppCompatActivity() {
             CommentsBottomSheet.newInstance(feedId)
                 .show(supportFragmentManager, "comments")
         }
+        //댓글수 변경
+        supportFragmentManager.setFragmentResultListener(
+            "comment_result", this
+        ) { _, bundle ->
+            val id = bundle.getLong("feedId", 0L)
+            val newCount = bundle.getInt("count", -1)
+            if (id == feedId && newCount >= 0) {
+                commentCount = newCount.toLong()
+                tvCommentCount.text = commentCount.toString()
+            }
+        }
+        ivLike.setOnClickListener { toggleLike() }
 
+        bindActionSheetResults()
+    }
         // 액션 바텀시트 결과
+        private fun bindActionSheetResults() {
         supportFragmentManager.setFragmentResultListener(
             FeedActionsBottomSheet.REQUEST_KEY, this
         ) { _, bundle ->
@@ -135,6 +154,15 @@ class FeedDetailActivity : AppCompatActivity() {
                         preComps = arrayListOf<String>() // ← preCompanions 아님!
                         // preRegions 파라미터 없음 (현 다이얼로그 버전)
                     ).show(supportFragmentManager, "category_select_first")
+                }
+                FeedActionsBottomSheet.ACTION_EDIT_POST -> {
+                    val initial = tvCaption.text?.toString().orEmpty()
+                    EditContentDialog.newInstance(feedIdArg, initial)
+                        .show(supportFragmentManager, "edit_content")
+                }
+
+                FeedActionsBottomSheet.ACTION_DELETE -> {
+                    confirmDeleteInDetail(feedIdArg)
                 }
             }
         }
@@ -262,23 +290,7 @@ class FeedDetailActivity : AppCompatActivity() {
             }
 
         }
-        supportFragmentManager.setFragmentResultListener(
-            FeedActionsBottomSheet.REQUEST_KEY, this
-        ) { _, bundle ->
-            val action = bundle.getString(FeedActionsBottomSheet.KEY_ACTION) ?: return@setFragmentResultListener
-            val feedIdArg = bundle.getLong(FeedActionsBottomSheet.KEY_FEED_ID, 0L)
-            if (feedIdArg == 0L) return@setFragmentResultListener
 
-            when (action) {
-                FeedActionsBottomSheet.ACTION_EDIT_COVER -> { /* 기존 코드 그대로 */ }
-                FeedActionsBottomSheet.ACTION_EDIT_CATEGORY -> { /* 기존 코드 그대로 */ }
-
-                // ✅ 삭제
-                FeedActionsBottomSheet.ACTION_DELETE -> {
-                    confirmDeleteInDetail(feedIdArg)
-                }
-            }
-        }
 
     }
 
@@ -287,31 +299,41 @@ class FeedDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val api: MainApi = Network.feedApi(this@FeedDetailActivity)
-                val dto: FeedDetailResponse = api.getFeedDetail(feedId)
+                val resp = api.getFeedDetail(feedId).detailInforDto
 
-                tvUserName.text = dto.nickName
-                tvDate.text = dto.createdAt
-                tvCaption.text = dto.content
-                if (!dto.profileImgUrl.isNullOrBlank()) imgAvatar.load(dto.profileImgUrl)
-                else imgAvatar.setImageResource(R.drawable.ic_profile_red)
+                feedAuthorNickname = resp.nickName
+                tvUserName.text = resp.nickName
+                tvDate.text = resp.createdAt
+                tvCaption.text = resp.content
+                //프로필 완성되면 손봐야함
+                imgAvatar.setImageResource(R.drawable.ic_profile_red)
 
-                feedAuthorNickname = dto.nickName
-                authorId = dto.authorId
+                isLikedByMe = resp.feedLike
+                likeCount = resp.likeCount
+                commentCount = resp.commentCount
+                renderLikeUi()
+
+                tvCommentCount.text = commentCount.toString()
+
+
+
 
                 chipGroup.removeAllViews()
-                dto.hashTag.forEach { tag ->
+                resp.hashTag.forEach { tag ->
                     val chip = Chip(this@FeedDetailActivity).apply {
                         text = "#$tag"; isClickable = false
                     }
                     chipGroup.addView(chip)
                 }
 
-                val pagerAdapter = PhotoPagerAdapter(dto.images)
+                val urls = resp.feedPhotoUrl
+                val pagerAdapter = PhotoPagerAdapter(urls)
                 viewPager.adapter = pagerAdapter
-                tvPageBadge.text = if (dto.images.isEmpty()) "0/0" else "1/${dto.images.size}"
+
+                tvPageBadge.text = if (urls.isEmpty()) "0/0" else "1/${urls.size}"
                 viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
-                        tvPageBadge.text = "${position + 1}/${dto.images.size}"
+                        tvPageBadge.text = "${position + 1}/${urls.size}"
                     }
                 })
 
@@ -321,6 +343,81 @@ class FeedDetailActivity : AppCompatActivity() {
                 Toast.makeText(this@FeedDetailActivity, "상세 불러오기 실패: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    /** 좋아요 토글 → 서버 전송 → UI 즉시 반영(낙관적) */
+    private fun toggleLike() {
+        val prevLiked = isLikedByMe
+        val prevCount = likeCount
+
+        // 낙관적 업데이트
+        isLikedByMe = !prevLiked
+        likeCount = if (isLikedByMe) prevCount + 1 else (prevCount - 1).coerceAtLeast(0)
+        renderLikeUi()
+
+        lifecycleScope.launch {
+            try {
+                val api = Network.feedApi(this@FeedDetailActivity)
+                if (isLikedByMe) {
+                    val r = api.likeFeed(feedId)
+                    if (!r.isSuccessful) throw HttpException(r)
+                } else {
+                    val r = api.unlikeFeed(feedId)
+                    if (!r.isSuccessful) throw HttpException(r)
+                }
+            } catch (t: Throwable) {
+                // 실패 시 롤백
+                isLikedByMe = prevLiked
+                likeCount   = prevCount
+                renderLikeUi()
+                Toast.makeText(this@FeedDetailActivity, "좋아요 처리 실패", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun renderLikeUi() {
+        ivLike.setImageResource(if (isLikedByMe) R.drawable.ic_heart_filled else R.drawable.ic_heart_unfilled)
+        tvLikeCount.text = likeCount.toString()
+    }
+
+    private fun confirmDeleteInDetail(feedId: Long) {
+        AlertDialog.Builder(this)
+            .setTitle("게시글을 삭제할까요?")
+            .setMessage("한번 삭제한 게시물은 되돌릴 수 없습니다.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("삭제") { d, _ ->
+                lifecycleScope.launch {
+                    try {
+                        val res = Network.feedApi(this@FeedDetailActivity).deleteFeed(feedId)
+                        if (res.isSuccessful) {
+                            Toast.makeText(this@FeedDetailActivity, "삭제되었습니다.", Toast.LENGTH_SHORT)
+                                .show()
+                            finish()
+                        } else {
+                            Toast.makeText(
+                                this@FeedDetailActivity,
+                                "삭제 실패: ${res.code()}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: HttpException) {
+                        Toast.makeText(
+                            this@FeedDetailActivity,
+                            "삭제 실패: ${e.code()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            this@FeedDetailActivity,
+                            "삭제 실패: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+                d.dismiss()
+            }
+            .show()
+
     }
 
     private fun showReportPopup(anchor: View) {
@@ -374,30 +471,4 @@ class FeedDetailActivity : AppCompatActivity() {
             .show()
     }
 
-    // 상세화면에서 삭제 확인 → 서버 호출 → 성공 시 화면 종료
-    private fun confirmDeleteInDetail(feedId: Long) {
-        AlertDialog.Builder(this)
-            .setTitle("게시글을 삭제할까요?")
-            .setMessage("한번 삭제한 게시물은 되돌릴 수 없습니다.")
-            .setNegativeButton("취소", null)
-            .setPositiveButton("삭제") { d, _ ->
-                lifecycleScope.launch {
-                    try {
-                        val res = Network.feedApi(this@FeedDetailActivity).deleteFeed(feedId)
-                        if (res.isSuccessful) {
-                            Toast.makeText(this@FeedDetailActivity, "삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                            finish() // 상세 종료 (목록은 사용자가 새로고침/재진입 시 반영)
-                        } else {
-                            Toast.makeText(this@FeedDetailActivity, "삭제 실패: ${res.code()}", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: HttpException) {
-                        Toast.makeText(this@FeedDetailActivity, "삭제 실패: ${e.code()}", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(this@FeedDetailActivity, "삭제 실패: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                d.dismiss()
-            }
-            .show()
-    }
 }

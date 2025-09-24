@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Interaction
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +17,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import com.google.android.material.button.MaterialButton
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.main.SlicedResponse
@@ -289,57 +292,78 @@ class FollowListFragment : Fragment() {
 
     /** FOLLOWING 탭: 언팔 성공 시 행 제거 */
     private fun toggleFollowAndRemove(row: FollowUserUi) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                if (!row.isFollowing) {
-                    // 안전 가드: 비정상 상태면 팔로우로 살려두기
+        if (!row.isFollowing) {
+            // 팔로우는 그대로 즉시 실행
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
                     Network.socialApi(requireContext()).follow(row.name)
                     myFollowingSet.add(row.name)
                     row.isFollowing = true
                     updateRow(row)
                     Toast.makeText(requireContext(), "팔로우했습니다.", Toast.LENGTH_SHORT).show()
                     Log.d(TAG_FL, "follow done name=${row.name}")
-                } else {
-                    Network.socialApi(requireContext()).unFollow(row.name)
-                    myFollowingSet.remove(row.name)
-                    // FOLLOWING 탭은 리스트에서 제거
-                    val cur = adapter.currentList.toMutableList()
-                    val idx = cur.indexOfFirst { it.id == row.id }
-                    if (idx >= 0) {
-                        cur.removeAt(idx)
-                        adapter.submitList(cur)
-
-                    }
-                    // 헤더 총합 1 감소
-                    headerTotal = (headerTotal - 1).coerceAtLeast(0)
-                    headerCount.text = "%,d".format(headerTotal)
-                    // 프로필로 델타 전달
-                    findNavController().previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("followingDelta", -1)
-
-                    Log.d(TAG_FL, "unfollow done name=${row.name} (removed) total=$headerTotal")
+                } catch (t: Throwable) {
+                    Log.e(TAG_FL, "follow failed name=${row.name}", t)
                 }
-            } catch (t: Throwable) {
-                Log.e(TAG_FL, "toggleFollowAndRemove failed name=${row.name}", t)
+            }
+        } else {
+            // ✅ 언팔로우: 다이얼로그 먼저
+            showUnfollowConfirmDialog(row.name, row.avatarUrl) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        Network.socialApi(requireContext()).unFollow(row.name)
+                        myFollowingSet.remove(row.name)
+
+                        // 리스트에서 제거
+                        val cur = adapter.currentList.toMutableList()
+                        val idx = cur.indexOfFirst { it.id == row.id }
+                        if (idx >= 0) {
+                            cur.removeAt(idx)
+                            adapter.submitList(cur)
+                        }
+
+                        // 헤더/델타 갱신
+                        headerTotal = (headerTotal - 1).coerceAtLeast(0)
+                        headerCount.text = "%,d".format(headerTotal)
+                        findNavController().previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("followingDelta", -1)
+
+                        Toast.makeText(requireContext(), "팔로우를 취소했습니다.", Toast.LENGTH_SHORT).show()
+                        Log.d(TAG_FL, "unfollow done name=${row.name}")
+                    } catch (t: Throwable) {
+                        Log.e(TAG_FL, "unfollow failed name=${row.name}", t)
+                    }
+                }
             }
         }
     }
 
     /** FOLLOWERS 탭: 토글만 하고 행은 유지 */
     private fun toggleFollowOnly(row: FollowUserUi) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                if (row.isFollowing) {
-                    Network.socialApi(requireContext()).unFollow(row.name)
-                    myFollowingSet.remove(row.name)
-                    row.isFollowing = false
-                    updateRow(row)
-                    findNavController().previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("followingDelta", -1)
-                    Log.d(TAG_FL, "unfollow done name=${row.name}")
-                } else {
+        if (row.isFollowing) {
+            // ✅ 언팔로우: 다이얼로그 먼저
+            showUnfollowConfirmDialog(row.name, row.avatarUrl) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        Network.socialApi(requireContext()).unFollow(row.name)
+                        myFollowingSet.remove(row.name)
+                        row.isFollowing = false
+                        updateRow(row)
+                        findNavController().previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("followingDelta", -1)
+                        Toast.makeText(requireContext(), "팔로우를 취소했습니다.", Toast.LENGTH_SHORT).show()
+                        Log.d(TAG_FL, "unfollow done name=${row.name}")
+                    } catch (t: Throwable) {
+                        Log.e(TAG_FL, "unfollow failed name=${row.name}", t)
+                    }
+                }
+            }
+        } else {
+            // 팔로우는 그대로 즉시 실행
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
                     Network.socialApi(requireContext()).follow(row.name)
                     myFollowingSet.add(row.name)
                     row.isFollowing = true
@@ -347,10 +371,11 @@ class FollowListFragment : Fragment() {
                     findNavController().previousBackStackEntry
                         ?.savedStateHandle
                         ?.set("followingDelta", +1)
+                    Toast.makeText(requireContext(), "팔로우했습니다.", Toast.LENGTH_SHORT).show()
                     Log.d(TAG_FL, "follow done name=${row.name}")
+                } catch (t: Throwable) {
+                    Log.e(TAG_FL, "follow failed name=${row.name}", t)
                 }
-            } catch (t: Throwable) {
-                Log.e(TAG_FL, "toggleFollowOnly failed name=${row.name}", t)
             }
         }
     }
@@ -361,4 +386,36 @@ class FollowListFragment : Fragment() {
         if (idx >= 0) cur[idx] = row.copy()
         adapter.submitList(cur)
     }
+
+    private fun showUnfollowConfirmDialog(
+        nickname: String,
+        avatarUrl: String?,
+        onConfirm: () -> Unit
+    ) {
+        val v = layoutInflater.inflate(R.layout.dialog_unfollow_confirm, null, false)
+        val iv = v.findViewById<ImageView>(R.id.ivProfile)
+        val btnCancel = v.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnUnfollow = v.findViewById<MaterialButton>(R.id.btnUnfollow)
+
+        // 프로필 이미지
+        if (!avatarUrl.isNullOrBlank()) {
+            iv.load(avatarUrl)
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(v)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnUnfollow.setOnClickListener {
+            btnUnfollow.isEnabled = false
+            onConfirm()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+
+
 }

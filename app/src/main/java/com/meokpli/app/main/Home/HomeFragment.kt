@@ -31,7 +31,10 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import android.app.AlertDialog
+import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
+import com.meokpli.app.main.CategorySelectDialog
+import com.meokpli.app.main.EditContentDialog
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
@@ -114,6 +117,42 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
             }
         )
         rv.adapter = adapter
+
+        childFragmentManager.setFragmentResultListener("feed_actions_result", viewLifecycleOwner) { _, bundle ->
+            val action = bundle.getString("action")
+            val feedId = bundle.getLong("feedId", 0L)
+            if (feedId == 0L) return@setFragmentResultListener
+
+            when (action) {
+                "edit_post" -> {
+                    // FeedDetail처럼 EditContentDialog 열기
+                    val initial = adapter.findItem(feedId)?.content ?: ""
+                    EditContentDialog.newInstance(feedId, initial)
+                        .show(childFragmentManager, "edit_content")
+                }
+                "edit_cover" -> {
+                    // FeedDetail처럼 대표사진 선택 바텀시트 열기
+                    val images = adapter.findItem(feedId)?.feedPhotoUrl ?: emptyList()
+                    FeedCoverPickBottomSheet.newInstance(
+                        feedId = feedId,
+                        images = ArrayList(images),
+                        currentMainIndex = 0 // 목록에서는 currentIndex 판단 힘들면 0 기본
+                    ).show(childFragmentManager, "cover_pick")
+                }
+                "edit_category" -> {
+                    // 카테고리 선택 다이얼로그
+                    CategorySelectDialog.newInstance(
+                        preMoods = arrayListOf(),
+                        preFoods = arrayListOf(),
+                        preComps = arrayListOf()
+                    ).show(childFragmentManager, "category_select")
+                }
+                "delete" -> {
+                    confirmDelete(feedId)
+                }
+            }
+        }
+
 
         // ✅ BottomSheet에서 댓글 수 갱신 전달 받기
         childFragmentManager.setFragmentResultListener("comment_result", viewLifecycleOwner) { _, bundle ->
@@ -230,14 +269,21 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
             elevation = 20f
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
-
-        v.findViewById<TextView>(R.id.itemDelete).setOnClickListener {
+        fun setResult(action: String) {
+            parentFragmentManager.setFragmentResult(
+                "feed_actions_result",
+                bundleOf("action" to action, "feedId" to feedId)
+            )
             popup.dismiss()
-            // TODO: 삭제 흐름(확인 → API → 목록 갱신)
-            confirmDelete(feedId)
         }
 
+        v.findViewById<TextView>(R.id.itemEditPost).setOnClickListener { setResult("edit_post") }
+        v.findViewById<TextView>(R.id.itemEditCover).setOnClickListener { setResult("edit_cover") }
+        v.findViewById<TextView>(R.id.itemEditCategory).setOnClickListener { setResult("edit_category") }
+        v.findViewById<TextView>(R.id.itemDelete).setOnClickListener { setResult("delete") }
+
         showPopupBelowRight(popup, anchor, v)
+
     }
 
     /** 남의 피드 팝업(신고 1개) */
