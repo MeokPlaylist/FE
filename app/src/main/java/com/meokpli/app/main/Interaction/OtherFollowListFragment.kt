@@ -61,7 +61,7 @@ class OtherFollowListFragment : Fragment() {
         super.onCreate(savedInstanceState)
         api = Network.followApi(requireContext())
         targetNickname = requireArguments().getString("arg_nickname").orEmpty()
-        currentTab = requireArguments().getString("arg_tab").orEmpty()
+        currentTab = requireArguments().getString("arg_tab") ?: "following"
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
@@ -329,6 +329,7 @@ class OtherFollowListFragment : Fragment() {
             private val name: TextView = itemView.findViewById(R.id.tvName)
             private val subtitle: TextView = itemView.findViewById(R.id.tvSubtitle)
             private val btn: MaterialButton = itemView.findViewById(R.id.btnAction)
+            private val btnUnfollow: ImageView = itemView.findViewById(R.id.btnUnfollow)
 
             fun bind(u: UserRowUi, pos: Int) {
                 val ctx = itemView.context
@@ -350,28 +351,48 @@ class OtherFollowListFragment : Fragment() {
                 if (isSelf) {
                     // 내 항목이면 버튼 숨김
                     btn.visibility = View.GONE
+                    btnUnfollow.visibility = View.GONE
                 } else {
-                    btn.visibility = View.VISIBLE
                     when {
-                        u.isFollowing && u.followsMe -> {
-                            btn.text = "팔로잉"
-                            btn.setBackgroundResource(R.drawable.btn_basic)
-                            btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
-                        }
+                        // ✅ 내가 팔로우 중(맞팔 포함) → X 아이콘만
                         u.isFollowing -> {
-                            btn.text = "팔로잉"
-                            btn.setBackgroundResource(R.drawable.btn_basic)
-                            btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                            btn.visibility = View.GONE
+                            btnUnfollow.visibility = View.VISIBLE
+                            btnUnfollow.setImageResource(R.drawable.ic_close)
+                            // 문자열 리소스 없으면 하드코딩 가능
+                            btnUnfollow.contentDescription = ctx.getString(R.string.unfollow, "언팔로우")
+                            btnUnfollow.setOnClickListener {
+                                Log.d(TAG_OFL, "unfollow click user=${u.nickname} pos=$pos")
+                                onFollowToggle(u, true, pos) // 언팔
+                            }
                         }
+                        // ✅ 그가 나를 팔로우(난 아직) → 맞팔로우 버튼
                         u.followsMe -> {
+                            btn.visibility = View.VISIBLE
+                            btnUnfollow.visibility = View.GONE
                             btn.text = "맞팔로우"
                             btn.setBackgroundResource(R.drawable.btn_mutual_follow)
                             btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.black))
+                            btn.setOnClickListener {
+                                Log.d(TAG_OFL, "mutual follow click user=${u.nickname} pos=$pos")
+                                btn.isEnabled = false
+                                onFollowToggle(u, false, pos) // 팔로우
+                                btn.isEnabled = true
+                            }
                         }
+                        // ✅ 서로 팔로우 아님 → 팔로우 버튼
                         else -> {
+                            btn.visibility = View.VISIBLE
+                            btnUnfollow.visibility = View.GONE
                             btn.text = "팔로우"
                             btn.setBackgroundResource(R.drawable.btn_basic)
                             btn.setTextColor(ContextCompat.getColor(ctx, android.R.color.white))
+                            btn.setOnClickListener {
+                                Log.d(TAG_OFL, "follow click user=${u.nickname} pos=$pos")
+                                btn.isEnabled = false
+                                onFollowToggle(u, false, pos) // 팔로우
+                                btn.isEnabled = true
+                            }
                         }
                     }
                 }
@@ -379,12 +400,6 @@ class OtherFollowListFragment : Fragment() {
                 itemView.setOnClickListener {
                     Log.d(TAG_OFL, "row click user=${u.nickname}")
                     onProfileClick(u)
-                }
-                btn.setOnClickListener {
-                    Log.d(TAG_OFL, "action click user=${u.nickname} isFollowing=${u.isFollowing} pos=$pos")
-                    btn.isEnabled = false
-                    onFollowToggle(u, u.isFollowing, pos)
-                    btn.isEnabled = true
                 }
             }
         }

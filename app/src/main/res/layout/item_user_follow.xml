@@ -61,4 +61,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/imgAvatar"
         app:layout_constraintBottom_toBottomOf="@id/imgAvatar"/>
+
+
+    <ImageView
+        android:id="@+id/btnUnfollow"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_close"
+        android:contentDescription="@string/unfollow"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/imgAvatar"
+        app:layout_constraintBottom_toBottomOf="@id/imgAvatar"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

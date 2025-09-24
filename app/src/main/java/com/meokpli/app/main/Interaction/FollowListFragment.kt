@@ -57,6 +57,11 @@ class FollowListFragment : Fragment() {
 
     private var myNickname: String? = null
 
+    // 헤더 “총합” (프로필에서 전달)
+    private var initialFollowers: Int = 0
+    private var initialFollowing: Int = 0
+    private var headerTotal: Int = 0 // 현재 탭의 총합 표시값
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         followApi = Network.followApi(requireContext())
@@ -64,6 +69,10 @@ class FollowListFragment : Fragment() {
             "FOLLOWERS" -> FollowTab.FOLLOWERS
             else -> FollowTab.FOLLOWING
         }
+        // 프로필에서 넘어온 총합
+        initialFollowers = requireArguments().getInt("arg_followers", 0)
+        initialFollowing = requireArguments().getInt("arg_following", 0)
+        Log.d(TAG_FL, "args totals followers=$initialFollowers following=$initialFollowing")
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
@@ -123,7 +132,7 @@ class FollowListFragment : Fragment() {
                     Log.w(TAG_FL, "failed to load personal info", it)
                 }
 
-            // 2) 관계 캐시 프리로드(각 1페이지)
+            // 2) 관계 캐시 프리로드(각 1페이지) 관계api있음 교체
             runCatching { withContext(Dispatchers.IO) { followApi.getFollowingList(page = 0) } }
                 .onSuccess { myFollowingSet += it.content.map { dto -> dto.nickname }; Log.d(TAG_FL, "prefetch following=${myFollowingSet.size}") }
                 .onFailure { Log.w(TAG_FL, "prefetch following fail", it) }
@@ -159,6 +168,11 @@ class FollowListFragment : Fragment() {
         currentPage = 0
         currentTotalCount = 0
         adapter.submitList(emptyList())
+
+        headerTotal = when (tab) {
+            FollowTab.FOLLOWERS -> initialFollowers
+            FollowTab.FOLLOWING -> initialFollowing
+        }
 
         when (tab) {
             FollowTab.FOLLOWERS -> {
@@ -207,8 +221,14 @@ class FollowListFragment : Fragment() {
                 name = d.nickname,
                 subtitle = d.introduction.orEmpty(),
                 avatarUrl = d.profileImgKey,
-                isFollowing = myFollowingSet.contains(d.nickname),
-                followsMe = myFollowersSet.contains(d.nickname)
+                isFollowing = when (currentTab) {
+                    FollowTab.FOLLOWING -> true
+                    FollowTab.FOLLOWERS -> myFollowingSet.contains(d.nickname)
+                },
+                followsMe = when (currentTab) {
+                    FollowTab.FOLLOWERS -> true
+                    FollowTab.FOLLOWING -> myFollowersSet.contains(d.nickname)
+                }
             )
         }
 
@@ -226,8 +246,7 @@ class FollowListFragment : Fragment() {
             }
         }
 
-        currentTotalCount = adapter.itemCount
-        headerCount.text = "%,d".format(currentTotalCount)
+        headerCount.text = "%,d".format(headerTotal)
     }
 
     private fun loadFollowerPage(page: Int, append: Boolean) {
@@ -289,14 +308,20 @@ class FollowListFragment : Fragment() {
                     if (idx >= 0) {
                         cur.removeAt(idx)
                         adapter.submitList(cur)
-                        headerCount.text = "%,d".format(cur.size)
+
                     }
-                    Toast.makeText(requireContext(), "언팔로우했습니다.", Toast.LENGTH_SHORT).show()
-                    Log.d(TAG_FL, "unfollow done name=${row.name} (removed)")
+                    // 헤더 총합 1 감소
+                    headerTotal = (headerTotal - 1).coerceAtLeast(0)
+                    headerCount.text = "%,d".format(headerTotal)
+                    // 프로필로 델타 전달
+                    findNavController().previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("followingDelta", -1)
+
+                    Log.d(TAG_FL, "unfollow done name=${row.name} (removed) total=$headerTotal")
                 }
             } catch (t: Throwable) {
                 Log.e(TAG_FL, "toggleFollowAndRemove failed name=${row.name}", t)
-                Toast.makeText(requireContext(), "처리 실패", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -310,19 +335,22 @@ class FollowListFragment : Fragment() {
                     myFollowingSet.remove(row.name)
                     row.isFollowing = false
                     updateRow(row)
-                    Toast.makeText(requireContext(), "언팔로우했습니다.", Toast.LENGTH_SHORT).show()
+                    findNavController().previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("followingDelta", -1)
                     Log.d(TAG_FL, "unfollow done name=${row.name}")
                 } else {
                     Network.socialApi(requireContext()).follow(row.name)
                     myFollowingSet.add(row.name)
                     row.isFollowing = true
                     updateRow(row)
-                    Toast.makeText(requireContext(), "팔로우했습니다.", Toast.LENGTH_SHORT).show()
+                    findNavController().previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("followingDelta", +1)
                     Log.d(TAG_FL, "follow done name=${row.name}")
                 }
             } catch (t: Throwable) {
                 Log.e(TAG_FL, "toggleFollowOnly failed name=${row.name}", t)
-                Toast.makeText(requireContext(), "처리 실패", Toast.LENGTH_SHORT).show()
             }
         }
     }

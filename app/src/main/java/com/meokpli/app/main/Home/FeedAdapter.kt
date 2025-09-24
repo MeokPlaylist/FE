@@ -27,8 +27,20 @@ import androidx.viewpager2.widget.ViewPager2
 class FeedAdapter(private var items: MutableList<Feed>,
                   private val onCommentClick: (feedId: Long) -> Unit,
                   val onMoreClick: (View, Feed) -> Unit,
-                  private val onItemClick: (feedId: Long) -> Unit
+                  private val onItemClick: (feedId: Long) -> Unit,
+                  private val onLocationClick: (feedId: Long, nickName: String) -> Unit,
+                  private val onLikeToggle: (feedId: Long, targetLiked: Boolean, result: (Boolean) -> Unit) -> Unit
 ) : RecyclerView.Adapter<FeedAdapter.VH>() {
+
+    /** 좋아요 로컬상태(낙관적) */
+    data class LikeState(var liked: Boolean, var count: Long)
+
+    /** in-flight 요청 방지용 잠금 */
+    private val likeInFlight = mutableSetOf<Long>()
+
+    /** feedId별 로컬 상태 (없으면 item 본래값에서 추정) */
+    private val localLike = mutableMapOf<Long, LikeState>()
+
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
         val tvUser: TextView = v.findViewById(R.id.tvUserName)
@@ -41,6 +53,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
         val commentCount: TextView = v.findViewById(R.id.commentCount)
         val viewPager: androidx.viewpager2.widget.ViewPager2 = v.findViewById(R.id.viewPagerPhotos)
         val btnMore: ImageView = v.findViewById(R.id.btnMore)
+        val btnLocation: ImageView = v.findViewById(R.id.btnLocation)
     }
     fun addItems(newItems: List<Feed>) {
         val start = items.size
@@ -55,6 +68,15 @@ class FeedAdapter(private var items: MutableList<Feed>,
             notifyItemRemoved(idx)
         }
     }
+    /** 상세 등 외부에서 좋아요 변경을 반영하고 싶을 때 사용 */
+    fun updateLikeState(feedId: Long, liked: Boolean, count: Long) {
+        localLike[feedId] = LikeState(liked, count)
+        val idx = items.indexOfFirst { it.feedId == feedId }
+        if (idx != -1) {
+            items[idx] = items[idx].copy(likeCount = count, isLiked = liked)
+            notifyItemChanged(idx, "like")
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_feed, parent, false)
@@ -66,8 +88,6 @@ class FeedAdapter(private var items: MutableList<Feed>,
 
         h.tvUser.text = item.nickName
         h.tvDate.text = item.createdAt
-        if (item.likeCount != 0.toLong())
-            h.likeCount.text = item.likeCount.toString()
         if (item.commentCount != 0.toLong())
             h.commentCount.text = item.commentCount.toString()
         // 댓글 바텀시트
@@ -75,6 +95,12 @@ class FeedAdapter(private var items: MutableList<Feed>,
         h.commentCount.setOnClickListener { onCommentClick(item.feedId) }
         // 점3개 → 피드 액션 바텀시트
         h.btnMore.setOnClickListener { v -> onMoreClick(v, item) }  // ✅ 수정
+
+        h.btnLocation.setOnClickListener {
+            onLocationClick(item.feedId, item.nickName)
+        }
+
+
 
 
         // 내용 + 해시태그
@@ -109,6 +135,47 @@ class FeedAdapter(private var items: MutableList<Feed>,
                 isExpanded = true
             }
         }
+        // ── 좋아요 초기 상태 세팅 (localLike 우선, 없으면 item 값 사용)
+        val st = localLike.getOrPut(item.feedId) { LikeState(item.isLiked, item.likeCount) }
+        applyLikeUi(h, st.liked, st.count)
+
+        // 좋아요 클릭
+        h.btnLike.setOnClickListener {
+            if (likeInFlight.contains(item.feedId)) return@setOnClickListener
+
+            val prevLiked = st.liked
+            val prevCount = st.count
+            val targetLiked = !prevLiked
+            val newCount = if (targetLiked) prevCount + 1 else maxOf(0, prevCount - 1)
+
+            // 인플라이트 잠금 + 버튼 잠금
+            likeInFlight.add(item.feedId)
+            h.btnLike.isEnabled = false
+
+            // 낙관적 UI 반영 + 애니메이션
+            st.liked = targetLiked
+            st.count = newCount
+            applyLikeUi(h, st.liked, st.count)
+            bounce(h.btnLike)
+
+            // 서버 호출(외부에 위임) → 결과 반영
+            onLikeToggle(item.feedId, targetLiked) { success ->
+                likeInFlight.remove(item.feedId)
+                h.btnLike.isEnabled = true
+
+                if (success) {
+                    // 성공 → 원본 아이템 동기화
+                    items[pos] = items[pos].copy(likeCount = st.count, isLiked = st.liked)
+                    notifyItemChanged(pos, "like")
+                } else {
+                    // 실패 → 원복
+                    st.liked = prevLiked
+                    st.count = prevCount
+                    applyLikeUi(h, st.liked, st.count)
+                }
+            }
+        }
+
 
         // ✅ 여러 장 사진 세팅
         val urls = item.feedPhotoUrl ?: emptyList()
@@ -179,6 +246,27 @@ class FeedAdapter(private var items: MutableList<Feed>,
 
 
 
+
+
+    }
+
+
+    private fun applyLikeUi(h: VH, liked: Boolean, likeCount: Long) {
+        h.btnLike.setImageResource(if (liked) R.drawable.ic_heart_filled else R.drawable.ic_heart_unfilled)
+        if (likeCount > 0) {
+            h.likeCount.text = likeCount.toString()
+            h.likeCount.visibility = View.VISIBLE
+        } else {
+            h.likeCount.text = ""
+            h.likeCount.visibility = View.GONE
+        }
+
+    }
+    private fun bounce(v: View) {
+        v.animate().cancel()
+        v.scaleX = 0.9f
+        v.scaleY = 0.9f
+        v.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
     }
     private fun preloadRemainingImages(context: Context, urls: List<String>) {
         val imageLoader = context.imageLoader
@@ -292,5 +380,6 @@ data class Feed(
     val createdAt: String,
     val feedPhotoUrl: List<String>?,
     val likeCount: Long,
-    val commentCount: Long
+    val commentCount: Long,
+    var isLiked: Boolean = false //현재 사용자가 눌렀느지?
 )

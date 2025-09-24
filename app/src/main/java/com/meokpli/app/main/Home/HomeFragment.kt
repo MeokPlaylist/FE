@@ -1,6 +1,7 @@
 package com.meokpli.app.main.Home
 
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -34,7 +35,10 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import android.app.AlertDialog
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.navigation.fragment.findNavController
 import com.meokpli.app.main.Home.FeedDetailActivity
+import com.meokpli.app.main.Roadmap.RoadmapViewFragment
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
@@ -83,6 +87,37 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                     "홈에서는 상세보기를 지원하지 않아요.\n프로필 또는 검색 결과에서 열어주세요.",
                     Toast.LENGTH_SHORT
                 ).show()
+            } ,
+            onLocationClick = { feedId, writerNickname ->
+                val isMine = !myNickname.isNullOrBlank() && (myNickname == writerNickname)
+
+                val bundle = Bundle().apply {
+                    putLong("feedId", feedId)
+                    putString("writerNickname", writerNickname)
+                    putBoolean("isMine", isMine)
+                }
+
+                findNavController().navigate(R.id.roadmapView, bundle)
+            },
+
+            // ✅ 추가: 좋아요 토글 콜백 (낙관적 업데이트 성공/실패 처리)
+            onLikeToggle = { feedId, targetLiked, done ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val api = Network.feedApi(requireContext())
+                        if (targetLiked) {
+                            // 예시: POST /feed/{id}/like
+                            api.likeFeed(feedId)
+                        } else {
+                            // 예시: DELETE /feed/{id}/like
+                            api.unlikeFeed(feedId)
+                        }
+                        done(true)
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "좋아요 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                        done(false)
+                    }
+                }
             }
         )
         rv.adapter = adapter
@@ -287,10 +322,22 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
             .show()
     }
 
+    // HomeFragment: 필드에
+    private val openDetailLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+            if (r.resultCode == Activity.RESULT_OK && r.data != null) {
+                val feedId = r.data!!.getLongExtra("feedId", 0L)
+                val liked = r.data!!.getBooleanExtra("liked", false)
+                val count = r.data!!.getLongExtra("likeCount", 0L)
+                if (feedId != 0L) adapter.updateLikeState(feedId, liked, count)
+            }
+        }
+
+    // 상세 열기
     private fun openDetail(feedId: Long) {
-        val intent = Intent(requireContext(), FeedDetailActivity::class.java)
-        intent.putExtra("feedId", feedId)
-        startActivity(intent)
+        val it = Intent(requireContext(), FeedDetailActivity::class.java)
+        it.putExtra("feedId", feedId)
+        openDetailLauncher.launch(it) // ← 이걸로 교체
     }
 
     /** 삭제 확인 다이얼로그 → 서버 호출 → 리스트에서 아이템 제거 */

@@ -52,6 +52,18 @@ interface MainApi {
     @POST("delete")
     suspend fun deleteFeed(@Query("feedId") feedId: Long): Response<Void>
 
+    // 좋아요 누르기
+    @POST("like")
+    suspend fun likeFeed(
+        @Query("feedId") feedId: Long
+    ): Response<Void>
+
+    // 좋아요 취소
+    @POST("unlike")
+    suspend fun unlikeFeed(
+        @Query("feedId") feedId: Long
+    ): Response<Void>
+
 
 
 
