@@ -1,7 +1,5 @@
 package com.meokpli.app.main.Home
 
-
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
@@ -33,6 +31,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import android.app.AlertDialog
+import androidx.navigation.fragment.findNavController
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
@@ -81,6 +80,37 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                     "홈에서는 상세보기를 지원하지 않아요.\n프로필 또는 검색 결과에서 열어주세요.",
                     Toast.LENGTH_SHORT
                 ).show()
+            } ,
+            onLocationClick = { feedId, writerNickname ->
+                val isMine = !myNickname.isNullOrBlank() && (myNickname == writerNickname)
+
+                val bundle = Bundle().apply {
+                    putLong("feedId", feedId)
+                    putString("writerNickname", writerNickname)
+                    putBoolean("isMine", isMine)
+                }
+
+                findNavController().navigate(R.id.roadmapView, bundle)
+            },
+
+            // ✅ 추가: 좋아요 토글 콜백 (낙관적 업데이트 성공/실패 처리)
+            onLikeToggle = { feedId, targetLiked, done ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val api = Network.feedApi(requireContext())
+                        if (targetLiked) {
+                            // 예시: POST /feed/{id}/like
+                            api.likeFeed(feedId)
+                        } else {
+                            // 예시: DELETE /feed/{id}/like
+                            api.unlikeFeed(feedId)
+                        }
+                        done(true)
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "좋아요 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                        done(false)
+                    }
+                }
             }
         )
         rv.adapter = adapter
@@ -201,21 +231,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
 
-        v.findViewById<TextView>(R.id.itemEditPost).setOnClickListener {
-            popup.dismiss()
-            // TODO: 글 수정 화면 이동 (임시로 상세로 이동)
-            openDetail(feedId)
-        }
-        v.findViewById<TextView>(R.id.itemEditCover).setOnClickListener {
-            popup.dismiss()
-            // 대표사진 변경은 상세에서(이미지 컨텍스트가 상세에 있음)
-            openDetail(feedId)
-        }
-        v.findViewById<TextView>(R.id.itemEditCategory).setOnClickListener {
-            popup.dismiss()
-            // TODO: 카테고리 수정 화면/바텀시트 (여기도 상세로 임시 이동)
-            openDetail(feedId)
-        }
         v.findViewById<TextView>(R.id.itemDelete).setOnClickListener {
             popup.dismiss()
             // TODO: 삭제 흐름(확인 → API → 목록 갱신)
@@ -285,12 +300,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
             .show()
     }
 
-    private fun openDetail(feedId: Long) {
-        val intent = Intent(requireContext(), FeedDetailActivity::class.java)
-        intent.putExtra("feedId", feedId)
-        startActivity(intent)
-    }
-
     /** 삭제 확인 다이얼로그 → 서버 호출 → 리스트에서 아이템 제거 */
     private fun confirmDelete(feedId: Long) {
         AlertDialog.Builder(requireContext())
@@ -322,6 +331,5 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                 d.dismiss()
             }
             .show()
-
     }
 }

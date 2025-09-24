@@ -118,7 +118,21 @@
         android:name="com.meokpli.app.main.Roadmap.RoadmapViewFragment"
         android:label="로드맵"
         tools:layout="@layout/fragment_roadmap_view">
+
         <argument android:name="feedId" app:argType="long" />
+        <!-- ✅ 추가 -->
+        <argument android:name="writerNickname" app:argType="string" />
+        <argument android:name="isMine" app:argType="boolean" android:defaultValue="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/roadmapEdit"
+        android:name="com.meokpli.app.main.Roadmap.RoadmapEditFragment"
+        android:label="로드맵 수정"
+        tools:layout="@layout/fragment_roadmap_edit">
+
+        <argument android:name="feedId" app:argType="long" />
+        <argument android:name="writerNickname" app:argType="string" />
     </fragment>
 
     <dialog

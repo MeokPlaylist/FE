@@ -297,10 +297,15 @@ class OtherProfileFragment : Fragment() {
     private fun setTabSelected(isPeriod: Boolean) {
         val active = Color.BLACK
         val inactive = Color.parseColor("#E8E8E8")
+
         textTabPeriod.setTextColor(if (isPeriod) active else inactive)
-        textTabRegion.setTextColor(if (!isPeriod) active else inactive)
-        indicatorPeriod.visibility = if (isPeriod) View.VISIBLE else View.INVISIBLE
-        indicatorRegion.visibility = if (!isPeriod) View.VISIBLE else View.INVISIBLE
+        textTabRegion.setTextColor(if (isPeriod) inactive else active)
+
+        // ▼ 가시성 토글 대신 색만 변경
+        indicatorPeriod.visibility = View.VISIBLE
+        indicatorRegion.visibility = View.VISIBLE
+        indicatorPeriod.setBackgroundColor(if (isPeriod) active else inactive)
+        indicatorRegion.setBackgroundColor(if (isPeriod) inactive else active)
     }
 
     // ====== 아이템 빌더(V2) ======
