@@ -3,7 +3,7 @@
 
     <!-- Google Cloud Console › OAuth 2.0 클라이언트(웹 애플리케이션) ID -->
     <string name="server_client_id">
-        614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com
+        691810024292-sjde8t68sgo7lrtrm6frm1h7ncgi0hio.apps.googleusercontent.com
     </string>
     <string name="search">검색</string>
     <string name="camera">카메라</string>

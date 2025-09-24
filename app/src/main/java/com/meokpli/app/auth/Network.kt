@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit
 import com.meokpli.app.main.SocialInteractionApi
 
 object Network {
-    private const val AUTH_BASE_URL = "https://meokplaylist.store/auth/"
-    private const val USER_BASE_URL = "https://meokplaylist.store/user/"
-    private const val FEED_BASE_URL = "https://meokplaylist.store/feed/"
-    private const val SOCIAL_BASE_URL = "https://meokplaylist.store/socialInteraction/"
-    private const val PLACE_BASE_URL = "https://meokplaylist.store/place/"
+    private const val AUTH_BASE_URL = "https://meokplaylist.shop/auth/"
+    private const val USER_BASE_URL = "https://meokplaylist.shop/user/"
+    private const val FEED_BASE_URL = "https://meokplaylist.shop/feed/"
+    private const val SOCIAL_BASE_URL = "https://meokplaylist.shop/socialInteraction/"
+    private const val PLACE_BASE_URL = "https://meokplaylist.shop/place/"
     private fun retrofit(baseUrl: String, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
             .baseUrl(baseUrl)

@@ -209,7 +209,7 @@ class LoginActivity : AppCompatActivity() {
                 453 -> ConsentFormActivity::class.java
                 454 -> null // 비밀번호 오류 → 그냥 토스트만
                 455 -> InitProfileActivity::class.java
-                456 -> CategoryActivity::class.java
+                458 -> CategoryActivity::class.java
                 else -> null
             }
 

@@ -192,7 +192,9 @@ class RegionActivity : AppCompatActivity() {
         selectedPairs.forEach { pair ->
             val (sido, sgg) = pair.split(":", ignoreCase = false, limit = 2)
             val chip = Chip(this).apply {
-                text = sgg
+                // ✅ "울산 동구" 형태로 표시
+                text = "$sido $sgg"
+
                 isCloseIconVisible = true
                 setOnCloseIconClickListener {
                     selectedPairs.remove(pair)
@@ -202,6 +204,7 @@ class RegionActivity : AppCompatActivity() {
                     }
                     syncSelectedChips()
                 }
+
                 setChipBackgroundColorResource(R.color.selector_chip_background)
                 setTextColor(resources.getColorStateList(R.color.selector_chip_text, null))
                 setChipStrokeColorResource(R.color.selector_chip_stroke)

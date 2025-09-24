@@ -41,7 +41,7 @@ class ResetPasswordActivity : AppCompatActivity() {
         btnReset = findViewById(R.id.btnResetPassword)
 
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.store/user/")
+            .baseUrl("https://meokplaylist.shop/user/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(UserApi::class.java)
