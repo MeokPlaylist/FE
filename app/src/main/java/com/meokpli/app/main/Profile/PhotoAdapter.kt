@@ -9,8 +9,9 @@ import coil.load
 import com.meokpli.app.R
 
 class PhotoAdapter(
-    private val photos: List<String>,
-    private val isRegionMode: Boolean = false
+    private val photos: List<MyPageItem.Photo>,
+    private val isRegionMode: Boolean = false,
+    private val onPhotoClick: (Long) -> Unit = {}
 ) : RecyclerView.Adapter<PhotoAdapter.PhotoVH>() {
 
     inner class PhotoVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -30,6 +31,8 @@ class PhotoAdapter(
     }
 
     override fun onBindViewHolder(holder: PhotoVH, position: Int) {
+        val photo = photos[position]
+
         if (isRegionMode) {
             // 지역별 모드
             holder.ivRegionThumb?.let { iv ->
@@ -38,22 +41,29 @@ class PhotoAdapter(
                 params.height = 480
                 iv.layoutParams = params
 
-                iv.load(photos[position]) {
+                iv.load(photo.url) {
                     crossfade(true)
                     placeholder(R.drawable.ic_placeholder)
                 }
+                iv.setOnClickListener {
+                    onPhotoClick(photo.feedId)
+                }
             }
         } else {
-            // ✅ 기간별 모드
+            // 기간별 모드
+            val photo = photos[position]  // feedId + url
             val screenWidth = holder.itemView.resources.displayMetrics.widthPixels
             val params = holder.ivThumb?.layoutParams
             params?.width = screenWidth / 2   // 2분할
-            params?.height = params?.width!!     // 정사각형
+            params?.height = params?.width!!  // 정사각형
             holder.ivThumb?.layoutParams = params
 
-            holder.ivThumb?.load(photos[position]) {
+            holder.ivThumb?.load(photo.url) {   // url 로드
                 crossfade(true)
                 placeholder(R.drawable.ic_placeholder)
+            }
+            holder.ivThumb?.setOnClickListener {
+                onPhotoClick(photo.feedId)      // 클릭 시 feedId 전달
             }
         }
     }

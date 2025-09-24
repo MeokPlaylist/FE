@@ -10,7 +10,7 @@ import retrofit2.http.Query
 /* 1) Retrofit API */
 interface MainApi {
 
-    @POST("create") // 서버 경로가 /api/feeds면 바꾸세요.
+    @POST("create")
     suspend fun createFeed(
         @Body body: CreateFeedBody
     ): Response<CreateFeedResponse>
@@ -21,7 +21,7 @@ interface MainApi {
         @Query("size") size: Int = 10
     ): SlicedResponse<Feed>
 
-    // ✅ 피드 상세 조회
+    // 피드 상세 조회
     @GET("detail")
     suspend fun getFeedDetail(
         @Query("feedId") feedId: Long

@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Home
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
@@ -18,24 +19,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.meokpli.app.R
 import com.meokpli.app.auth.Network
+import com.meokpli.app.main.CategorySelectDialog
+import com.meokpli.app.main.EditContentDialog
 import com.meokpli.app.main.FeedDetailResponse
 import com.meokpli.app.main.MainApi
 import com.meokpli.app.main.ModifyFeedCategoryRequest
+import com.meokpli.app.main.ModifyFeedContentRequest
 import com.meokpli.app.main.ModifyMainFeedPhotoRequest
-import com.meokpli.app.main.CategorySelectDialog
-import com.meokpli.app.R
-import com.meokpli.app.comments.CommentsBottomSheet
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-import com.meokpli.app.main.EditContentDialog
-import com.meokpli.app.main.ModifyFeedContentRequest
-import android.app.AlertDialog
-import com.meokpli.app.Main.Home.FeedActionsBottomSheet
-import com.meokpli.app.Main.Home.FeedCoverPickBottomSheet
-import com.meokpli.app.Main.Home.PhotoPagerAdapter
 
 
 class FeedDetailActivity : AppCompatActivity() {
@@ -89,8 +85,8 @@ class FeedDetailActivity : AppCompatActivity() {
 
         // 내 닉네임 로드
         lifecycleScope.launch {
-            runCatching { Network.userApi(this@FeedDetailActivity).getPersonalInfo() }
-                .onSuccess { myNickname = it.name }
+            runCatching { Network.userApi(this@FeedDetailActivity).getMyPage() }
+                .onSuccess { myNickname = it.userNickname }
                 .onFailure { myNickname = null }
         }
 

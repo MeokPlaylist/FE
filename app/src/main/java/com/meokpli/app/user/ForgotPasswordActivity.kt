@@ -2,6 +2,7 @@ package com.meokpli.app.user
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -50,7 +51,7 @@ class ForgotPasswordActivity : AppCompatActivity() {
         errorMsg.visibility = View.GONE
 
         if (email.isBlank() || name.isBlank()) {
-            showError("이메일과 이름은 필수입니다.")
+            Log.d("Error","이메일과 이름은 필수입니다.")
             return
         }
 
@@ -67,14 +68,9 @@ class ForgotPasswordActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    showError("정보가 일치하지 않습니다.")
+                    Log.d("Error","정보가 일치하지 않습니다.")
                 }
             }
         }
-    }
-
-    private fun showError(msg: String) {
-        errorMsg.text = msg
-        errorMsg.visibility = View.VISIBLE
     }
 }

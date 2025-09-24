@@ -1,18 +1,20 @@
-package com.meokpli.app.comments
+package com.meokpli.app.main.Home
 
+import android.os.Build
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.meokpli.app.R
-import com.meokpli.app.main.Home.UiComment
-
+import java.time.Duration
+import java.time.Instant
 class CommentAdapter(
     private val onReplyClick: (UiComment) -> Unit
 ) : RecyclerView.Adapter<CommentAdapter.VH>() {
@@ -42,12 +44,14 @@ class CommentAdapter(
         return VH(v)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: VH, position: Int) {
         val c = currentList[position]
         Log.v(TAG, "bind pos=$position author='${c.author}' len=${c.content.length}")
 
         holder.name.text = c.author
-        holder.date.text = c.createdAt
+
+        holder.date.text = getDurationFromNowToServerTime(c.createdAt)
         holder.body.text = c.content
 
         if (c.avatarUrl.isNullOrBlank()) {
@@ -61,5 +65,22 @@ class CommentAdapter(
         holder.tvReplyHint.setOnClickListener { onReplyClick(c) }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDurationFromNowToServerTime(serverUtc: String): String {
+        val serverTime = Instant.parse(serverUtc)  // 서버 UTC
+        val now = Instant.now()                    // 현재 UTC
+
+        val duration = Duration.between(serverTime, now)
+
+        val seconds = duration.seconds
+
+        return when {
+            seconds < 60 -> "${seconds}초"
+            seconds < 3600 -> "${seconds / 60}분"
+            seconds < 86400 -> "${seconds / 3600}시간"
+            seconds < 604800 -> "${seconds / 86400}일"
+            else -> "${seconds / 604800}주"
+        }
+    }
     override fun getItemCount() = currentList.size
 }

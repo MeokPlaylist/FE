@@ -252,7 +252,7 @@
                 android:background="@drawable/edittext_background"
                 android:padding="12dp"
                 android:layout_marginTop="4dp"
-                android:hint="ex. 2000-00-00"
+                android:hint="생년월일 입력"
                 android:textSize="11dp"
                 android:inputType="date"
                 android:fontFamily="@font/inter_medium"

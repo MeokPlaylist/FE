@@ -33,6 +33,10 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
+    <style name="ShapeAppearance.App" parent="ShapeAppearance.Material3.Corner.None">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
 
     <style name="ShapeAppearance.App.Circle">
         <item name="cornerFamily">rounded</item>

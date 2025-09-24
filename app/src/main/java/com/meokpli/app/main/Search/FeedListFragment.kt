@@ -15,6 +15,8 @@ import com.meokpli.app.data.remote.response.SearchFeedResponse
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.meokpli.app.data.remote.request.FeedSearchRequest
+import com.meokpli.app.main.cityMap
+import com.meokpli.app.main.provinceMap
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -58,7 +60,15 @@ class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
     }
 
     private fun loadFeeds(categories: List<String>, regions: List<String>, page: Int = 0, size: Int = 10) {
-        val request = FeedSearchRequest(categories, regions)
+        val convertedRegions = regions.mapNotNull { r ->
+            val parts = r.split(":")
+            if (parts.size == 2) {
+                val province = provinceMap[parts[0]] ?: parts[0]
+                val city = cityMap[parts[1]] ?: parts[1]
+                "$province:$city"
+            } else null
+        }
+        val request = FeedSearchRequest(categories, convertedRegions)
         socialInteractionApi.searchFeed(request, page, size).enqueue(object : Callback<SearchFeedResponse> {
             override fun onResponse(call: Call<SearchFeedResponse>, response: Response<SearchFeedResponse>) {
                 if (response.isSuccessful) {

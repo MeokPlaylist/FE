@@ -1,5 +1,6 @@
 package com.meokpli.app.auth
 
+import TokenManager
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -72,7 +73,7 @@ class LoginActivity : AppCompatActivity() {
             val email = emailEdit.text.toString()
             val pw = passwordEdit.text.toString()
             if (email.isBlank() || pw.isBlank()) {
-                showError("아이디와 비밀번호를 입력해 주세요")
+                Log.d("Error","아이디와 비밀번호를 입력해 주세요")
                 return@setOnClickListener
             }
 
@@ -81,7 +82,7 @@ class LoginActivity : AppCompatActivity() {
                     try {
                         val res = api.login(LoginRequest(email, pw))
                         // ✅ Access-only: refreshToken은 더 이상 사용하지 않음
-                        tokenManager.saveTokens(res.jwt)
+                        tokenManager.saveTokens(res.accessToken, res.refreshToken)
                         routeAfterLoginByErrorCodeOnly()
                     } catch (e: Exception) {
                         var notFound = false
@@ -100,13 +101,13 @@ class LoginActivity : AppCompatActivity() {
                                     )
                                     .show(supportFragmentManager, "user_not_found")
                             } else {
-                                showError("로그인 실패: ${e.message}")
+                                Log.d("Error","로그인 실패: ${e.message}")
                             }
                         }
                     }
                 }
             } else {
-                showError("로컬 로그인은 비활성화됨")
+                Log.d("Error","로컬 로그인은 비활성화됨")
             }
         }
 
@@ -145,27 +146,27 @@ class LoginActivity : AppCompatActivity() {
                 if (account != null) {
                     val idToken = account.idToken
                     if (idToken == null) {
-                        showError("구글 로그인 토큰을 가져오지 못했습니다")
+                        Log.d("Error","구글 로그인 토큰을 가져오지 못했습니다")
                         return
                     }
                     if (useServer) {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
-                                val res = api.oauthLogin(OAuthRequest("google", idToken))
-                                tokenManager.saveTokens(res.jwt)
+                                val res = api.googleLogin(GoogleLoginRequest(idToken))
+                                tokenManager.saveTokens(res.accessToken, res.refreshToken)
                                 routeAfterLoginByErrorCodeOnly()
                             } catch (e: Exception) {
-                                showError("구글 로그인 실패: ${e.message}")
+                                Log.d("Google","구글 로그인 실패: ${e.message}")
                             }
                         }
                     } else {
                         goNext()
                     }
                 } else {
-                    showError("구글 계정 정보 가져오기 실패")
+                    Log.d("Error","구글 계정 정보 가져오기 실패")
                 }
             } catch (e: Exception) {
-                showError("구글 로그인 예외: ${e.message}")
+                Log.d("Error","구글 로그인 예외: ${e.message}")
             }
         }
     }
@@ -174,19 +175,20 @@ class LoginActivity : AppCompatActivity() {
         val act: Activity = this
         val callback: (OAuthToken?, Throwable?) -> Unit = { token, error ->
             if (error != null) {
-                showError("카카오 로그인 실패: ${error.message}")
+                Log.d("KAKAO","카카오 로그인 실패: ${error.message}")
             } else if (token != null) {
-                val idToken = token.accessToken
-                Log.d("KAKAO", "AccessToken: $idToken")
+                val accessToken = token.accessToken
+                val refreshToken = token.refreshToken
+                Log.d("KAKAO", "AccessToken: $accessToken")
 
                 if (useServer) {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val res = api.oauthLogin(OAuthRequest("kakao", idToken))
-                            tokenManager.saveTokens(res.jwt)
+                            val res = api.kakaoLogin(KakaoLoginRequest( accessToken, refreshToken))
+                            tokenManager.saveTokens(res.accessToken, res.refreshToken)
                             routeAfterLoginByErrorCodeOnly()
                         } catch (e: Exception) {
-                            showError("카카오 로그인 실패: ${e.message}")
+                            Log.d("Error","카카오 로그인 실패: ${e.message}")
                         }
                     }
                 } else {
@@ -250,14 +252,6 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
-    }
-
-    private fun showOnMain(msg: String) {
-        runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
-    }
-
-    private fun showError(msg: String) {
-        runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
     }
 
     companion object {

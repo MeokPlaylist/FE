@@ -1,11 +1,11 @@
 package com.meokpli.app.user
 
+import TokenManager
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import com.meokpli.app.auth.LoginActivity
-import com.meokpli.app.auth.TokenManager
 import com.meokpli.app.R
 
 class FragmentSetting : Fragment() {

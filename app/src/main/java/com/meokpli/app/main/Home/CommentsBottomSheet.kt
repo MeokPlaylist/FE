@@ -1,4 +1,4 @@
-package com.meokpli.app.comments
+package com.meokpli.app.main.Home
 
 import android.content.Context
 import android.os.Bundle
@@ -17,8 +17,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
-import com.meokpli.app.main.Home.CommentApi
-import com.meokpli.app.main.Home.toUi
 import kotlinx.coroutines.launch
 
 class CommentsBottomSheet : BottomSheetDialogFragment() {
@@ -99,7 +97,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "loadComments error", e)
-                Toast.makeText(requireContext(), "댓글 불러오기 실패", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -116,9 +113,9 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             try {
                 // 서버에서 내 닉네임 조회(필요 시)
                 val userApi = Network.userApi(requireContext())
-                val myNickname = runCatching { userApi.getPersonalInfo().name ?: "익명" }
+                val myNickname = runCatching { userApi.getMyPage().userNickname ?: "익명" }
                     .getOrElse { "익명" }
-
+                Log.d("myNickname",myNickname)
                 api.writeComment(feedId, myNickname, text)
                 Log.i(TAG, "postComment ok in ${SystemClock.elapsedRealtime() - t0}ms")
 

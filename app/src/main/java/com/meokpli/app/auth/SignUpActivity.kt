@@ -3,6 +3,7 @@ package com.meokpli.app.auth
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -10,6 +11,8 @@ import com.meokpli.app.R
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -113,7 +116,6 @@ class SignUpActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
     private fun handleRegister() {
         if (!isEmailChecked) {
             showToast("이메일 중복 확인을 해주세요.")
@@ -123,7 +125,7 @@ class SignUpActivity : AppCompatActivity() {
         val confirm = confirmEdit.text.toString()
         val email = emailEdit.text.toString()
         val name = nameEdit.text.toString()
-        val birth = birthEdit.text.toString()
+        var birth = birthEdit.text.toString()
 
         pwMsg.text = ""
         if (pw.isBlank() || confirm.isBlank() || email.isBlank() || name.isBlank()) {
@@ -145,6 +147,19 @@ class SignUpActivity : AppCompatActivity() {
             return
         }
 
+        // 생년월일 변환 (yyyyMMdd -> yyyy-MM-dd)
+        if (birth.length == 8) {
+            try {
+                val inputFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val date = inputFormat.parse(birth)
+                birth = outputFormat.format(date!!)
+            } catch (e: Exception) {
+                showToast("생년월일 형식이 올바르지 않습니다.")
+                return
+            }
+        }
+        Log.d("1234567890",birth)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val res = api.register(RegisterRequest(email, pw, name, birth))
@@ -159,6 +174,7 @@ class SignUpActivity : AppCompatActivity() {
             }
         }
     }
+
 
     private fun showToast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()

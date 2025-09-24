@@ -1,4 +1,4 @@
-package com.meokpli.app.Main.Home
+package com.meokpli.app.main.Home
 
 import android.view.LayoutInflater
 import android.view.View

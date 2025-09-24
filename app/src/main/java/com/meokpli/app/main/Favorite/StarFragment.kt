@@ -1,16 +1,24 @@
 package com.meokpli.app.main.Favorite
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.annotation.DrawableRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
+import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelTextStyle
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.data.remote.request.SearchPlaceRequest
@@ -29,6 +37,7 @@ class StarFragment : Fragment() {
 
     // 풍선 좌표 저장
     private var currentBalloonLatLng: LatLng? = null
+    private var currentLabel: com.kakao.vectormap.label.Label? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -65,6 +74,7 @@ class StarFragment : Fragment() {
                 // POI 클릭 시 → 풍선 띄우기
                 map.setOnPoiClickListener { _, position, name, layerId ->
                     Log.d("POI", "POI 클릭: name=$name, layerId=$layerId at $position")
+                    addCustomLabel(position.latitude, position.longitude, name)
                     sendToBackend(name, position.latitude, position.longitude)
                 }
 
@@ -73,6 +83,9 @@ class StarFragment : Fragment() {
                     balloonContainer.removeAllViews()
                     currentBalloonLatLng = null
                     balloonContainer.visibility = View.GONE
+
+                    currentLabel?.remove()
+                    currentLabel = null
                 }
 
 
@@ -142,11 +155,25 @@ class StarFragment : Fragment() {
         // 텍스트 채우기
         balloonView.findViewById<TextView>(R.id.place_name).text = place.place_name
         balloonView.findViewById<TextView>(R.id.place_road_address).text =
-            place.road_address_name ?: "-"
+            "(도로명) ${place.road_address_name ?: "-"}"
+
         balloonView.findViewById<TextView>(R.id.place_address).text =
-            place.address_name ?: "-"
-        balloonView.findViewById<TextView>(R.id.place_phone).text =
-            place.phone ?: "-"
+            "(지번) ${place.address_name ?: "-"}"
+
+        val phoneView = balloonView.findViewById<TextView>(R.id.place_phone)
+        phoneView.text = place.phone ?: "-"
+
+        // 전화번호가 있으면 클릭 시 다이얼러 실행
+        place.phone?.let { phone ->
+            if (phone.isNotBlank()) {
+                phoneView.paint.isUnderlineText = true
+
+                phoneView.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                    startActivity(intent)
+                }
+            }
+        }
 
         balloonView.findViewById<TextView>(R.id.tv_detail).setOnClickListener {
             if (!place.place_url.isNullOrEmpty()) {
@@ -173,11 +200,44 @@ class StarFragment : Fragment() {
         )
         val w = balloonView.measuredWidth
         val h = balloonView.measuredHeight
-        val offsetY = 30
+        val offsetY = 100
         // margin 대신 translation 사용
         balloonView.translationX = (pt.x - w / 2).toFloat()
         balloonView.translationY = (pt.y - h - offsetY).toFloat()
     }
+
+    private fun vectorToBitmap(@DrawableRes resId: Int): Bitmap {
+        val drawable = AppCompatResources.getDrawable(requireContext(), resId)!!
+        val bitmap = Bitmap.createBitmap(
+            drawable.intrinsicWidth,
+            drawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
+    }
+
+    private fun addCustomLabel(lat: Double, lng: Double, text: String) {
+        val bitmap = vectorToBitmap(R.drawable.ic_default_pin)
+
+        val labelLayer = kakaoMap?.labelManager?.layer ?: return
+
+        val style = LabelStyle.from(bitmap)
+            .setTextStyles(LabelTextStyle.from(40, Color.BLACK))
+
+        val options = LabelOptions.from(LatLng.from(lat, lng))
+            .setStyles(style)
+
+        // 기존 마커 제거
+        currentLabel?.remove()
+
+        // 새 마커 추가 & 저장
+        currentLabel = labelLayer.addLabel(options)
+    }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

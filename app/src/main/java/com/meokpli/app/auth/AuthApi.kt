@@ -15,9 +15,15 @@ interface AuthApi {
     @POST("emailInspect")
     suspend fun checkEmail(@Body request: EmailInspectRequest): EmailCheckResponse
 
-    @POST("socialLogin")
-    suspend fun oauthLogin(@Body req: OAuthRequest): TokenResponse
-/*
+    @POST("socialLogin/google")
+    suspend fun googleLogin(@Body req: GoogleLoginRequest): TokenResponse
+
+    @POST("socialLogin/kakao")
+    suspend fun kakaoLogin(@Body req: KakaoLoginRequest): TokenResponse
+    @POST("reissue")
+    suspend fun refresh(@Body req: RefreshRequest): TokenResponse
+
+    /*
     //액세스 토큰 갱신
     @POST("refresh")
     suspend fun refresh(@Body req: RefreshRequest): TokenResponse
@@ -33,13 +39,12 @@ interface AuthApi {
         @Query("nickname") nickname: String
     ): NicknameCheckResponse
 
-
-
 }
 
 data class LoginRequest(val email: String, val password: String)
 data class RegisterRequest(val email: String, val password: String, val name: String, val birthDay: String? = null)
-data class OAuthRequest(val provider: String, val token: String)
+data class GoogleLoginRequest(val idToken: String)
+data class KakaoLoginRequest(val accessToken: String, val refreshToken: String)
 
 
 data class EmailInspectRequest(val email: String)
@@ -48,7 +53,8 @@ data class EmailInspectRequest(val email: String)
 data class EmailCheckResponse(val isAvailable: Boolean)
 //액세스토큰 DTO
 data class TokenResponse(
-    val jwt: String
+    val accessToken: String,
+    val refreshToken: String
 )
 data class RefreshRequest(val refreshToken: String)
 

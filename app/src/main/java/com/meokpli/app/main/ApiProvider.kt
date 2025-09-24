@@ -1,5 +1,6 @@
 package com.meokpli.app.main
 
+import TokenManager
 import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
@@ -14,33 +15,29 @@ import com.meokpli.app.R
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.meokpli.app.auth.AuthApi
+import com.meokpli.app.auth.AuthInterceptor
+import com.meokpli.app.auth.TokenAuthenticator
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
 object ApiProvider {
-    private val client: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+    fun create(tokenManager: TokenManager, api: AuthApi): OkHttpClient {
+        return OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC
+                level = HttpLoggingInterceptor.Level.BODY
             })
+            .addInterceptor(AuthInterceptor(tokenManager))   // 요청에 토큰 부착
+            .authenticator(TokenAuthenticator(api, tokenManager)) // 401 시 refresh
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
-
-    // build.gradle 에 buildConfigField 로 BASE_URL 넣어두면 좋음
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://meokplaylist.com/") // 예: "https://api.meokplaylist.com/"
-            .client(client)
-            .build() // 멀티파트만 쓰면 컨버터 없어도 OK. JSON 쓰면 Gson 추가
-    }
-
-    val api: MainApi by lazy { retrofit.create(MainApi::class.java) }
 }
+
 
 class CategorySelectDialog : DialogFragment() {
     //예외처리용

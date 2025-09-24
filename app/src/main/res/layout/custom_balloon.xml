@@ -3,7 +3,10 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bg_balloon"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <!-- 상단: 가게 이름 + 찜 버튼 -->
     <LinearLayout
@@ -34,6 +37,7 @@
         android:id="@+id/place_road_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="(도로명) "
         android:textSize="12sp"
         android:textColor="#666"/>
 
@@ -42,6 +46,7 @@
         android:id="@+id/place_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="(지번) "
         android:textSize="12sp"
         android:textColor="#666"/>
 
@@ -51,7 +56,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="12sp"
-        android:textColor="#333"/>
+        android:textColor="@android:color/holo_blue_dark" />
 
     <!-- 상세보기 버튼 -->
     <TextView

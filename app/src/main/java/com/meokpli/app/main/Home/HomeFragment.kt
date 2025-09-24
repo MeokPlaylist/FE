@@ -24,7 +24,6 @@ import com.meokpli.app.auth.Network
 import com.meokpli.app.main.MainApi
 import com.meokpli.app.main.Resettable
 import com.meokpli.app.R
-import com.meokpli.app.comments.CommentsBottomSheet
 import com.meokpli.app.feed.Feed
 import com.meokpli.app.feed.FeedAdapter
 import kotlinx.coroutines.launch
@@ -34,7 +33,6 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import android.app.AlertDialog
-import com.meokpli.app.main.Home.FeedDetailActivity
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 

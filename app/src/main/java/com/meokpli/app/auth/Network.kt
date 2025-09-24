@@ -1,5 +1,6 @@
 package com.meokpli.app.auth
 
+import TokenManager
 import android.content.Context
 import com.meokpli.app.main.Favorite.PlaceApi
 import com.meokpli.app.main.Home.CommentApi
@@ -29,15 +30,18 @@ object Network {
             .build()
     private fun debugClient(context: Context, withAuth: Boolean): OkHttpClient {
         val log = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+        val tokenManager = TokenManager(context.applicationContext)
 
         val b = OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
-            .followRedirects(false) // ★ 리다이렉트로 Authorization 떨어지는지 확인용
+            .followRedirects(false)
             .addInterceptor(log)
 
         if (withAuth) {
-            b.addInterceptor(AuthInterceptor(TokenManager(context.applicationContext)))
+            val authApi = retrofit(AUTH_BASE_URL, OkHttpClient.Builder().build()).create(AuthApi::class.java)
+            b.addInterceptor(AuthInterceptor(tokenManager))
+            b.authenticator(TokenAuthenticator(authApi, tokenManager))
         }
         return b.build()
     }
