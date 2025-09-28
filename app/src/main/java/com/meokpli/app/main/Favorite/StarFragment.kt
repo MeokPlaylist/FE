@@ -43,6 +43,9 @@ class StarFragment : Fragment() {
     private var currentBalloonLatLng: LatLng? = null
     private var currentLabel: Label? = null
 
+    // 좌표를 key로 favorite 라벨 저장
+    private val favoriteLabels = mutableMapOf<Pair<Double, Double>, Label>()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -74,7 +77,7 @@ class StarFragment : Fragment() {
                     map.moveCamera(CameraUpdateFactory.zoomTo(4))
                 }
 
-                // ✅ 진입 시 즐겨찾기 불러오기
+                // 진입 시 즐겨찾기 불러오기
                 lifecycleScope.launch {
                     try {
                         val response = withContext(Dispatchers.IO) {
@@ -88,14 +91,14 @@ class StarFragment : Fragment() {
                     }
                 }
 
-                // ✅ 다른 가게는 기존 POI 클릭 로직 그대로 유지
+                // 다른 가게는 기존 POI 클릭 로직 그대로 유지
                 map.setOnPoiClickListener { _, position, name, layerId ->
                     Log.d("POI", "POI 클릭: name=$name, layerId=$layerId at $position")
                     addCustomLabel(position.latitude, position.longitude, name)
-                    sendToBackend(name, position.latitude, position.longitude)
+                    sendToBackend(name, position.latitude, position.longitude, false)
                 }
 
-                // ✅ 별마커 클릭 처리
+                // 별마커 클릭 처리
                 map.setOnLabelClickListener(object : KakaoMap.OnLabelClickListener {
                     override fun onLabelClicked(
                         kakaoMap: KakaoMap,
@@ -104,7 +107,9 @@ class StarFragment : Fragment() {
                     ) {
                         if (label.tag == "FAVORITE") {
                             val pos = label.position
-                            sendToBackend("Favorite", pos.latitude, pos.longitude)
+                            currentLabel?.remove()
+                            currentLabel = null
+                            sendToBackend("Favorite", pos.latitude, pos.longitude, true)
                         }
                     }
                 })
@@ -136,25 +141,24 @@ class StarFragment : Fragment() {
 
     // ------------------------ 풍선 처리 ------------------------
 
-    private fun sendToBackend(name: String, lat: Double, lng: Double) {
+    private fun sendToBackend(name: String, lat: Double, lng: Double, fromFavorite: Boolean = false) {
         lifecycleScope.launch {
             try {
-                Log.d("Position","${lat},${lng}" )
                 val request = SearchPlaceRequest(lat = lat, lng = lng)
                 val response: SearchPlaceResponse = withContext(Dispatchers.IO) {
                     placeApi.searchPlace(request)
                 }
-                showBalloon(LatLng.from(lat, lng), response)
+                showBalloon(LatLng.from(lat, lng), response, fromFavorite)
             } catch (e: Exception) {
                 Log.e("StarFragment", "백엔드 호출 실패", e)
             }
         }
     }
 
-    private fun showBalloon(position: LatLng, place: SearchPlaceResponse) {
+    private fun showBalloon(position: LatLng, place: SearchPlaceResponse, fromFavorite: Boolean) {
         balloonContainer.removeAllViews()
         currentBalloonLatLng = position
-        Log.d("Position","${position.latitude},${position.longitude}" )
+        Log.d("Position", "${position.latitude},${position.longitude}")
 
         val balloonView = layoutInflater.inflate(R.layout.custom_balloon, balloonContainer, false)
 
@@ -192,7 +196,7 @@ class StarFragment : Fragment() {
         // 찜 버튼 처리
         val favBtn = balloonView.findViewById<ImageView>(R.id.btn_favorite)
 
-        var isFavorite = false // 초기값, 서버에서 받은 즐겨찾기 여부 반영할 수도 있음
+        var isFavorite = fromFavorite
         updateFavoriteIcon(favBtn, isFavorite)
 
         favBtn.setOnClickListener {
@@ -210,6 +214,9 @@ class StarFragment : Fragment() {
                                 )
                             )
                         }
+                        // 지도에서 라벨 제거 & 리스트에서 제거
+                        favoriteLabels.remove(position.latitude to position.longitude)?.remove()
+
                         isFavorite = false
                         Log.d("StarFragment", "즐겨찾기 제거 완료")
                     } else {
@@ -223,7 +230,7 @@ class StarFragment : Fragment() {
                             )
                         }
                         isFavorite = true
-                        addFavoriteLabel(position.latitude, position.longitude) // 지도에 별마커 표시
+                        addFavoriteLabel(position.latitude, position.longitude)
                         Log.d("StarFragment", "즐겨찾기 저장 완료")
                     }
                     updateFavoriteIcon(favBtn, isFavorite)
@@ -242,6 +249,7 @@ class StarFragment : Fragment() {
         val iconRes = if (isFavorite) R.drawable.ic_favorite else R.drawable.ic_unfavorite
         favBtn.setImageResource(iconRes)
     }
+
     private fun updateBalloonPosition(latLng: LatLng) {
         val pt = kakaoMap?.toScreenPoint(latLng) ?: return
         val balloonView = balloonContainer.getChildAt(0) ?: return
@@ -283,18 +291,23 @@ class StarFragment : Fragment() {
         currentLabel = labelLayer.addLabel(options)
     }
 
-    // ✅ 찜 별마커
+    // 찜 별마커
     private fun addFavoriteLabel(lat: Double, lng: Double) {
         val bitmap = vectorToBitmap(R.drawable.ic_favorite)
+
+        val sizePx = (20 * resources.displayMetrics.density).toInt()
+        val scaled = Bitmap.createScaledBitmap(bitmap, sizePx, sizePx, true)
+
         val labelLayer = kakaoMap?.labelManager?.layer ?: return
-        val style = LabelStyle.from(bitmap)
-            .setAnchorPoint(0.5f, 0.5f) // 기본은 (0.5, 1f). y를 1보다 크게 → 더 아래로 내려감
+        val style = LabelStyle.from(scaled)
+            .setAnchorPoint(0.5f, 0.6f)
 
         val options = LabelOptions.from(LatLng.from(lat, lng))
             .setStyles(style)
             .setTag("FAVORITE")
 
-        labelLayer.addLabel(options)
+        val label = labelLayer.addLabel(options)
+        favoriteLabels[lat to lng] = label
     }
 
     // ------------------------
@@ -306,6 +319,7 @@ class StarFragment : Fragment() {
         }
         kakaoMap = null
         currentBalloonLatLng = null
+        favoriteLabels.clear()
     }
 
     companion object {

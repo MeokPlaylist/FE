@@ -20,6 +20,8 @@ import com.meokpli.app.main.provinceMap
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import android.content.Intent
+import com.meokpli.app.main.Home.FeedDetailActivity
 
 class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
     private var onEditClick: (() -> Unit)? = null
@@ -45,7 +47,12 @@ class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
 
         socialInteractionApi = Network.socialApi(requireContext())
         recyclerView = view.findViewById(R.id.rvMyFeeds)
-        adapter = SearchFeedAdapter(mutableListOf(), onFeedClick = { feedId -> /* TODO */ })
+        adapter = SearchFeedAdapter(mutableListOf(), onFeedClick = { feedId ->
+            val intent = Intent(requireContext(), FeedDetailActivity::class.java).apply {
+                putExtra("feedId", feedId)
+            }
+            startActivity(intent)
+        })
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         recyclerView.adapter = adapter
 
