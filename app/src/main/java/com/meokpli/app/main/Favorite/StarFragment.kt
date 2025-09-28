@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
@@ -23,6 +24,8 @@ import com.kakao.vectormap.label.Label
 import com.kakao.vectormap.label.LabelLayer
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
+import com.meokpli.app.data.remote.request.RemoveFavoriteRequest
+import com.meokpli.app.data.remote.request.SaveFavoriteRequest
 import com.meokpli.app.data.remote.request.SearchPlaceRequest
 import com.meokpli.app.data.remote.response.SearchPlaceResponse
 import kotlinx.coroutines.Dispatchers
@@ -136,6 +139,7 @@ class StarFragment : Fragment() {
     private fun sendToBackend(name: String, lat: Double, lng: Double) {
         lifecycleScope.launch {
             try {
+                Log.d("Position","${lat},${lng}" )
                 val request = SearchPlaceRequest(lat = lat, lng = lng)
                 val response: SearchPlaceResponse = withContext(Dispatchers.IO) {
                     placeApi.searchPlace(request)
@@ -150,6 +154,7 @@ class StarFragment : Fragment() {
     private fun showBalloon(position: LatLng, place: SearchPlaceResponse) {
         balloonContainer.removeAllViews()
         currentBalloonLatLng = position
+        Log.d("Position","${position.latitude},${position.longitude}" )
 
         val balloonView = layoutInflater.inflate(R.layout.custom_balloon, balloonContainer, false)
 
@@ -184,11 +189,59 @@ class StarFragment : Fragment() {
             }
         }
 
+        // 찜 버튼 처리
+        val favBtn = balloonView.findViewById<ImageView>(R.id.btn_favorite)
+
+        var isFavorite = false // 초기값, 서버에서 받은 즐겨찾기 여부 반영할 수도 있음
+        updateFavoriteIcon(favBtn, isFavorite)
+
+        favBtn.setOnClickListener {
+            currentLabel?.remove()
+            currentLabel = null
+            lifecycleScope.launch {
+                try {
+                    if (isFavorite) {
+                        // 즐겨찾기 제거
+                        withContext(Dispatchers.IO) {
+                            placeApi.removeFavorite(
+                                RemoveFavoriteRequest(
+                                    lat = position.latitude,
+                                    lng = position.longitude
+                                )
+                            )
+                        }
+                        isFavorite = false
+                        Log.d("StarFragment", "즐겨찾기 제거 완료")
+                    } else {
+                        // 즐겨찾기 저장
+                        withContext(Dispatchers.IO) {
+                            placeApi.saveFavorite(
+                                SaveFavoriteRequest(
+                                    lat = position.latitude,
+                                    lng = position.longitude
+                                )
+                            )
+                        }
+                        isFavorite = true
+                        addFavoriteLabel(position.latitude, position.longitude) // 지도에 별마커 표시
+                        Log.d("StarFragment", "즐겨찾기 저장 완료")
+                    }
+                    updateFavoriteIcon(favBtn, isFavorite)
+                } catch (e: Exception) {
+                    Log.e("StarFragment", "즐겨찾기 토글 실패", e)
+                }
+            }
+        }
+
         balloonContainer.addView(balloonView)
         updateBalloonPosition(position)
         balloonContainer.visibility = View.VISIBLE
     }
 
+    private fun updateFavoriteIcon(favBtn: ImageView, isFavorite: Boolean) {
+        val iconRes = if (isFavorite) R.drawable.ic_favorite else R.drawable.ic_unfavorite
+        favBtn.setImageResource(iconRes)
+    }
     private fun updateBalloonPosition(latLng: LatLng) {
         val pt = kakaoMap?.toScreenPoint(latLng) ?: return
         val balloonView = balloonContainer.getChildAt(0) ?: return
@@ -235,10 +288,11 @@ class StarFragment : Fragment() {
         val bitmap = vectorToBitmap(R.drawable.ic_favorite)
         val labelLayer = kakaoMap?.labelManager?.layer ?: return
         val style = LabelStyle.from(bitmap)
+            .setAnchorPoint(0.5f, 0.5f) // 기본은 (0.5, 1f). y를 1보다 크게 → 더 아래로 내려감
 
         val options = LabelOptions.from(LatLng.from(lat, lng))
             .setStyles(style)
-            .setTag("FAVORITE") // 구분용 태그
+            .setTag("FAVORITE")
 
         labelLayer.addLabel(options)
     }
