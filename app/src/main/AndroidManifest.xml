@@ -44,7 +44,9 @@
 
         <!-- 나머지 Activity 목록 -->
         <activity android:name=".auth.SignUpActivity" />
-        <activity android:name=".main.MainActivity"/>
+        <activity
+            android:name=".main.MainActivity"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity android:name=".user.InitProfileActivity" />
         <activity android:name=".user.CategoryActivity" />
         <activity android:name=".user.ConsentFormActivity" />

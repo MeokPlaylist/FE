@@ -145,6 +145,7 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
                 }
             }
         })
+        setupHideKeyboardOnTouch(view)
     }
     //검색 초기화
     override fun resetToDefault() {
@@ -159,6 +160,25 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
         super.onSaveInstanceState(outState)
         lastKeyword = etSearch?.text.toString().trim()
         outState.putString("lastKeyword", lastKeyword)
+    }
+    private fun setupHideKeyboardOnTouch(view: View) {
+        // 뷰가 EditText가 아니면 클릭 시 키보드 내리기
+        if (view !is EditText) {
+            view.setOnTouchListener { _, _ ->
+                val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
+                        as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+                etSearch?.clearFocus()
+                false
+            }
+        }
+
+        // 자식 뷰들에도 재귀 적용
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                setupHideKeyboardOnTouch(view.getChildAt(i))
+            }
+        }
     }
 
     // 검색 실행

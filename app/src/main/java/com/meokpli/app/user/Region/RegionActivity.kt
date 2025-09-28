@@ -157,6 +157,15 @@ class RegionActivity : AppCompatActivity() {
             setResult(RESULT_CANCELED)
             finish()
         }
+
+        // 화면 아무데나 누르면 키보드 내려가기
+        findViewById<View>(R.id.rootLayout).setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+                hideKeyboard()
+                v.clearFocus()
+            }
+            false
+        }
     }
 
     private fun onSidoChanged(sido: String) {

@@ -57,7 +57,7 @@ dependencies {
     implementation(libs.google.material)
     implementation(libs.material3.android)
     val nav_version = "2.7.7"  // 최신 확인 가능
-
+    implementation("androidx.activity:activity-ktx:1.7.2")
     implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")
     implementation("androidx.navigation:navigation-ui-ktx:${nav_version}")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
