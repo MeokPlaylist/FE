@@ -21,8 +21,7 @@ interface AuthApi {
     @POST("socialLogin/kakao")
     suspend fun kakaoLogin(@Body req: KakaoLoginRequest): TokenResponse
     @POST("reissue")
-    suspend fun refresh(@Body req: RefreshRequest): TokenResponse
-
+    suspend fun refresh(@Body req: RefreshRequest): AccessTokenResponse
     /*
     //액세스 토큰 갱신
     @POST("refresh")
@@ -49,6 +48,7 @@ data class KakaoLoginRequest(val accessToken: String, val refreshToken: String)
 
 data class EmailInspectRequest(val email: String)
 
+data class AccessTokenResponse(val accessToken: String)
 
 data class EmailCheckResponse(val isAvailable: Boolean)
 //액세스토큰 DTO

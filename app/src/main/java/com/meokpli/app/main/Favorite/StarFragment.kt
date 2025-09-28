@@ -14,12 +14,13 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelTextStyle
+import com.kakao.vectormap.label.Label
+import com.kakao.vectormap.label.LabelLayer
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.data.remote.request.SearchPlaceRequest
@@ -36,9 +37,8 @@ class StarFragment : Fragment() {
 
     private lateinit var placeApi: PlaceApi
 
-    // 풍선 좌표 저장
     private var currentBalloonLatLng: LatLng? = null
-    private var currentLabel: com.kakao.vectormap.label.Label? = null
+    private var currentLabel: Label? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -71,104 +71,105 @@ class StarFragment : Fragment() {
                     map.moveCamera(CameraUpdateFactory.zoomTo(4))
                 }
 
+                // ✅ 진입 시 즐겨찾기 불러오기
+                lifecycleScope.launch {
+                    try {
+                        val response = withContext(Dispatchers.IO) {
+                            placeApi.getFavorite()
+                        }
+                        response.placeCoordinates.forEach { coord ->
+                            addFavoriteLabel(coord.x, coord.y)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("StarFragment", "getFavorite 호출 실패", e)
+                    }
+                }
 
-                // POI 클릭 시 → 풍선 띄우기
+                // ✅ 다른 가게는 기존 POI 클릭 로직 그대로 유지
                 map.setOnPoiClickListener { _, position, name, layerId ->
                     Log.d("POI", "POI 클릭: name=$name, layerId=$layerId at $position")
                     addCustomLabel(position.latitude, position.longitude, name)
                     sendToBackend(name, position.latitude, position.longitude)
                 }
 
+                // ✅ 별마커 클릭 처리
+                map.setOnLabelClickListener(object : KakaoMap.OnLabelClickListener {
+                    override fun onLabelClicked(
+                        kakaoMap: KakaoMap,
+                        layer: LabelLayer,
+                        label: Label
+                    ) {
+                        if (label.tag == "FAVORITE") {
+                            val pos = label.position
+                            sendToBackend("Favorite", pos.latitude, pos.longitude)
+                        }
+                    }
+                })
+
                 // 지도 빈 곳 클릭 시 → 풍선 제거
                 map.setOnMapClickListener { _, _, _, _ ->
                     balloonContainer.removeAllViews()
                     currentBalloonLatLng = null
                     balloonContainer.visibility = View.GONE
-
                     currentLabel?.remove()
                     currentLabel = null
                 }
 
-
-                // 카메라 이동 시작 → 풍선 숨김
-                map.setOnCameraMoveStartListener(object : KakaoMap.OnCameraMoveStartListener {
-                    override fun onCameraMoveStart(kakaoMap: KakaoMap, gestureType: GestureType) {
-                        if (balloonContainer.childCount > 0) {
-                            balloonContainer.visibility = View.GONE
-                        }
+                // 카메라 이동 시작/끝에 대한 풍선 처리
+                map.setOnCameraMoveStartListener { _, _ ->
+                    if (balloonContainer.childCount > 0) {
+                        balloonContainer.visibility = View.GONE
                     }
-                })
-
-                // 카메라 이동 끝 → 풍선 다시 보이기 + 위치 보정
-                map.setOnCameraMoveEndListener(object : KakaoMap.OnCameraMoveEndListener {
-                    override fun onCameraMoveEnd(
-                        kakaoMap: KakaoMap,
-                        position: com.kakao.vectormap.camera.CameraPosition,
-                        gestureType: GestureType
-                    ) {
-                        currentBalloonLatLng?.let {
-                            updateBalloonPosition(it)
-                            balloonContainer.visibility = View.VISIBLE
-                        }
+                }
+                map.setOnCameraMoveEndListener { _, _, _ ->
+                    currentBalloonLatLng?.let {
+                        updateBalloonPosition(it)
+                        balloonContainer.visibility = View.VISIBLE
                     }
-                })
+                }
             }
         })
     }
 
-    /**
-     * 좌표 + placeId를 서버로 보내서 상세 정보 조회
-     */
+    // ------------------------ 풍선 처리 ------------------------
+
     private fun sendToBackend(name: String, lat: Double, lng: Double) {
         lifecycleScope.launch {
             try {
                 val request = SearchPlaceRequest(lat = lat, lng = lng)
-                Log.d("StarFragment", "request:$request")
                 val response: SearchPlaceResponse = withContext(Dispatchers.IO) {
                     placeApi.searchPlace(request)
                 }
-                Log.d("StarFragment", "백엔드 응답: $response")
-
                 showBalloon(LatLng.from(lat, lng), response)
-
             } catch (e: Exception) {
                 Log.e("StarFragment", "백엔드 호출 실패", e)
             }
         }
     }
 
-    /**
-     * 풍선 표시 (항상 하나만 유지)
-     */
     private fun showBalloon(position: LatLng, place: SearchPlaceResponse) {
         balloonContainer.removeAllViews()
         currentBalloonLatLng = position
 
         val balloonView = layoutInflater.inflate(R.layout.custom_balloon, balloonContainer, false)
 
-        // 항상 wrap_content 고정
         val params = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         )
         balloonView.layoutParams = params
 
-        // 텍스트 채우기
         balloonView.findViewById<TextView>(R.id.place_name).text = place.place_name
         balloonView.findViewById<TextView>(R.id.place_road_address).text =
             "(도로명) ${place.road_address_name ?: "-"}"
-
         balloonView.findViewById<TextView>(R.id.place_address).text =
             "(지번) ${place.address_name ?: "-"}"
 
         val phoneView = balloonView.findViewById<TextView>(R.id.place_phone)
         phoneView.text = place.phone ?: "-"
-
-        // 전화번호가 있으면 클릭 시 다이얼러 실행
         place.phone?.let { phone ->
             if (phone.isNotBlank()) {
                 phoneView.paint.isUnderlineText = true
-
                 phoneView.setOnClickListener {
                     val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
                     startActivity(intent)
@@ -184,13 +185,10 @@ class StarFragment : Fragment() {
         }
 
         balloonContainer.addView(balloonView)
-        updateBalloonPosition(position) // 초기 위치 반영
+        updateBalloonPosition(position)
         balloonContainer.visibility = View.VISIBLE
     }
 
-    /**
-     * 풍선 위치 갱신
-     */
     private fun updateBalloonPosition(latLng: LatLng) {
         val pt = kakaoMap?.toScreenPoint(latLng) ?: return
         val balloonView = balloonContainer.getChildAt(0) ?: return
@@ -202,10 +200,11 @@ class StarFragment : Fragment() {
         val w = balloonView.measuredWidth
         val h = balloonView.measuredHeight
         val offsetY = 100
-        // margin 대신 translation 사용
         balloonView.translationX = (pt.x - w / 2).toFloat()
         balloonView.translationY = (pt.y - h - offsetY).toFloat()
     }
+
+    // ------------------------ 마커 처리 ------------------------
 
     private fun vectorToBitmap(@DrawableRes resId: Int): Bitmap {
         val drawable = AppCompatResources.getDrawable(requireContext(), resId)!!
@@ -222,23 +221,29 @@ class StarFragment : Fragment() {
 
     private fun addCustomLabel(lat: Double, lng: Double, text: String) {
         val bitmap = vectorToBitmap(R.drawable.ic_default_pin)
-
         val labelLayer = kakaoMap?.labelManager?.layer ?: return
-
         val style = LabelStyle.from(bitmap)
             .setTextStyles(LabelTextStyle.from(40, Color.BLACK))
 
-        val options = LabelOptions.from(LatLng.from(lat, lng))
-            .setStyles(style)
-
-        // 기존 마커 제거
+        val options = LabelOptions.from(LatLng.from(lat, lng)).setStyles(style)
         currentLabel?.remove()
-
-        // 새 마커 추가 & 저장
         currentLabel = labelLayer.addLabel(options)
     }
 
+    // ✅ 찜 별마커
+    private fun addFavoriteLabel(lat: Double, lng: Double) {
+        val bitmap = vectorToBitmap(R.drawable.ic_favorite)
+        val labelLayer = kakaoMap?.labelManager?.layer ?: return
+        val style = LabelStyle.from(bitmap)
 
+        val options = LabelOptions.from(LatLng.from(lat, lng))
+            .setStyles(style)
+            .setTag("FAVORITE") // 구분용 태그
+
+        labelLayer.addLabel(options)
+    }
+
+    // ------------------------
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -248,9 +253,8 @@ class StarFragment : Fragment() {
         kakaoMap = null
         currentBalloonLatLng = null
     }
+
     companion object {
         var lastCameraPosition: com.kakao.vectormap.camera.CameraPosition? = null
     }
-
-
 }

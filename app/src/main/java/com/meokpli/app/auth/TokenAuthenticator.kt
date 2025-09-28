@@ -14,16 +14,23 @@ class TokenAuthenticator(
     override fun authenticate(route: Route?, response: Response): Request? {
         val refresh = tokenManager.getRefreshToken() ?: return null
         return try {
-            val newTokens = runBlocking {
+            val newAccess = runBlocking {
                 api.refresh(RefreshRequest(refresh))
             }
-            tokenManager.saveTokens(newTokens.accessToken, newTokens.refreshToken)
 
+            // 기존 refreshToken은 그대로 유지
+            tokenManager.saveTokens(
+                newAccess.accessToken,
+                refresh
+            )
+
+            // 새 accessToken으로 Authorization 헤더 교체
             response.request.newBuilder()
-                .header("Authorization", "Bearer ${newTokens.accessToken}")
+                .header("Authorization", "Bearer ${newAccess.accessToken}")
                 .build()
         } catch (e: Exception) {
             null
         }
     }
 }
+
