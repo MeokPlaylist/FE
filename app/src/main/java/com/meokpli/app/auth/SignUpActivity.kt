@@ -47,7 +47,7 @@ class SignUpActivity : AppCompatActivity() {
         pwMsg = findViewById(R.id.textViewPwMsg)
 
         api = Retrofit.Builder()
-            .baseUrl("https://meokplaylist.shop/auth/")
+            .baseUrl("https://meokplaylist.store/auth/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AuthApi::class.java)
