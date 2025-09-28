@@ -24,6 +24,10 @@ class SearchFeedContainerFragment : Fragment(R.layout.fragment_feed_container) {
 
     fun showCategorySetup() {
         val searchFeedFragment = SearchFeedFragment().apply {
+            arguments = Bundle().apply {
+                putStringArrayList("categories", ArrayList(selectedCategories))
+                putStringArrayList("regions", ArrayList(selectedRegions))
+            }
             setOnCompleteListener { categories, regions ->
                 selectedCategories.clear()
                 selectedCategories.addAll(categories)
@@ -37,6 +41,7 @@ class SearchFeedContainerFragment : Fragment(R.layout.fragment_feed_container) {
             .replace(R.id.feed_container, searchFeedFragment)
             .commit()
     }
+
 
     fun showFeedList() {
         val feedListFragment = FeedListFragment().apply {
