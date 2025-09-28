@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+src/main/java/com/meokpli/app/auth/Network.kt
+src/main/java/com/meokpli/app/auth/SignUpActivity.kt
+src/main/java/com/meokpli/app/auth/LoginActivity.kt
+src/main/java/com/meokpli/app/user/ForgotPasswordActivity.kt
+src/main/java/com/meokpli/app/user/ResetPasswordActivity.kt
+src/main/java/com/meokpli/app/auth/GlobalApplication.kt
+src/main/AndroidManifest.xml
