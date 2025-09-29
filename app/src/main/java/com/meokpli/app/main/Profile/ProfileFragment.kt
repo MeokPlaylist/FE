@@ -131,26 +131,35 @@ class ProfileFragment : Fragment() {
 
         // 기간별 보기 (2열 그리드)
         timeBtn.setOnClickListener {
-            rvMyFeeds.layoutManager = GridLayoutManager(requireContext(), 2).apply {
-                spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-                    override fun getSpanSize(position: Int): Int {
-                        return when (adapter.getItemViewType(position)) {
-                            0 -> 2 // 헤더는 전체 폭
-                            else -> 1 // 사진은 반폭
+            if (::myPage.isInitialized) {
+                rvMyFeeds.layoutManager = GridLayoutManager(requireContext(), 2).apply {
+                    spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                        override fun getSpanSize(position: Int): Int {
+                            return when (adapter.getItemViewType(position)) {
+                                0 -> 2
+                                else -> 1
+                            }
                         }
                     }
                 }
+                adapter.updateItems(buildYearItems(myPage))
+                setTabSelected(true)
+            } else {
+                Log.w(TAG_PROFILE, "myPage not loaded yet")
             }
-            adapter.updateItems(buildYearItems(myPage))
-            setTabSelected(true)
         }
 
         regionBtn.setOnClickListener {
-            rvMyFeeds.layoutManager =
-                LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-            adapter.updateItems(buildRegionItems(myPage))
-            setTabSelected(false)
+            if (::myPage.isInitialized) {
+                rvMyFeeds.layoutManager =
+                    LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+                adapter.updateItems(buildRegionItems(myPage))
+                setTabSelected(false)
+            } else {
+                Log.w(TAG_PROFILE, "myPage not loaded yet")
+            }
         }
+
 
         // 팔로우/언팔 리스트에서 돌아올 때 실시간 델타 반영
         findNavController().currentBackStackEntry

@@ -1,4 +1,4 @@
-package com.meokpli.app.main.Feed
+package com.meokpli.app.Main.Feed
 
 import SelectedPhotosAdapter
 import android.content.res.ColorStateList
@@ -14,14 +14,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,17 +30,24 @@ import com.meokpli.app.main.FeedRequestBuilder
 import com.meokpli.app.main.MainActivity
 import com.meokpli.app.main.MainApi
 import com.meokpli.app.R
+import com.meokpli.app.databinding.FragmentFeedBinding
 import com.meokpli.app.gallery.GalleryBottomSheet
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.meokpli.app.main.Feed.PhotoMeta
+import com.meokpli.app.main.Feed.PresignedUploader
+import com.meokpli.app.main.Feed.extractPhotoMeta
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.Collections
-import kotlin.random.Random
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
 
     private val TAG = "FeedFragment"
+
+
+
+
 
     // --- UI refs ---
     private lateinit var cameraBtn: View
@@ -58,34 +62,45 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     private val selectedUris = mutableListOf<Uri>()             // 사진 선택 목록
     private var sel = SelectedCategories(emptyList(), emptyList(), emptyList())
     private var selectedPayload: ArrayList<String> = arrayListOf() // 서버 전송용(moods/foods/companions/regions)
-    private lateinit var etContent: EditText
     private var hashtagWatcher: TextWatcher? = null
+
+
     private val HASHTAG_COLOR = Color.parseColor("#FF0000")
     private val STATE_CONTENT = "state_feed_content"
+
     // dp helper
     private fun View.dp(v: Float) = v * resources.displayMetrics.density
+    private var _binding: FragmentFeedBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View = inflater.inflate(R.layout.fragment_feed, container, false)
-
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFeedBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        ensureMediaPerms()
+
         feedApi = Network.feedApi(requireContext())
+
         // 버튼/리사이클러뷰 바인딩
         backBtn = view.findViewById(R.id.btnBack)
         cameraBtn = view.findViewById(R.id.btnCamera)
         rvPhotos = view.findViewById(R.id.rvPhotos)
         uploadBtn = view.findViewById(R.id.btnUpload)
-        etContent = view.findViewById(R.id.etContent)
 
         // 내용 복원
         savedInstanceState?.getString(STATE_CONTENT)?.let { restored ->
-            etContent.setText(restored)
-            etContent.setSelection(restored.length)
+
+            binding.etContent.setText(restored)
+            binding.etContent.setSelection(restored.length)
         }
 
         // 리사이클러뷰
@@ -103,14 +118,41 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 running = true
                 try {
                     highlightHashtags(s)   // 아래 함수
+
                 } finally {
                     running = false
                 }
             }
         }
-        etContent.addTextChangedListener(hashtagWatcher)
+        binding.etContent.addTextChangedListener(hashtagWatcher)
 
         // 1) ItemTouchHelper: 롱프레스 드래그 비활성화(아이템 내 핸들에서만)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0
         ) {
@@ -149,6 +191,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         rvPhotos.adapter = photosAdapter
         touchHelper.attachToRecyclerView(rvPhotos)
 
+
         // 3) 갤러리 바텀시트 결과 수신 (이미지 선택)
         parentFragmentManager.setFragmentResultListener(
             GalleryBottomSheet.Companion.RESULT_KEY, viewLifecycleOwner
@@ -164,6 +207,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             if (selectedUris.isNotEmpty()) rvPhotos.scrollToPosition(0)
             Toast.makeText(requireContext(), "선택: ${uris.size}장", Toast.LENGTH_SHORT).show()
         }
+
 
         // 4) 카테고리/지역 다이얼로그 결과 수신
         parentFragmentManager.setFragmentResultListener(
@@ -196,9 +240,15 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             ).show(parentFragmentManager, "CategorySelectDialog")
         }
 
+
         // 5) 업로드 버튼
         uploadBtn.setOnClickListener {
-            val contentText = etContent.text?.toString()?.trim().orEmpty()
+            // 0) 사진이 없으면 업로드 막기
+            if (selectedUris.isEmpty()) {
+                Toast.makeText(requireContext(), "사진을 최소 1장 이상 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val contentText = binding.etContent.text?.toString()?.trim().orEmpty()
             val contentNullable = contentText.takeIf { it.isNotBlank() } // 비었으면 null
 
             val categoryReq = CategoryRequest(
@@ -265,11 +315,8 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
                         // 결과 확인
                         if (results.all { it }) {
-                            findNavController().navigate(
-                                R.id.action_feed_to_roadmapEdit,
-                                bundleOf("feedId" to feedId)
-                            )
                             Toast.makeText(requireContext(), "원본 업로드 완료", Toast.LENGTH_SHORT).show()
+                            (requireActivity() as? MainActivity)?.handleSystemBack()
                         } else {
                             val failed = results.withIndex().filter { !it.value }.map { it.index }
                             Toast.makeText(requireContext(), "업로드 실패 인덱스: $failed", Toast.LENGTH_SHORT).show()
@@ -283,7 +330,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                     Toast.makeText(requireContext(), "오류: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-
         }
 
 
@@ -311,13 +357,13 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             .filter { it.startsWith("regions:") }
             .map { it.removePrefix("regions:").trim() }   // "서울:구로구" 또는 "서울"
             .map { body ->
-                val idx = body.indexOf(':')               // 첫 ':' 기준 분리
+                val idx = body.indexOf(':')
                 if (idx >= 0) {
                     val sido = body.substring(0, idx).trim()
                     val sigungu = body.substring(idx + 1).trim()
-                    if (sigungu.isNotEmpty()) sigungu else sido
+                    "$sido:$sigungu"
                 } else {
-                    body                                   // 시군구가 없으면 시도 사용
+                    "$body:전체"   // "서울" → "서울:전체" 같은 placeholder 붙임
                 }
             }
             .filter { it.isNotEmpty() }
@@ -377,6 +423,25 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             Log.d(TAG, "renderPreviewChips: childCount=${cg.childCount}, size=${labels.size}")
         }
     }
+    //GPS받는 권한
+
+    private fun ensureMediaPerms() {
+        val perms = when {
+            Build.VERSION.SDK_INT >= 33 ->
+                arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES,
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            Build.VERSION.SDK_INT >= 29 ->
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            else ->
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        registerForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+        ) { /* 결과 체크 */ }
+            .launch(perms)
+    }
+
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -385,7 +450,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
     /** EditText의 현재 내용을 깔끔하게 가져오기 */
     private fun getFeedContent(): String =
-        etContent.text?.toString()?.trim().orEmpty()
+        binding.etContent.text?.toString()?.trim().orEmpty()
 
     /** 실시간 색상 하이라이트: #부터 다음 공백 전까지 빨간색 */
     private fun highlightHashtags(editable: Editable) {
