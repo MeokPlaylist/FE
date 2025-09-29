@@ -29,6 +29,7 @@ import com.meokpli.app.main.MainApi
 import com.meokpli.app.main.ModifyFeedCategoryRequest
 import com.meokpli.app.main.ModifyFeedContentRequest
 import com.meokpli.app.main.ModifyMainFeedPhotoRequest
+import com.meokpli.app.main.feedIdQuery
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -355,14 +356,17 @@ class FeedDetailActivity : AppCompatActivity() {
         likeCount = if (isLikedByMe) prevCount + 1 else (prevCount - 1).coerceAtLeast(0)
         renderLikeUi()
 
+        ivLike.isEnabled = false // ✅ 연타 방지
         lifecycleScope.launch {
             try {
                 val api = Network.feedApi(this@FeedDetailActivity)
                 if (isLikedByMe) {
-                    val r = api.likeFeed(feedId)
+                    // before: val r = api.likeFeed(feedId)
+                    val r = api.feedLike(feedIdQuery(feedId))
                     if (!r.isSuccessful) throw HttpException(r)
                 } else {
-                    val r = api.unlikeFeed(feedId)
+                    // before: val r = api.unlikeFeed(feedId)
+                    val r = api.feedUnLike(feedIdQuery(feedId))
                     if (!r.isSuccessful) throw HttpException(r)
                 }
             } catch (t: Throwable) {
@@ -371,6 +375,8 @@ class FeedDetailActivity : AppCompatActivity() {
                 likeCount   = prevCount
                 renderLikeUi()
                 Toast.makeText(this@FeedDetailActivity, "좋아요 처리 실패", Toast.LENGTH_SHORT).show()
+            } finally {
+                ivLike.isEnabled = true // ✅ 복구
             }
         }
     }

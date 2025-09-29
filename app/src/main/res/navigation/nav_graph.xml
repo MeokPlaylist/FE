@@ -30,7 +30,12 @@
     <fragment
         android:id="@+id/feedFragment"
         android:name="com.meokpli.app.main.Feed.FeedFragment"
-        android:label="피드" />
+        android:label="피드">
+        <!-- 업로드 성공 후 Edit로 바로 이동 -->
+        <action
+            android:id="@+id/action_feed_to_roadmapEdit"
+            app:destination="@id/roadmapEdit" />
+    </fragment>
 
     <fragment
         android:id="@+id/starFragment"
@@ -102,16 +107,6 @@
             app:argType="string" />
     </fragment>
 
-    <fragment
-        android:id="@+id/roadmapPreview"
-        android:name="com.meokpli.app.main.Roadmap.RoadmapPreviewFragment"
-        android:label="로드맵 미리보기"
-        tools:layout="@layout/fragment_roadmap_preview">
-        <argument android:name="feedId" app:argType="long" />
-        <action
-            android:id="@+id/action_roadmapPreview_to_roadmapView"
-            app:destination="@id/roadmapView" />
-    </fragment>
 
     <fragment
         android:id="@+id/roadmapView"

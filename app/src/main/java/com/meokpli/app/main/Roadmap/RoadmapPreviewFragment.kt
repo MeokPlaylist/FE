@@ -118,7 +118,7 @@ class RoadmapPreviewFragment : Fragment() {
                             Toast.makeText(requireContext(), "로드맵이 저장되었습니다.", Toast.LENGTH_SHORT).show()
                             // 저장 후 보기 전용 화면으로 이동
                             findNavController().navigate(
-                                R.id.action_roadmapPreview_to_roadmapView,
+                                R.id.action_feed_to_roadmapEdit,
                                 bundleOf("feedId" to feedId)
                             )
                         } else {

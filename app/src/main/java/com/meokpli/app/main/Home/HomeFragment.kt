@@ -35,6 +35,7 @@ import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.meokpli.app.main.CategorySelectDialog
 import com.meokpli.app.main.EditContentDialog
+import com.meokpli.app.main.feedIdQuery
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
@@ -102,11 +103,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                     try {
                         val api = Network.feedApi(requireContext())
                         if (targetLiked) {
-                            // 예시: POST /feed/{id}/like
-                            api.likeFeed(feedId)
+                            // before: api.likeFeed(feedId)
+                            api.feedLike(feedIdQuery(feedId))
                         } else {
-                            // 예시: DELETE /feed/{id}/like
-                            api.unlikeFeed(feedId)
+                            // before: api.unlikeFeed(feedId)
+                            api.feedUnLike(feedIdQuery(feedId))
                         }
                         done(true)
                     } catch (e: Exception) {
