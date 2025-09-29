@@ -1,5 +1,6 @@
 package com.meokpli.app.main.Interaction
 
+import android.app.AlertDialog
 import android.util.Log
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -92,12 +93,27 @@ class OtherFollowListFragment : Fragment() {
             },
             onFollowToggle = { user, isFollowingNow, position ->
                 Log.d(TAG_OFL, "toggle follow target=${user.nickname} now=$isFollowingNow pos=$position")
-                toggleFollow(user.nickname, isFollowingNow) { success, newState ->
-                    if (success) {
-                        adapter.updateFollowState(position, newState)
-                        Log.d(TAG_OFL, "toggle success target=${user.nickname} newState=$newState")
-                    } else {
-                        Log.e(TAG_OFL, "toggle failed target=${user.nickname}")
+                if (isFollowingNow) {
+                    // ✅ 언팔로우는 다이얼로그 띄우고 확인 시 실행
+                    showUnfollowConfirmDialog(user.nickname, user.profileImgUrl) {
+                        toggleFollow(user.nickname, true) { success, newState ->
+                            if (success) {
+                                adapter.updateFollowState(position, newState)
+                                Log.d(TAG_OFL, "unfollow success target=${user.nickname}")
+                            } else {
+                                Log.e(TAG_OFL, "unfollow failed target=${user.nickname}")
+                            }
+                        }
+                    }
+                } else {
+                    // ✅ 팔로우는 즉시 실행
+                    toggleFollow(user.nickname, false) { success, newState ->
+                        if (success) {
+                            adapter.updateFollowState(position, newState)
+                            Log.d(TAG_OFL, "follow success target=${user.nickname}")
+                        } else {
+                            Log.e(TAG_OFL, "follow failed target=${user.nickname}")
+                        }
                     }
                 }
             }
@@ -283,6 +299,36 @@ class OtherFollowListFragment : Fragment() {
             }
         }
     }
+    private fun showUnfollowConfirmDialog(
+        nickname: String,
+        avatarUrl: String?,
+        onConfirm: () -> Unit
+    ) {
+        val v = layoutInflater.inflate(R.layout.dialog_unfollow_confirm, null, false)
+        val iv = v.findViewById<ImageView>(R.id.ivProfile)
+        val btnCancel = v.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnUnfollow = v.findViewById<MaterialButton>(R.id.btnUnfollow)
+
+        if (!avatarUrl.isNullOrBlank()) {
+            iv.load(avatarUrl)
+        } else {
+            iv.setImageResource(R.drawable.ic_profile_red)
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(v)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnUnfollow.setOnClickListener {
+            btnUnfollow.isEnabled = false
+            onConfirm()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
 
     // ============== Adapter/Item ==============
 
@@ -360,7 +406,9 @@ class OtherFollowListFragment : Fragment() {
                             btnUnfollow.visibility = View.VISIBLE
                             btnUnfollow.setImageResource(R.drawable.ic_close)
                             // 문자열 리소스 없으면 하드코딩 가능
-                            btnUnfollow.contentDescription = ctx.getString(R.string.unfollow, "언팔로우")
+                            btnUnfollow.contentDescription = ctx.getString(R.string.unfollow)
+
+
                             btnUnfollow.setOnClickListener {
                                 Log.d(TAG_OFL, "unfollow click user=${u.nickname} pos=$pos")
                                 onFollowToggle(u, true, pos) // 언팔

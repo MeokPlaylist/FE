@@ -51,8 +51,8 @@
             android:text="확인"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
+            android:background="@drawable/btn_basic"
             app:cornerRadius="21dp"
-            app:backgroundTint="#C64132"
-            app:rippleColor="@android:color/white" />
+            app:backgroundTint="@null"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
