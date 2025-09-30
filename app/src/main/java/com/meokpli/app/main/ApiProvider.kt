@@ -124,19 +124,19 @@ class CategorySelectDialog : DialogFragment() {
         renderRegionChips(cgRegions, selectedRegionCodes)
 
         // 지역 선택 다이얼로그 결과 수신(이 다이얼로그의 childFM에서 받음)
-        childFragmentManager.setFragmentResultListener(
-            RegionSelectDialog.Companion.REQUEST_KEY, this
+        parentFragmentManager.setFragmentResultListener(
+            RegionSelectDialog.REQUEST_KEY, this
         ) { _, b ->
-            val codes = b.getStringArrayList(RegionSelectDialog.Companion.KEY_SELECTED_CODES) ?: arrayListOf()
+            val codes = b.getStringArrayList(RegionSelectDialog.KEY_SELECTED_CODES) ?: arrayListOf()
+            Log.d("CategorySelectDialog", "✅ Region 결과 수신: $codes")
             selectedRegionCodes = ArrayList(codes) // 덮어쓰기(최신 선택 유지)
-            Log.d(TAG, "Region result received: ${selectedRegionCodes.size} items -> $selectedRegionCodes")
             renderRegionChips(cgRegions, selectedRegionCodes)
         }
 
         // 지역 추가 버튼 → RegionSelectDialog 띄우기(미리 선택값 넘김)
         PlusRegionButton.setOnClickListener {
             RegionSelectDialog.Companion.newInstance(ArrayList(selectedRegionCodes))
-                .show(childFragmentManager, "RegionSelectDialog")
+                .show(parentFragmentManager, "RegionSelectDialog")
         }
 
         v.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { dismiss() }
@@ -152,7 +152,7 @@ class CategorySelectDialog : DialogFragment() {
                 addAll(getCheckedCodes(cgComp).map { "companions:$it" })
                 addAll(selectedRegionCodes.map { "regions:$it" })
             }
-            Log.d(TAG, "setFragmentResult OK moods=${labelsM.size}, foods=${labelsF.size}, comps=${labelsC.size}, regions=${selectedRegionCodes.size}, payload=${payload.size}")
+            Log.d("CategorySelectDialog", "✅ btnDone 클릭, 최종 payload = $payload")
 
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
@@ -216,7 +216,7 @@ class CategorySelectDialog : DialogFragment() {
     private fun renderRegionChips(cg: ChipGroup, codes: List<String>) {
         cg.removeAllViews()
         codes.forEach { code ->
-            val label = code.replace("|", " ")
+            val label = code.replace(":", " ")   // ✅ ":" 통일
             val chip = Chip(requireContext()).apply {
                 text = label
                 isCheckable = false
@@ -234,38 +234,6 @@ class CategorySelectDialog : DialogFragment() {
                 }
             }
             cg.addView(chip)
-        }
-    }
-
-    private fun renderRegionPreviewChips(
-        group: ChipGroup,
-        codes: Collection<String>
-    ) {
-        group.removeAllViews()
-        if (codes.isEmpty()) return
-
-        codes.forEach { code ->
-            val label = code.substringAfter("|") // "서울|강남구" → "강남구"만 표시
-            val chip = Chip(requireContext()).apply {
-                text = label
-                isCheckable = false
-                isClickable = false
-                isCloseIconVisible = false
-                includeFontPadding = false
-                setEnsureMinTouchTargetSize(false)
-                chipMinHeight = resources.displayMetrics.density * 28f
-                setPadding(
-                    (10 * resources.displayMetrics.density).toInt(),
-                    0,
-                    (10 * resources.displayMetrics.density).toInt(),
-                    0
-                )
-                setChipBackgroundColorResource(R.color.selector_chip_background)
-                setTextColor(resources.getColorStateList(R.color.selector_chip_text, null))
-                setChipStrokeColorResource(R.color.selector_chip_stroke)
-                chipStrokeWidth = resources.displayMetrics.density * 0.75f
-            }
-            group.addView(chip)
         }
     }
 }

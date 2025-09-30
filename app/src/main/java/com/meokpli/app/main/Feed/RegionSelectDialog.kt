@@ -6,6 +6,7 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -161,6 +162,7 @@ class RegionSelectDialog : DialogFragment() {
         // 취소/완료
         btnCancel.setOnClickListener { dismiss() }
         btnComplete.setOnClickListener {
+            Log.d("RegionSelectDialog", "완료 버튼 클릭, 선택된 지역 = $selectedPairs")
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(KEY_SELECTED_CODES to ArrayList(selectedPairs))
