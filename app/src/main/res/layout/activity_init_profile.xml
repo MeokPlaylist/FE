@@ -40,18 +40,35 @@
             android:textSize="12sp" />
 
         <!-- 프로필 사진 영역 (PlaceHolder) -->
-        <ImageView
-            android:id="@+id/imageProfile"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:scaleType="centerInside"
-            android:adjustViewBounds="true"
-            android:background="@drawable/circle_background"
-            android:clipToOutline="true"
-            android:contentDescription="프로필 이미지"
-            android:src="@drawable/ic_profile_camera" />
+            android:layout_marginTop="24dp">
+
+            <!-- 원형 프로필 이미지 -->
+            <ImageView
+                android:id="@+id/imageProfile"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:scaleType="centerInside"
+                android:adjustViewBounds="true"
+                android:background="@drawable/circle_background"
+                android:clipToOutline="true"
+                android:contentDescription="프로필 이미지"
+                android:src="@drawable/ic_profile_camera" />
+
+            <!-- X(삭제) 버튼: 기본은 숨김 -->
+            <ImageButton
+                android:id="@+id/btnClearPhoto"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end|top"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_close_round"
+                android:contentDescription="사진 삭제"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <!-- 닉네임 필드 -->
         <LinearLayout

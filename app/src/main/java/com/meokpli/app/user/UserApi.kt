@@ -9,6 +9,7 @@ import retrofit2.http.Part
 import com.meokpli.app.data.remote.response.MyPageResponse
 import com.meokpli.app.data.remote.response.PersonalInfoResponse
 import retrofit2.http.Query
+import java.time.LocalDateTime
 
 interface UserApi {
     @POST("setupDetailInfo")
@@ -16,14 +17,13 @@ interface UserApi {
         @Body body: UserDetailRequest
     )
 
-    @Multipart
     @POST("setupProfile")
     suspend fun savePhoto(
-        @Part profileImg: MultipartBody.Part
-    )
+        @Body request: UserProfileSetupRequest): UserProfileSetupResponse
 
     @POST("find")
-    suspend fun findUser(@Body request: FindUserRequest): FindUserResponse
+    suspend fun findUser(
+        @Body request: FindUserRequest): FindUserResponse
 
     @POST("renewalPassword")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
@@ -52,10 +52,14 @@ interface UserApi {
 }
 data class GetCategoriesResponse(val categoryNames: List<String>)
 data class FindUserRequest(val name: String, val email: String)
+data class UserProfileSetupRequest(val fileName: String, val dayAndTime: String)
 data class FindUserResponse(val userId: Long)
 data class ResetPasswordRequest(val userId: Long,val newPassword: String)
 data class UserDetailRequest(val nickname: String, val introduction: String)
 data class BaseResponse(val isAvailable: Boolean, val message: String?)
 data class ConsentAgreeRequest(
     val isAvailable: Boolean
+)
+data class UserProfileSetupResponse(
+    val presignedPutUrls: String
 )

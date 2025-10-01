@@ -111,7 +111,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         // RecyclerView
         rvPhotos.layoutManager =
             LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-        rvPhotos.setHasFixedSize(true)
 
         // 해시태그 색칠
         hashtagWatcher = object : TextWatcher {

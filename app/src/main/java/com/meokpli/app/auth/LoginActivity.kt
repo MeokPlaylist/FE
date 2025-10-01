@@ -49,7 +49,7 @@ class LoginActivity : AppCompatActivity() {
 
         // 구글 설정 (ID 토큰 필요 시)
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("691810024292-sjde8t68sgo7lrtrm6frm1h7ncgi0hio.apps.googleusercontent.com")
+            .requestIdToken("614172335108-a6j4nkrudna9k8tpon4anj3jgi6ee0ts.apps.googleusercontent.com")
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)

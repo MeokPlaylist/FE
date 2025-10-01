@@ -1,32 +1,31 @@
 package com.meokpli.app.user
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.View
 import android.widget.*
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.meokpli.app.auth.Network
 import com.meokpli.app.R
 import com.meokpli.app.auth.AuthApi
+import com.meokpli.app.auth.Network
+import com.meokpli.app.main.Feed.PresignedUploader
 import kotlinx.coroutines.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
-import java.io.FileOutputStream
+import java.time.LocalDateTime
 
 class InitProfileActivity : AppCompatActivity() {
 
     private lateinit var imageProfile: ImageView
+    private lateinit var btnClearPhoto: ImageButton
     private lateinit var editNickname: EditText
     private lateinit var textNicknameCount: TextView
     private lateinit var textIntroCount: TextView
@@ -34,23 +33,37 @@ class InitProfileActivity : AppCompatActivity() {
     private lateinit var buttonNext: Button
     private lateinit var tvNicknameError: TextView
 
-    private val PICK_IMAGE_REQUEST = 1
     private val NICKNAME_LIMIT = 10
     private val INTRO_LIMIT = 30
-
+    private var selectedImageUri: Uri? = null
     private lateinit var userApi: UserApi
     private lateinit var authApi: AuthApi
 
-    // 닉네임 실시간 중복검사 디바운싱용
     private var checkJob: Job? = null
     private var lastCheckedNickname: String = ""
     private var lastIsAvailable: Boolean? = null
 
+    // 갤러리에서 이미지 선택 런처
+    private val pickImage = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            contentResolver.openInputStream(it)?.use { input ->
+                val bmp = BitmapFactory.decodeStream(input)
+                imageProfile.setImageBitmap(bmp)
+            }
+            btnClearPhoto.visibility = View.VISIBLE // 사진 있을 때만 보이기
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_init_profile)
 
         imageProfile = findViewById(R.id.imageProfile)
+        btnClearPhoto = findViewById(R.id.btnClearPhoto)
         editNickname = findViewById(R.id.editNickname)
         textNicknameCount = findViewById(R.id.textNicknameCount)
         textIntroCount = findViewById(R.id.textIntroCount)
@@ -58,10 +71,13 @@ class InitProfileActivity : AppCompatActivity() {
         buttonNext = findViewById(R.id.buttonNext)
         tvNicknameError = findViewById(R.id.tvNicknameError)
 
-        // /user/ 베이스 API 사용 (AuthInterceptor로 토큰 자동 부착)
-        userApi = Network.userApi(this) // :contentReference[oaicite:2]{index=2}
+        userApi = Network.userApi(this)
         authApi = Network.authApi(this)
 
+        // 기본은 숨김
+        btnClearPhoto.visibility = View.GONE
+
+        // 뒤로가기 시 동의 화면으로 복귀
         onBackPressedDispatcher.addCallback(this) {
             val intent = Intent(this@InitProfileActivity, ConsentFormActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -69,19 +85,17 @@ class InitProfileActivity : AppCompatActivity() {
             finish()
         }
 
-        // 글자수 제한 필터 적용 (UX)
+        // 글자수 제한
         editNickname.filters = arrayOf(InputFilter.LengthFilter(NICKNAME_LIMIT))
         editIntro.filters = arrayOf(InputFilter.LengthFilter(INTRO_LIMIT))
 
-        // 닉네임 글자 수 실시간 표시 + 중복 검사
+        // 닉네임 입력 감시
         editNickname.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val count = s?.length ?: 0
                 textNicknameCount.text = "$count/$NICKNAME_LIMIT"
 
                 val nickname = s?.toString()?.trim().orEmpty()
-
-                // 비어있으면 에러 제거 및 상태 초기화
                 if (nickname.isEmpty()) {
                     tvNicknameError.text = ""
                     tvNicknameError.visibility = View.GONE
@@ -90,7 +104,6 @@ class InitProfileActivity : AppCompatActivity() {
                     return
                 }
 
-                // 이전 검사 취소 + 간단 디바운스
                 checkJob?.cancel()
                 checkJob = lifecycleScope.launch {
                     delay(400)
@@ -111,51 +124,45 @@ class InitProfileActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        // 갤러리에서 사진 선택
-        imageProfile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(intent, PICK_IMAGE_REQUEST)
+        // 사진 선택
+        imageProfile.setOnClickListener { pickImage.launch("image/*") }
+
+        // X 버튼 클릭 → 기본 이미지로 복귀
+        btnClearPhoto.setOnClickListener {
+            selectedImageUri = null
+            imageProfile.setImageResource(R.drawable.ic_profile_red)
+            btnClearPhoto.visibility = View.GONE
         }
 
-        // 다음 버튼 클릭 시: 최종 닉네임 중복 확인 후 저장
+        // 다음 버튼 클릭 → 프로필/닉네임 저장
         buttonNext.setOnClickListener {
             val nickname = editNickname.text.toString().trim()
             val intro = editIntro.text.toString().trim()
 
-            if (nickname.isEmpty()) {
-                showToast("닉네임을 입력해주세요.")
-                return@setOnClickListener
-            }
-
             lifecycleScope.launch(Dispatchers.IO) {
-                // 마지막 실시간 검사 결과 대신, 최종 한 번 더 서버 확인
-                val isAvailable = runCatching {
-                    authApi.checkNickname(nickname).isAvailable
-                }.getOrElse {
-                    withContext(Dispatchers.Main) {
-                        tvNicknameError.text = "중복 검사 실패: ${it.message}"
-                        tvNicknameError.visibility = View.VISIBLE
-                    }
-                    return@launch
-                }
+                try {
+                    if (selectedImageUri != null) {
+                        val fileName = "profile_${System.currentTimeMillis()}.jpg"
+                        val setupResp = userApi.savePhoto(
+                            UserProfileSetupRequest(fileName, LocalDateTime.now().toString())
+                        )
 
-                if (!isAvailable) {
-                    withContext(Dispatchers.Main) {
-                        tvNicknameError.text = "이미 사용 중인 닉네임입니다."
-                        tvNicknameError.visibility = View.VISIBLE
-                    }
-                    return@launch
-                }
+                        val uploaded = PresignedUploader.uploadAll(
+                            context = this@InitProfileActivity,
+                            uris = listOf(selectedImageUri!!),
+                            urls = listOf(setupResp.presignedPutUrls)
+                        )
 
-                // 중복 아님 → 프로필 저장
-                runCatching {
+                        if (!uploaded.all { it }) throw Exception("프로필 업로드 실패")
+                    }
+
                     userApi.saveDetail(UserDetailRequest(nickname, intro))
-                }.onSuccess {
+
                     withContext(Dispatchers.Main) {
                         startActivity(Intent(this@InitProfileActivity, CategoryActivity::class.java))
                         finish()
                     }
-                }.onFailure { e ->
+                } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         showToast("프로필 저장 실패: ${e.message}")
                     }
@@ -165,7 +172,6 @@ class InitProfileActivity : AppCompatActivity() {
     }
 
     private suspend fun performDuplicateCheck(nickname: String) {
-        // 같은 문자열에 대한 중복 호출 방지(선택)
         if (lastCheckedNickname == nickname && lastIsAvailable != null) {
             withContext(Dispatchers.Main) {
                 if (lastIsAvailable == false) {
@@ -203,55 +209,6 @@ class InitProfileActivity : AppCompatActivity() {
         }
     }
 
-    @Deprecated("Use ActivityResultContracts")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data?.data != null) {
-            val imageUri = data.data!!
-            try {
-                // (선택) 큰 이미지 대응: 필요 시 다운샘플링 로직 적용
-                contentResolver.openInputStream(imageUri)?.use { input ->
-                    val bmp = BitmapFactory.decodeStream(input)
-                    imageProfile.setImageBitmap(bmp)
-                }
-
-                val file = createTempFileFromUriSafe(imageUri)
-                val part = MultipartBody.Part.createFormData(
-                    name = "profileImg", // 서버 필드명과 동일해야 함
-                    filename = file.name,
-                    body = file.asRequestBody("image/*".toMediaTypeOrNull())
-                )
-
-                lifecycleScope.launch(Dispatchers.IO) {
-                    runCatching {
-                        userApi.savePhoto(part)
-                    }.onSuccess {
-                        withContext(Dispatchers.Main) { showToast("이미지 업로드 성공!") }
-                    }.onFailure { e ->
-                        withContext(Dispatchers.Main) { showToast("업로드 실패: ${e.message}") }
-                    }
-                }
-
-            } catch (e: Exception) {
-                showToast("이미지를 불러오지 못했습니다.")
-            }
-        }
-    }
-
-    private fun createTempFileFromUriSafe(uri: Uri): File {
-        val suffix = when (contentResolver.getType(uri)) {
-            "image/png" -> ".png"
-            "image/webp" -> ".webp"
-            else -> ".jpg"
-        }
-        val tempFile = File.createTempFile("profile_", suffix, cacheDir)
-        contentResolver.openInputStream(uri)?.use { input ->
-            FileOutputStream(tempFile).use { output -> input.copyTo(output) }
-        }
-        return tempFile
-    }
-
-    private fun showToast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    private fun showToast(msg: String) =
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }
-
-

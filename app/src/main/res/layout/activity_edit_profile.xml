@@ -51,13 +51,32 @@
             android:paddingTop="24dp"
             android:paddingBottom="8dp">
 
-            <ImageView
-                android:id="@+id/ivAvatar"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/ic_profile_red"
-                android:contentDescription="@string/profile_image"
-                android:elevation="4dp" />
+            <!-- 프로필 + 삭제버튼 겹치기 -->
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <!-- 원형 프로필 이미지뷰 -->
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivAvatar"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_profile_red"
+                    android:contentDescription="@string/profile_image"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/CircleImageView" />
+
+                <!-- 삭제 아이콘 (기본은 숨김) -->
+                <ImageButton
+                    android:id="@+id/btnClearPhoto"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="end|top"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_close_round"
+                    android:contentDescription="remove_photo"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvChangePhoto"
