@@ -38,14 +38,19 @@ class SearchFeedAdapter(
             .build()
         val shimmerDrawable = ShimmerDrawable().apply { setShimmer(shimmer) }
 
-        // ✅ photoUrl만 Coil에 넘겨야 함
         holder.img.load(item.photoUrl) {
             crossfade(true)
             memoryCachePolicy(CachePolicy.ENABLED)
             diskCachePolicy(CachePolicy.ENABLED)
             placeholder(shimmerDrawable)
         }
+
+        // feedId 전달
+        holder.img.setOnClickListener {
+            onFeedClick(item.feedId)
+        }
     }
+
 
 
     override fun getItemCount(): Int = items.size

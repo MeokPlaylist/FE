@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 배경 원 -->
+    <path
+        android:fillColor="#FF0000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M12,2
+                          A10,10 0 1,1 11.999,2Z" />
+
+    <!-- 중앙에 정확히 배치된 별 (둥근 팔) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFF"
+        android:strokeWidth="1"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M12,6.5
+                          L13.8,10.5
+                          L18.2,10.9
+                          L14.8,13.9
+                          L15.9,18.2
+                          L12,16
+                          L8.1,18.2
+                          L9.2,13.9
+                          L5.8,10.9
+                          L10.2,10.5 Z"/>
+</vector>

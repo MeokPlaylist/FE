@@ -1,19 +1,20 @@
 package com.meokpli.app.main.Roadmap
 
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface RoadmapApi {
-    @GET("/api/roadmap")
+    @GET("callInRoadMap")               // ← 상대경로로 수정
     suspend fun getRoadmap(@Query("feedId") feedId: Long): CallInRoadMapResponse
 
-    @GET("/place/pullOutKakao")
+    @GET("pullOutKakao")
     suspend fun pullOutKakao(@Query("feedId") feedId: Long): PullOutKakaoPlaceResponse
 
-    @POST("/place/saveRoadMap")
-    suspend fun saveRoadMap(@Body body: SaveRoadMapPlaceRequest): retrofit2.Response<Unit>
+    @POST("saveRoadMap")
+    suspend fun saveRoadMap(@Body body: SaveRoadMapPlaceRequest): Response<Unit>
 }
 
 data class CallInRoadMapResponse(

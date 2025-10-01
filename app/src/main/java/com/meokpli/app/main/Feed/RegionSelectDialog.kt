@@ -1,13 +1,16 @@
 package com.meokpli.app.main.Feed
 
 import android.app.Dialog
+import android.content.Context
 import android.content.res.Resources
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
@@ -75,6 +78,14 @@ class RegionSelectDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val v = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_region_select, null, false)
 
+        v.setOnTouchListener { vv, event ->
+            if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(vv.windowToken, 0)
+                vv.clearFocus()
+            }
+            false
+        }
         // 기존 선택 주입
         val pre = arguments?.getStringArrayList(KEY_PRESELECTED_CODES) ?: arrayListOf()
         selectedPairs.clear()
@@ -151,6 +162,7 @@ class RegionSelectDialog : DialogFragment() {
         // 취소/완료
         btnCancel.setOnClickListener { dismiss() }
         btnComplete.setOnClickListener {
+            Log.d("RegionSelectDialog", "완료 버튼 클릭, 선택된 지역 = $selectedPairs")
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(KEY_SELECTED_CODES to ArrayList(selectedPairs))

@@ -61,6 +61,10 @@ class FeedAdapter(private var items: MutableList<Feed>,
         notifyItemRangeInserted(start, newItems.size)
     }
 
+    fun findItem(feedId: Long): Feed? {
+        return items.find { it.feedId == feedId }
+    }
+
     fun removeItem(feedId: Long) {
         val idx = items.indexOfFirst { it.feedId == feedId }
         if (idx != -1) {

@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import com.meokpli.app.R
 import com.google.android.material.chip.Chip
@@ -53,9 +52,23 @@ class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
         submitButton = view.findViewById(R.id.submitButton)
         plusRegionButton = view.findViewById(R.id.PlusRegionButton)
 
+        // ✅ 칩 생성
         createChips(chipGroupMood, moodList)
         createChips(chipGroupFood, foodList)
         createChips(chipGroupCompanion, companionList)
+
+        // ✅ 전달받은 categories, regions 적용
+        val preSelectedCategories = arguments?.getStringArrayList("categories") ?: arrayListOf()
+        val preSelectedRegions = arguments?.getStringArrayList("regions") ?: arrayListOf()
+
+        restoreCheckedChips(chipGroupMood, preSelectedCategories, "moods", moodMap)
+        restoreCheckedChips(chipGroupFood, preSelectedCategories, "foods", foodMap)
+        restoreCheckedChips(chipGroupCompanion, preSelectedCategories, "companions", companionMap)
+
+        // 지역 미리 선택
+        selectedRegions.clear()
+        selectedRegions.addAll(preSelectedRegions)
+        renderRegionChips()
 
         // ✅ RegionSelectDialog 결과 수신
         childFragmentManager.setFragmentResultListener(
@@ -102,6 +115,22 @@ class SearchFeedFragment : Fragment(R.layout.fragment_search_feed_category) {
                 chipStrokeWidth = resources.displayMetrics.density * 0.75f
             }
             chipGroup.addView(chip)
+        }
+    }
+
+    // ✅ 전달받은 categories를 기반으로 chip 체크 상태 복원
+    private fun restoreCheckedChips(
+        group: ChipGroup,
+        preSelectedCategories: List<String>,
+        typePrefix: String,
+        map: Map<String, String>
+    ) {
+        for (i in 0 until group.childCount) {
+            val chip = group.getChildAt(i) as? Chip ?: continue
+            val code = map[chip.text.toString()] ?: continue
+            if (preSelectedCategories.contains("$typePrefix:$code")) {
+                chip.isChecked = true
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-package com.meokpli.app.main.Feed
+package com.meokpli.app.Main.Feed
 
 import SelectedPhotosAdapter
 import android.content.res.ColorStateList
@@ -10,6 +10,7 @@ import android.text.Editable
 import android.text.Spanned
 import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,26 +18,32 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.meokpli.app.auth.Network
-import com.meokpli.app.main.*
-import com.meokpli.app.R
-import com.meokpli.app.databinding.FragmentFeedBinding
-import com.meokpli.app.gallery.GalleryBottomSheet
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import java.util.Collections
+import com.meokpli.app.R
+import com.meokpli.app.auth.Network
+import com.meokpli.app.databinding.FragmentFeedBinding
+import com.meokpli.app.gallery.GalleryBottomSheet
+import com.meokpli.app.main.CategoryRequest
 import com.meokpli.app.main.CategorySelectDialog
+import com.meokpli.app.main.ClientPhoto
+import com.meokpli.app.main.Feed.PhotoMeta
+import com.meokpli.app.main.Feed.PresignedUploader
+import com.meokpli.app.main.Feed.extractPhotoMeta
+import com.meokpli.app.main.FeedRequestBuilder
+import com.meokpli.app.main.MainActivity
+import com.meokpli.app.main.MainApi
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.util.Collections
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
 
     private val TAG = "FeedFragment"
-
-    // --- binding ---
-    private var _binding: FragmentFeedBinding? = null
-    private val binding get() = _binding!!
 
     // --- UI refs ---
     private lateinit var cameraBtn: View
@@ -47,17 +54,32 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     private lateinit var feedApi: MainApi
 
     // --- state ---
-    private val selectedUris = mutableListOf<Uri>() // 사진 선택 목록
+    private val selectedUris = mutableListOf<Uri>()             // 사진 선택 목록
     private var sel = SelectedCategories(emptyList(), emptyList(), emptyList())
-    private var selectedPayload: ArrayList<String> = arrayListOf() // 서버 전송용
+
+    private var selectedPayload: MutableList<String> = mutableListOf()
+
     private var hashtagWatcher: TextWatcher? = null
-    private var latestContent: String = "" // <- EditText 추적용
 
     private val HASHTAG_COLOR = Color.parseColor("#FF0000")
     private val STATE_CONTENT = "state_feed_content"
 
-    // dp helper
     private fun View.dp(v: Float) = v * resources.displayMetrics.density
+    private var _binding: FragmentFeedBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // 카테고리 결과 받기 (onCreate에서 등록)
+        parentFragmentManager.setFragmentResultListener(
+            CategorySelectDialog.REQUEST_KEY, this
+        ) { _, b ->
+            selectedPayload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
+            Log.d("FeedFragment", "✅ Category 결과 수신: $selectedPayload")
+            view?.let { renderPreviewChips(it, selectedPayload) }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -75,7 +97,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         ensureMediaPerms()
         feedApi = Network.feedApi(requireContext())
 
-        // 버튼/리사이클러뷰 바인딩
         backBtn = view.findViewById(R.id.btnBack)
         cameraBtn = view.findViewById(R.id.btnCamera)
         rvPhotos = view.findViewById(R.id.rvPhotos)
@@ -83,16 +104,16 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
         // 내용 복원
         savedInstanceState?.getString(STATE_CONTENT)?.let { restored ->
-            latestContent = restored
             binding.etContent.setText(restored)
             binding.etContent.setSelection(restored.length)
         }
 
-        // 리사이클러뷰
+        // RecyclerView
         rvPhotos.layoutManager =
             LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        rvPhotos.setHasFixedSize(true)
 
-        // 실시간 해시태그 색칠
+        // 해시태그 색칠
         hashtagWatcher = object : TextWatcher {
             private var running = false
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -100,43 +121,12 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             override fun afterTextChanged(s: Editable?) {
                 if (running || s == null) return
                 running = true
-                try {
-                    highlightHashtags(s)
-                    latestContent = s.toString() // <- 매번 업데이트
-                } finally {
-                    running = false
-                }
+                try { highlightHashtags(s) } finally { running = false }
             }
         }
         binding.etContent.addTextChangedListener(hashtagWatcher)
 
-        // 사진 어댑터/터치헬퍼
-        setupRecycler(view)
-
-        // 갤러리 선택 리스너
-        setupGalleryListener(view)
-
-        // 카테고리 다이얼로그 결과
-        setupCategoryListener(view)
-
-        // 카테고리 다이얼로그 열기 버튼
-        view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
-            CategorySelectDialog.newInstance(
-                ArrayList(sel.moods), ArrayList(sel.foods), ArrayList(sel.companions)
-            ).show(parentFragmentManager, "CategorySelectDialog")
-        }
-
-        // 업로드 버튼
-        setupUpload(view)
-
-        // 뒤로/카메라 버튼
-        cameraBtn.setOnClickListener { openGalleryBottomSheet() }
-        backBtn.setOnClickListener { (requireActivity() as? MainActivity)?.handleSystemBack() }
-    }
-
-    // ---------------- util ----------------
-
-    private fun setupRecycler(view: View) {
+        // 어댑터 & TouchHelper
         val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0
         ) {
@@ -171,9 +161,8 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         )
         rvPhotos.adapter = photosAdapter
         touchHelper.attachToRecyclerView(rvPhotos)
-    }
 
-    private fun setupGalleryListener(view: View) {
+        // 갤러리 결과
         parentFragmentManager.setFragmentResultListener(
             GalleryBottomSheet.RESULT_KEY, viewLifecycleOwner
         ) { _, bundle ->
@@ -181,37 +170,87 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             selectedUris.clear()
             selectedUris.addAll(uris)
             photosAdapter.submitList(selectedUris.toList())
-
             view.findViewById<View>(R.id.emptyPhotoBox)?.visibility =
                 if (selectedUris.isEmpty()) View.VISIBLE else View.GONE
-
             if (selectedUris.isNotEmpty()) rvPhotos.scrollToPosition(0)
-            Toast.makeText(requireContext(), "선택: ${uris.size}장", Toast.LENGTH_SHORT).show()
         }
+
+        // 카테고리 버튼
+        view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
+            CategorySelectDialog.newInstance(
+                ArrayList(sel.moods), ArrayList(sel.foods), ArrayList(sel.companions)
+            ).show(parentFragmentManager, "CategorySelectDialog")
+        }
+
+
+        // 업로드 버튼
+        uploadBtn.setOnClickListener { doUpload(view) }
+
+        cameraBtn.setOnClickListener { openGalleryBottomSheet() }
+        backBtn.setOnClickListener { (requireActivity() as? MainActivity)?.handleSystemBack() }
     }
 
-    private fun setupCategoryListener(view: View) {
-        parentFragmentManager.setFragmentResultListener(
-            CategorySelectDialog.REQUEST_KEY, viewLifecycleOwner
-        ) { _, b ->
-            selectedPayload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
-            sel = SelectedCategories(
-                b.getStringArrayList(CategorySelectDialog.KEY_MOODS) ?: arrayListOf(),
-                b.getStringArrayList(CategorySelectDialog.KEY_FOODS) ?: arrayListOf(),
-                b.getStringArrayList(CategorySelectDialog.KEY_COMPANIONS) ?: arrayListOf()
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun doUpload(view: View) {
+        if (selectedUris.isEmpty()) {
+            Toast.makeText(requireContext(), "사진을 최소 1장 이상 선택해주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val contentText = binding.etContent.text?.toString()?.trim().orEmpty()
+        val contentNullable = contentText.takeIf { it.isNotBlank() }
+
+        val categoryReq = CategoryRequest(
+            mood = sel.moods.takeIf { it.isNotEmpty() }.orEmpty(),
+            food = sel.foods.takeIf { it.isNotEmpty() }.orEmpty(),
+            companion = sel.companions.takeIf { it.isNotEmpty() }.orEmpty(),
+        )
+        val regionStrings = selectedPayload
+            .filter { it.startsWith("regions:") }
+            .map { it.removePrefix("regions:") }
+            .takeIf { it.isNotEmpty() } // 서버 전송용은 ":" 유지
+        val hashtags = extractHashtags(contentText).takeIf { it.isNotEmpty() }
+
+        val metas: List<PhotoMeta> = selectedUris.map { extractPhotoMeta(requireContext(), it) }
+        val photos: List<ClientPhoto> = metas.mapIndexed { idx, m ->
+            ClientPhoto(
+                fileName = m.fileName,
+                latitude = m.latitude,
+                longitude = m.longitude,
+                dayAndTime = m.dateTimeOriginalIso ?: LocalDateTime.now().withSecond(0).withNano(0).toString(),
+                sequence = idx + 1
             )
-            renderPreviewChips(view, sel)
         }
-    }
 
-    private fun setupUpload(view: View) {
-        uploadBtn.setOnClickListener {
-            if (selectedUris.isEmpty()) {
-                Toast.makeText(requireContext(), "사진을 최소 1장 이상 선택해주세요.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val body = FeedRequestBuilder.buildBody(
+                    content = contentNullable,
+                    hashTags = hashtags,
+                    categories = categoryReq,
+                    regions = regionStrings, // ✅ 서버로는 ":" 포함
+                    photos = photos
+                )
+                val resp = feedApi.createFeed(body)
+                if (resp.isSuccessful) {
+                    val uploadUrls = resp.body()?.presignedPutUrls.orEmpty()
+                    val results = PresignedUploader.uploadAll(
+                        context = requireContext(),
+                        uris = selectedUris.toList(),
+                        urls = uploadUrls
+                    )
+                    if (results.all { it }) {
+                        Toast.makeText(requireContext(), "업로드 완료", Toast.LENGTH_SHORT).show()
+                        (requireActivity() as? MainActivity)?.handleSystemBack()
+                    } else {
+                        Toast.makeText(requireContext(), "일부 업로드 실패", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "실패: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "upload error", e)
+                Toast.makeText(requireContext(), "오류: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-            val contentText = latestContent.trim().ifEmpty { null }
-            // TODO: feedApi 업로드 로직 (생략)
         }
     }
 
@@ -224,50 +263,57 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             .show(parentFragmentManager, "gallery")
     }
 
-    private fun highlightHashtags(editable: Editable) {
-        val old = editable.getSpans(0, editable.length, ForegroundColorSpan::class.java)
-        for (span in old) {
-            if (span.foregroundColor == HASHTAG_COLOR) {
-                editable.removeSpan(span)
-            }
-        }
-        val regex = Regex("""#([^\s#]+)""")
-        regex.findAll(editable.toString()).forEach { m ->
-            editable.setSpan(
-                ForegroundColorSpan(HASHTAG_COLOR),
-                m.range.first, m.range.last + 1,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-    }
-
-    // 미리보기 칩 생성
-    private fun renderPreviewChips(root: View, s: SelectedCategories) {
+    // 칩 렌더링
+    private fun renderPreviewChips(root: View, payload: List<String>) {
         val cg = root.findViewById<ChipGroup>(R.id.chipGroupCategoryPreview)
         cg.removeAllViews()
-        val labels = s.moods + s.foods + s.companions
-        if (labels.isEmpty()) {
+
+        if (payload.isEmpty()) {
             val empty = Chip(requireContext()).apply {
                 text = "선택 없음"
                 isCheckable = false
+                setEnsureMinTouchTargetSize(false)
                 chipBackgroundColor = ColorStateList.valueOf(Color.parseColor("#EEEEEE"))
                 setTextColor(Color.parseColor("#888888"))
+                chipStrokeWidth = 0f
             }
             cg.addView(empty)
             return
         }
-        labels.forEach { label ->
+
+        payload.forEach { raw ->
+            val label = when {
+                raw.startsWith("regions:") -> {
+                    val code = raw.removePrefix("regions:")
+                    if (code.contains(":")) {
+                        val (sido, sigungu) = code.split(":", limit = 2)
+                        "$sido $sigungu"
+                    } else code
+                }
+                raw.startsWith("moods:") -> raw.removePrefix("moods:")
+                raw.startsWith("foods:") -> raw.removePrefix("foods:")
+                raw.startsWith("companions:") -> raw.removePrefix("companions:")
+                else -> raw
+            }
             val chip = Chip(requireContext()).apply {
                 text = label
                 isCheckable = false
-                setTextColor(Color.parseColor("#C64132"))
+                isClickable = false
+                isCloseIconVisible = false
+                includeFontPadding = false
+                setEnsureMinTouchTargetSize(false)
+                chipMinHeight = root.dp(28f)
                 chipBackgroundColor = ColorStateList.valueOf(Color.parseColor("#FFE7E7"))
+                chipStrokeColor = ColorStateList.valueOf(Color.parseColor("#C64132"))
+                chipStrokeWidth = root.dp(1f)
+                setTextColor(Color.parseColor("#C64132"))
+                textSize = 12f
             }
             cg.addView(chip)
         }
     }
 
-    // 권한
+
     private fun ensureMediaPerms() {
         val perms = when {
             Build.VERSION.SDK_INT >= 33 ->
@@ -279,20 +325,40 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         }
         registerForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
-        ) { }.launch(perms)
+        ) { } .launch(perms)
     }
 
-    // 상태 저장
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(STATE_CONTENT, latestContent)
+        outState.putString(STATE_CONTENT, getFeedContent())
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-        hashtagWatcher = null
+    private fun getFeedContent(): String =
+        binding.etContent.text?.toString()?.trim().orEmpty()
+
+    private fun highlightHashtags(editable: Editable) {
+        val old = editable.getSpans(0, editable.length, ForegroundColorSpan::class.java)
+        for (span in old) {
+            if (span.foregroundColor == HASHTAG_COLOR) editable.removeSpan(span)
+        }
+        val regex = Regex("""#([^\s#]+)""")
+        val text = editable.toString()
+        regex.findAll(text).forEach { m ->
+            val start = m.range.first
+            val end = m.range.last + 1
+            editable.setSpan(
+                ForegroundColorSpan(HASHTAG_COLOR),
+                start, end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
     }
+
+    private fun extractHashtags(text: String): List<String> =
+        Regex("""#([^\s#]+)""")
+            .findAll(text)
+            .map { it.groupValues[1] }
+            .toList()
 
     data class SelectedCategories(
         val moods: List<String>,

@@ -6,6 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
+import retrofit2.http.QueryMap
 
 /* 1) Retrofit API */
 interface MainApi {
@@ -22,10 +23,10 @@ interface MainApi {
     ): SlicedResponse<Feed>
 
     // 피드 상세 조회
-    @GET("detail")
+    @GET("getDetailInfor")
     suspend fun getFeedDetail(
         @Query("feedId") feedId: Long
-    ): FeedDetailResponse
+    ): GetDetailInforResponse
 
     // ✅ 피드 신고
     @POST("report")
@@ -53,17 +54,17 @@ interface MainApi {
     suspend fun deleteFeed(@Query("feedId") feedId: Long): Response<Void>
 
     // 좋아요 누르기
-    @POST("like")
-    suspend fun likeFeed(
-        @Query("feedId") feedId: Long
+    // ✅ 좋아요 누르기: 서버 경로와 동일하게 변경
+    @POST("feedLike")
+    suspend fun feedLike(
+        @QueryMap(encoded = true) q: Map<String, String>
     ): Response<Void>
 
-    // 좋아요 취소
-    @POST("unlike")
-    suspend fun unlikeFeed(
-        @Query("feedId") feedId: Long
+    // ✅ 좋아요 취소: 서버 경로와 동일하게 변경
+    @POST("feedUnLike")
+    suspend fun feedUnLike(
+        @QueryMap(encoded = true) q: Map<String, String>
     ): Response<Void>
-
 
 
 
@@ -74,6 +75,10 @@ data class CreateFeedBody(
     val categories: List<String> = emptyList(), // "moods:기분", "foods:라멘" 형식
     val regions: List<String> = emptyList(),
     val photos: List<PhotoBody> = emptyList(),
+)
+fun feedIdQuery(feedId: Long): Map<String, String> = mapOf(
+    "feedId" to feedId.toString(),
+    "/feedId" to feedId.toString()
 )
 
 data class PhotoBody(
@@ -99,16 +104,22 @@ data class SlicedResponse<T>(
     val hasNext: Boolean
 )
 
-/* 2) 상세 DTO */
-data class FeedDetailResponse(
-    val feedId: Long,
+
+/* 서버 응답 DTO 반영 */
+data class GetDetailInforResponse(
+    val detailInforDto: GetDetailInforDto
+)
+
+data class GetDetailInforDto(
     val nickName: String,
-    val profileImgUrl: String?,
-    val createdAt: String,
     val content: String,
     val hashTag: List<String>,
-    val images: List<String>,
-    val authorId: Long? = null // 서버가 주면 더 안전한 소유자 판별 가능
+    val createdAt: String,              // OffsetDateTime → String 파싱
+    val feedPhotoUrl: List<String>,
+    val feedCategories: List<String>,   // FeedCategory enum → String
+    val feedLike: Boolean,
+    val likeCount: Long,
+    val commentCount: Long
 )
 
 data class ModifyMainFeedPhotoRequest(
