@@ -1,6 +1,7 @@
-package com.meokpli.app.Main.Feed
+package com.meokpli.app.main.Feed
 
 import SelectedPhotosAdapter
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
@@ -12,6 +13,7 @@ import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -31,15 +33,14 @@ import com.meokpli.app.gallery.GalleryBottomSheet
 import com.meokpli.app.main.CategoryRequest
 import com.meokpli.app.main.CategorySelectDialog
 import com.meokpli.app.main.ClientPhoto
-import com.meokpli.app.main.Feed.PhotoMeta
-import com.meokpli.app.main.Feed.PresignedUploader
-import com.meokpli.app.main.Feed.extractPhotoMeta
 import com.meokpli.app.main.FeedRequestBuilder
 import com.meokpli.app.main.MainActivity
 import com.meokpli.app.main.MainApi
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.Collections
+import android.view.inputmethod.InputMethodManager
+
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
 
@@ -181,6 +182,14 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             ).show(parentFragmentManager, "CategorySelectDialog")
         }
 
+        view.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+                view.clearFocus()
+            }
+            false
+        }
 
         // 업로드 버튼
         uploadBtn.setOnClickListener { doUpload(view) }
@@ -351,7 +360,9 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
+
     }
+
 
     private fun extractHashtags(text: String): List<String> =
         Regex("""#([^\s#]+)""")

@@ -110,6 +110,15 @@ class ResetPasswordActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (currentFocus != null) {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
+            currentFocus!!.clearFocus()
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
 }
 
 

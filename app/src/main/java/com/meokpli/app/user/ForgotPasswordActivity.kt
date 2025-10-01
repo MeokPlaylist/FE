@@ -42,6 +42,14 @@ class ForgotPasswordActivity : AppCompatActivity() {
             handleNext()
         }
     }
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (currentFocus != null) {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
+            currentFocus!!.clearFocus()
+        }
+        return super.dispatchTouchEvent(ev)
+    }
 
     private fun handleNext() {
         val email = emailEdit.text.toString().trim()
