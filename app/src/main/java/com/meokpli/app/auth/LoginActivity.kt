@@ -73,7 +73,7 @@ class LoginActivity : AppCompatActivity() {
             val email = emailEdit.text.toString()
             val pw = passwordEdit.text.toString()
             if (email.isBlank() || pw.isBlank()) {
-                Log.d("Error","아이디와 비밀번호를 입력해 주세요")
+                Log.d("Error","아이디와 비밀번호를 입 력해 주세요")
                 return@setOnClickListener
             }
 

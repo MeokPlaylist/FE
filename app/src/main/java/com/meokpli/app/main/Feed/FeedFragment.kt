@@ -1,7 +1,6 @@
 package com.meokpli.app.main.Feed
 
 import SelectedPhotosAdapter
-import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
@@ -13,7 +12,6 @@ import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -33,13 +31,17 @@ import com.meokpli.app.gallery.GalleryBottomSheet
 import com.meokpli.app.main.CategoryRequest
 import com.meokpli.app.main.CategorySelectDialog
 import com.meokpli.app.main.ClientPhoto
+import com.meokpli.app.main.Feed.PhotoMeta
+import com.meokpli.app.main.Feed.PresignedUploader
+import com.meokpli.app.main.Feed.extractPhotoMeta
 import com.meokpli.app.main.FeedRequestBuilder
 import com.meokpli.app.main.MainActivity
 import com.meokpli.app.main.MainApi
+import com.meokpli.app.main.Roadmap.SaveRoadMapPlaceRequest
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.Collections
-import android.view.inputmethod.InputMethodManager
+import androidx.navigation.fragment.findNavController
 
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
@@ -72,14 +74,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 카테고리 결과 받기 (onCreate에서 등록)
-        parentFragmentManager.setFragmentResultListener(
-            CategorySelectDialog.REQUEST_KEY, this
-        ) { _, b ->
-            selectedPayload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
-            Log.d("FeedFragment", "✅ Category 결과 수신: $selectedPayload")
-            view?.let { renderPreviewChips(it, selectedPayload) }
-        }
     }
 
     override fun onCreateView(
@@ -112,6 +106,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         // RecyclerView
         rvPhotos.layoutManager =
             LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        rvPhotos.setHasFixedSize(true)
 
         // 해시태그 색칠
         hashtagWatcher = object : TextWatcher {
@@ -174,6 +169,23 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 if (selectedUris.isEmpty()) View.VISIBLE else View.GONE
             if (selectedUris.isNotEmpty()) rvPhotos.scrollToPosition(0)
         }
+        // ✅ 카테고리/지역 결과: 뷰 라이프사이클에 연결해서 안전하게 수신
+        parentFragmentManager.setFragmentResultListener(
+            CategorySelectDialog.REQUEST_KEY, viewLifecycleOwner
+        ) { _, b ->
+            val payload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
+            selectedPayload.clear()
+            selectedPayload.addAll(payload)
+
+            // ✅ 선택값을 payload에서 역추출해 sel 갱신 (별도 KEY 없이도 동작)
+            val moods = payload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
+            val foods = payload.filter { it.startsWith("foods:") }.map { it.removePrefix("foods:") }
+            val companions = payload.filter { it.startsWith("companions:") }.map { it.removePrefix("companions:") }
+            sel = SelectedCategories(moods = moods, foods = foods, companions = companions)
+
+            Log.d(TAG, "✅ Category 결과 수신: payload=$selectedPayload / sel=$sel")
+            renderPreviewChips(view, selectedPayload) // 뷰 존재 시 즉시 렌더
+        }
 
         // 카테고리 버튼
         view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
@@ -181,15 +193,8 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 ArrayList(sel.moods), ArrayList(sel.foods), ArrayList(sel.companions)
             ).show(parentFragmentManager, "CategorySelectDialog")
         }
+        renderPreviewChips(view, selectedPayload)
 
-        view.setOnTouchListener { v, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(view.windowToken, 0)
-                view.clearFocus()
-            }
-            false
-        }
 
         // 업로드 버튼
         uploadBtn.setOnClickListener { doUpload(view) }
@@ -228,6 +233,9 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 sequence = idx + 1
             )
         }
+        Log.i(TAG, "⏫ createFeed 요청 준비: content='${contentNullable?.take(40)}', tags=${hashtags?.size ?: 0}, " +
+                "cat=${(sel.moods+sel.foods+sel.companions).size}, regions=${regionStrings?.size ?: 0}, photos=${photos.size}")
+
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -235,12 +243,23 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                     content = contentNullable,
                     hashTags = hashtags,
                     categories = categoryReq,
-                    regions = regionStrings, // ✅ 서버로는 ":" 포함
+                    regions = regionStrings, // 서버로는 ":" 포함
                     photos = photos
                 )
                 val resp = feedApi.createFeed(body)
+                Log.d(TAG, "createFeed 응답: code=${resp.code()} success=${resp.isSuccessful}")
+
                 if (resp.isSuccessful) {
+                    val respBody = resp.body()
+                    val feedId = respBody?.feedId
                     val uploadUrls = resp.body()?.presignedPutUrls.orEmpty()
+                    Log.i(TAG, " createFeed OK: feedId=$feedId, presigned=${uploadUrls.size}")
+
+                    if (feedId == null) {
+                        Log.e(TAG, " feedId 없음: CreateFeedResponse에 feedId 필드가 필요합니다.")
+                        Toast.makeText(requireContext(), "feedId를 수신하지 못했습니다.", Toast.LENGTH_LONG).show()
+                        return@launch
+                    }
                     val results = PresignedUploader.uploadAll(
                         context = requireContext(),
                         uris = selectedUris.toList(),
@@ -248,10 +267,17 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                     )
                     if (results.all { it }) {
                         Toast.makeText(requireContext(), "업로드 완료", Toast.LENGTH_SHORT).show()
-                        (requireActivity() as? MainActivity)?.handleSystemBack()
+
                     } else {
                         Toast.makeText(requireContext(), "일부 업로드 실패", Toast.LENGTH_SHORT).show()
                     }
+                    initAndSaveDefaultRoadmap(feedId)
+
+                    // ✅ 4) 로드맵 편집 화면으로 이동
+                    val args = Bundle().apply { putLong("feedId", feedId) }
+                    Log.i(TAG, "로드맵 편집 화면 이동: feedId=$feedId")
+                    findNavController().navigate(R.id.action_feed_to_roadmapEdit, args)
+
                 } else {
                     Toast.makeText(requireContext(), "실패: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
@@ -319,6 +345,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             }
             cg.addView(chip)
         }
+        Log.d(TAG, "💡 미리보기 칩 렌더 완료: ${cg.childCount}개")
     }
 
 
@@ -340,6 +367,13 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         super.onSaveInstanceState(outState)
         outState.putString(STATE_CONTENT, getFeedContent())
     }
+    override fun onDestroyView() {
+        //  누수 방지
+        hashtagWatcher?.let { binding.etContent.removeTextChangedListener(it) }
+        hashtagWatcher = null
+        _binding = null
+        super.onDestroyView()
+    }
 
     private fun getFeedContent(): String =
         binding.etContent.text?.toString()?.trim().orEmpty()
@@ -360,7 +394,29 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
+    }
+    private suspend fun initAndSaveDefaultRoadmap(feedId: Long) {
+        val roadmapApi = Network.roadmapApi(requireContext())
+        Log.d(TAG, "pullOutKakao 시작: feedId=$feedId")
 
+        runCatching { roadmapApi.pullOutKakao(feedId) }
+            .onSuccess { res ->
+                Log.d(TAG, "pullOutKakao OK: seqSet=${res.kakaoPlaceInfor.keys}")
+
+                val defaultMap = res.kakaoPlaceInfor.mapNotNull { (seq, list) ->
+                    val first = list.firstOrNull()
+                    if (first != null) seq to first else null
+                }.toMap()
+
+                Log.d(TAG, "saveRoadMap 준비: 선택수=${defaultMap.size}")
+                val saveRes = roadmapApi.saveRoadMap(
+                    SaveRoadMapPlaceRequest(feedId = feedId, saveRoadMapPlaceInfor = defaultMap)
+                )
+                Log.i(TAG, "📝 saveRoadMap 응답: code=${saveRes.code()} success=${saveRes.isSuccessful}")
+            }
+            .onFailure { e ->
+                Log.w(TAG, "pullOutKakao 실패(자동 저장 스킵): ${e.localizedMessage}")
+            }
     }
 
 
