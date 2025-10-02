@@ -31,7 +31,7 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     data class EditItem(
         val seq: Int,
         val doc: KakaoDocument,
-        var checked: Boolean = true,   // 포함 여부
+        var checked: Boolean = false,   // 포함 여부
         var starred: Boolean = false   // ★ 찜(저장 로직에 영향 X)
     )
 
@@ -74,29 +74,39 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     }
 
     private fun loadInitial() = viewLifecycleOwner.lifecycleScope.launch {
-        Log.d(TAG, "loadInitial: pullOutKakao...")
-        runCatching { api.pullOutKakao(feedId) }
-            .onSuccess { res ->
-                Log.d(TAG, "pullOutKakao OK: seqCount=${res.kakaoPlaceInfor.size}")
-                val items = mutableListOf<EditItem>()
-                res.kakaoPlaceInfor.forEach { (seq, list) ->
-                    list.forEachIndexed { idx, doc ->
-                        // 첫 후보 기본 포함(checked=true). ★(찜)는 전부 false로 시작.
-                        items += EditItem(
-                            seq = seq,
-                            doc = doc,
-                            checked = (idx == 0),
-                            starred = false
-                        )
-                    }
+        Log.d(TAG, "loadInitial: getRoadmap & pullOutKakao 병행")
+        val api = this@RoadmapEditFragment.api
+
+        // 1) 저장본/후보 병행 로드
+        val saved = runCatching { api.getRoadmap(feedId) }.getOrNull()
+        val savedList = saved?.callInRoadMapDtoList.orEmpty()
+        Log.d(TAG, "getRoadmap: savedCount=${savedList.size}")
+
+        val candidates = runCatching { api.pullOutKakao(feedId) }.getOrNull()
+        val map = candidates?.kakaoPlaceInfor.orEmpty()
+        Log.d(TAG, "pullOutKakao: seqCount=${map.size}")
+
+        val savedKey: Set<String> = savedList.mapNotNull {
+            // 매칭 키: kakao id 가 있으면 가장 좋지만, DTO에 없으므로 우선 placeName으로 매칭
+            it.name?.trim()
+        }.toSet()
+
+        val items = mutableListOf<EditItem>()
+        map.forEach { (seq, docs) ->
+            if (docs.isEmpty()) return@forEach
+            docs.forEachIndexed { idx, doc ->
+                val checked = if (savedKey.isNotEmpty()) {
+                    // 저장본 존재: 동일 장소명 있으면 체크
+                    savedKey.contains(doc.placeName?.trim())
+                } else {
+                    // 저장본 없음: 첫 후보만 체크
+                    idx == 0
                 }
-                adapter.submit(items)
-                Log.d(TAG, "items.size=${adapter.items.size}")
+                items += EditItem(seq = seq, doc = doc, checked = false, starred = false)
             }
-            .onFailure { e ->
-                Log.e(TAG, "pullOutKakao FAILED", e)
-                Toast.makeText(requireContext(), "로드맵 후보 불러오기 실패: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-            }
+        }
+        adapter.submit(items)
+        Log.i(TAG, "로드맵 편집 초기화 완료: items=${adapter.items.size}, checked=${adapter.items.count { it.checked }}")
     }
 
     private fun deleteChecked() {
@@ -128,7 +138,7 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     private fun saveAndExit() = viewLifecycleOwner.lifecycleScope.launch {
         // 체크된(포함) 항목만 seq별 대표 1개를 고르는 게 아니라,
         // 요구사항상 '별은 찜일 뿐'이므로 **대표 개념 없이** seq마다 '체크된 항목 중 첫 번째'만 저장 대상으로 삼음.
-        val selected = adapter.items.filter { it.checked }
+        val selected = adapter.items.filter { !it.checked }
         Log.d(TAG, "saveAndExit selected.count=${selected.size}")
         if (selected.isEmpty()) {
             Toast.makeText(requireContext(), "선택된 장소가 없습니다.", Toast.LENGTH_SHORT).show()

@@ -91,6 +91,7 @@ data class PhotoBody(
 )
 
 data class CreateFeedResponse(
+    val feedId: Long,
     val presignedPutUrls: List<String> = emptyList()
 )
 //Page dto
