@@ -120,6 +120,14 @@ class CategorySelectDialog : DialogFragment() {
         createChips(cgFood, foodItems, preFoods.toSet())
         createChips(cgComp, compItems, preComps.toSet())
 
+        // FeedFragment에서 전달한 지역 정보 복원
+        val preRegions = requireArguments().getStringArrayList("state_regions") ?: arrayListOf()
+        if (preRegions.isNotEmpty()) {
+            // 기존 지역 목록을 덮어쓰기 (중복 방지)
+            selectedRegionCodes = ArrayList(preRegions)
+            renderRegionChips(cgRegions, selectedRegionCodes)
+        }
+
         // 지역 칩 미리보기(라벨은 코드 -> "서울 강남구" 로 변환)
         renderRegionChips(cgRegions, selectedRegionCodes)
 
@@ -129,9 +137,14 @@ class CategorySelectDialog : DialogFragment() {
         ) { _, b ->
             val codes = b.getStringArrayList(RegionSelectDialog.KEY_SELECTED_CODES) ?: arrayListOf()
             Log.d("CategorySelectDialog", "✅ Region 결과 수신: $codes")
-            selectedRegionCodes = ArrayList(codes) // 덮어쓰기(최신 선택 유지)
+
+            // ✅ 중복 제거 (강남구 여러 번 추가 방지)
+            val merged = (selectedRegionCodes + codes).distinct()
+            selectedRegionCodes = ArrayList(merged)
+
             renderRegionChips(cgRegions, selectedRegionCodes)
         }
+
 
         // 지역 추가 버튼 → RegionSelectDialog 띄우기(미리 선택값 넘김)
         PlusRegionButton.setOnClickListener {

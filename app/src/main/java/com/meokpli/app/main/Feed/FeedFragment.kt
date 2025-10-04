@@ -1,7 +1,7 @@
 package com.meokpli.app.main.Feed
 
 import SelectedPhotosAdapter
-import android.content.res.ColorStateList
+import com.meokpli.app.main.Roadmap.SaveRoadMapPlaceRequest
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -22,27 +23,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.databinding.FragmentFeedBinding
 import com.meokpli.app.gallery.GalleryBottomSheet
-import com.meokpli.app.main.CategoryRequest
-import com.meokpli.app.main.CategorySelectDialog
-import com.meokpli.app.main.ClientPhoto
-import com.meokpli.app.main.Feed.PhotoMeta
-import com.meokpli.app.main.Feed.PresignedUploader
-import com.meokpli.app.main.Feed.extractPhotoMeta
-import com.meokpli.app.main.FeedRequestBuilder
-import com.meokpli.app.main.MainActivity
-import com.meokpli.app.main.MainApi
-import com.meokpli.app.main.Roadmap.SaveRoadMapPlaceRequest
+import com.meokpli.app.main.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.Collections
 import androidx.navigation.fragment.findNavController
-
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
 
@@ -57,30 +46,18 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     private lateinit var feedApi: MainApi
 
     // --- state ---
-    private val selectedUris = mutableListOf<Uri>()             // 사진 선택 목록
+    private val selectedUris = mutableListOf<Uri>() // 사진 목록
     private var sel = SelectedCategories(emptyList(), emptyList(), emptyList())
-
     private var selectedPayload: MutableList<String> = mutableListOf()
 
     private var hashtagWatcher: TextWatcher? = null
-
     private val HASHTAG_COLOR = Color.parseColor("#FF0000")
     private val STATE_CONTENT = "state_feed_content"
 
-    private fun View.dp(v: Float) = v * resources.displayMetrics.density
     private var _binding: FragmentFeedBinding? = null
     private val binding get() = _binding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -88,7 +65,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         ensureMediaPerms()
         feedApi = Network.feedApi(requireContext())
 
@@ -103,34 +79,82 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             binding.etContent.setSelection(restored.length)
         }
 
-        // RecyclerView
-        rvPhotos.layoutManager =
-            LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-        rvPhotos.setHasFixedSize(true)
+        // RecyclerView 설정
+        rvPhotos.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        setupRecycler(view)
+        setupHashtagWatcher()
+        setupGalleryListener(view)
 
-        // 해시태그 색칠
-        hashtagWatcher = object : TextWatcher {
-            private var running = false
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                if (running || s == null) return
-                running = true
-                try { highlightHashtags(s) } finally { running = false }
-            }
+        // ✅ 다이얼로그 결과 리스너
+        parentFragmentManager.setFragmentResultListener(
+            CategorySelectDialog.REQUEST_KEY, viewLifecycleOwner
+        ) { _, b ->
+            val payload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
+
+            // ✅ 중복 방지: regions 항목은 payload 쪽 것을 우선으로 하고 distinct() 처리
+            val merged = (selectedPayload + payload).distinct()
+
+            selectedPayload.clear()
+            selectedPayload.addAll(merged)
+
+            val moods = selectedPayload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
+            val foods = selectedPayload.filter { it.startsWith("foods:") }.map { it.removePrefix("foods:") }
+            val companions = selectedPayload.filter { it.startsWith("companions:") }.map { it.removePrefix("companions:") }
+
+            sel = SelectedCategories(moods, foods, companions)
+            renderPreviewChips(view, selectedPayload)
         }
-        binding.etContent.addTextChangedListener(hashtagWatcher)
 
-        // 어댑터 & TouchHelper
-        val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0
-        ) {
-            override fun isLongPressDragEnabled(): Boolean = false
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
+
+        // ✅ 카테고리 추가 버튼
+        view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
+            val moods = selectedPayload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
+            val foods = selectedPayload.filter { it.startsWith("foods:") }.map { it.removePrefix("foods:") }
+            val companions = selectedPayload.filter { it.startsWith("companions:") }.map { it.removePrefix("companions:") }
+            val regions = selectedPayload.filter { it.startsWith("regions:") }.map { it.removePrefix("regions:") }
+
+            val reverseMoodMap = mapOf(
+                "TRADITIONAL" to "전통적인", "UNIQUE" to "이색적인", "EMOTIONAL" to "감성적인",
+                "HEALING" to "힐링되는", "GOODVIEW" to "뷰 맛집", "ACTIVITY" to "활기찬", "LOCAL" to "로컬"
+            )
+            val reverseFoodMap = mapOf(
+                "BUNSIK" to "분식","CAFE_DESSERT" to "카페/디저트","CHICKEN" to "치킨","CHINESE" to "중식",
+                "KOREAN" to "한식","PORK_SASHIMI" to "돈까스/회","FASTFOOD" to "패스트푸드","JOKBAL_BOSSAM" to "족발/보쌈",
+                "PIZZA" to "피자","WESTERN" to "양식","MEAT" to "고기","ASIAN" to "아시안","DOSIRAK" to "도시락",
+                "LATE_NIGHT" to "야식","JJIM_TANG" to "찜/탕"
+            )
+            val reverseCompanionMap = mapOf(
+                "ALONE" to "혼밥","FRIEND" to "친구","COUPLE" to "연인","FAMILY" to "가족",
+                "GROUP" to "단체","WITH_PET" to "반려동물 동반","ALUMNI" to "동호회"
+            )
+
+            val moodLabels = moods.mapNotNull { reverseMoodMap[it] }
+            val foodLabels = foods.mapNotNull { reverseFoodMap[it] }
+            val compLabels = companions.mapNotNull { reverseCompanionMap[it] }
+
+            val dialog = CategorySelectDialog.newInstance(
+                ArrayList(moodLabels),
+                ArrayList(foodLabels),
+                ArrayList(compLabels)
+            )
+
+            val mergedArgs = (dialog.arguments ?: Bundle()).apply {
+                putStringArrayList("state_regions", ArrayList(regions))
+            }
+            dialog.arguments = mergedArgs
+            dialog.show(parentFragmentManager, "CategorySelectDialog")
+        }
+
+        uploadBtn.setOnClickListener { doUpload(view) }
+        cameraBtn.setOnClickListener { openGalleryBottomSheet() }
+        backBtn.setOnClickListener { (requireActivity() as? MainActivity)?.handleSystemBack() }
+    }
+
+    // ---------- RecyclerView ----------
+    private fun setupRecycler(view: View) {
+        val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0) {
+            override fun isLongPressDragEnabled() = false
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
                 val from = viewHolder.bindingAdapterPosition
                 val to = target.bindingAdapterPosition
                 if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION) return false
@@ -156,11 +180,26 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         )
         rvPhotos.adapter = photosAdapter
         touchHelper.attachToRecyclerView(rvPhotos)
+    }
 
-        // 갤러리 결과
-        parentFragmentManager.setFragmentResultListener(
-            GalleryBottomSheet.RESULT_KEY, viewLifecycleOwner
-        ) { _, bundle ->
+    // ---------- 해시태그 색칠 ----------
+    private fun setupHashtagWatcher() {
+        hashtagWatcher = object : TextWatcher {
+            private var running = false
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (running || s == null) return
+                running = true
+                try { highlightHashtags(s) } finally { running = false }
+            }
+        }
+        binding.etContent.addTextChangedListener(hashtagWatcher)
+    }
+
+    // ---------- 갤러리 리스너 ----------
+    private fun setupGalleryListener(view: View) {
+        parentFragmentManager.setFragmentResultListener(GalleryBottomSheet.RESULT_KEY, viewLifecycleOwner) { _, bundle ->
             val uris = bundle.getParcelableArrayList<Uri>(GalleryBottomSheet.RESULT_URIS) ?: arrayListOf()
             selectedUris.clear()
             selectedUris.addAll(uris)
@@ -169,40 +208,84 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 if (selectedUris.isEmpty()) View.VISIBLE else View.GONE
             if (selectedUris.isNotEmpty()) rvPhotos.scrollToPosition(0)
         }
-        // ✅ 카테고리/지역 결과: 뷰 라이프사이클에 연결해서 안전하게 수신
-        parentFragmentManager.setFragmentResultListener(
-            CategorySelectDialog.REQUEST_KEY, viewLifecycleOwner
-        ) { _, b ->
-            val payload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
-            selectedPayload.clear()
-            selectedPayload.addAll(payload)
-
-            // ✅ 선택값을 payload에서 역추출해 sel 갱신 (별도 KEY 없이도 동작)
-            val moods = payload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
-            val foods = payload.filter { it.startsWith("foods:") }.map { it.removePrefix("foods:") }
-            val companions = payload.filter { it.startsWith("companions:") }.map { it.removePrefix("companions:") }
-            sel = SelectedCategories(moods = moods, foods = foods, companions = companions)
-
-            Log.d(TAG, "✅ Category 결과 수신: payload=$selectedPayload / sel=$sel")
-            renderPreviewChips(view, selectedPayload) // 뷰 존재 시 즉시 렌더
-        }
-
-        // 카테고리 버튼
-        view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
-            CategorySelectDialog.newInstance(
-                ArrayList(sel.moods), ArrayList(sel.foods), ArrayList(sel.companions)
-            ).show(parentFragmentManager, "CategorySelectDialog")
-        }
-        renderPreviewChips(view, selectedPayload)
-
-
-        // 업로드 버튼
-        uploadBtn.setOnClickListener { doUpload(view) }
-
-        cameraBtn.setOnClickListener { openGalleryBottomSheet() }
-        backBtn.setOnClickListener { (requireActivity() as? MainActivity)?.handleSystemBack() }
     }
 
+    // ---------- 칩 렌더링 ----------
+    private fun renderPreviewChips(root: View, payload: List<String>) {
+        val cg = root.findViewById<ViewGroup>(R.id.chipGroupCategoryPreview)
+        cg.removeAllViews()
+        if (payload.isEmpty()) {
+            val emptyChip = LayoutInflater.from(requireContext()).inflate(R.layout.item_chip, cg, false)
+            emptyChip.findViewById<TextView>(R.id.chipText).apply {
+                text = "선택 없음"
+                setTextColor(Color.parseColor("#888888"))
+            }
+            emptyChip.findViewById<ImageView>(R.id.chipClose).visibility = View.GONE
+            cg.addView(emptyChip)
+            return
+        }
+
+        val reverseMoodMap = mapOf(
+            "TRADITIONAL" to "전통적인", "UNIQUE" to "이색적인", "EMOTIONAL" to "감성적인",
+            "HEALING" to "힐링되는", "GOODVIEW" to "뷰 맛집", "ACTIVITY" to "활기찬", "LOCAL" to "로컬"
+        )
+        val reverseFoodMap = mapOf(
+            "BUNSIK" to "분식","CAFE_DESSERT" to "카페/디저트","CHICKEN" to "치킨","CHINESE" to "중식",
+            "KOREAN" to "한식","PORK_SASHIMI" to "돈까스/회","FASTFOOD" to "패스트푸드","JOKBAL_BOSSAM" to "족발/보쌈",
+            "PIZZA" to "피자","WESTERN" to "양식","MEAT" to "고기","ASIAN" to "아시안","DOSIRAK" to "도시락",
+            "LATE_NIGHT" to "야식","JJIM_TANG" to "찜/탕"
+        )
+        val reverseCompanionMap = mapOf(
+            "ALONE" to "혼밥","FRIEND" to "친구","COUPLE" to "연인","FAMILY" to "가족",
+            "GROUP" to "단체","WITH_PET" to "반려동물 동반","ALUMNI" to "동호회"
+        )
+
+        payload.forEach { raw ->
+            val label = when {
+                raw.startsWith("regions:") -> raw.removePrefix("regions:").replace(":", " ")
+                raw.startsWith("moods:") -> reverseMoodMap[raw.removePrefix("moods:")] ?: raw
+                raw.startsWith("foods:") -> reverseFoodMap[raw.removePrefix("foods:")] ?: raw
+                raw.startsWith("companions:") -> reverseCompanionMap[raw.removePrefix("companions:")] ?: raw
+                else -> raw
+            }
+
+            val chipView = LayoutInflater.from(requireContext()).inflate(R.layout.item_chip, cg, false)
+            chipView.findViewById<TextView>(R.id.chipText).text = label
+            chipView.findViewById<ImageView>(R.id.chipClose).setOnClickListener {
+                selectedPayload.remove(raw)
+                val moods = selectedPayload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
+                val foods = selectedPayload.filter { it.startsWith("foods:") }.map { it.removePrefix("foods:") }
+                val companions = selectedPayload.filter { it.startsWith("companions:") }.map { it.removePrefix("companions:") }
+                sel = SelectedCategories(moods, foods, companions)
+                renderPreviewChips(root, selectedPayload)
+            }
+            cg.addView(chipView)
+        }
+    }
+
+    // ---------- 권한 ----------
+    private fun ensureMediaPerms() {
+        val perms = when {
+            Build.VERSION.SDK_INT >= 33 ->
+                arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            Build.VERSION.SDK_INT >= 29 ->
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            else ->
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) { }.launch(perms)
+    }
+
+    private fun highlightHashtags(editable: Editable) {
+        val old = editable.getSpans(0, editable.length, ForegroundColorSpan::class.java)
+        for (span in old) if (span.foregroundColor == HASHTAG_COLOR) editable.removeSpan(span)
+        val regex = Regex("""#([^\s#]+)""")
+        regex.findAll(editable.toString()).forEach { m ->
+            editable.setSpan(ForegroundColorSpan(HASHTAG_COLOR), m.range.first, m.range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
+
+    // ---------- 업로드 ----------
     @RequiresApi(Build.VERSION_CODES.O)
     private fun doUpload(view: View) {
         if (selectedUris.isEmpty()) {
@@ -217,10 +300,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             food = sel.foods.takeIf { it.isNotEmpty() }.orEmpty(),
             companion = sel.companions.takeIf { it.isNotEmpty() }.orEmpty(),
         )
-        val regionStrings = selectedPayload
-            .filter { it.startsWith("regions:") }
-            .map { it.removePrefix("regions:") }
-            .takeIf { it.isNotEmpty() } // 서버 전송용은 ":" 유지
+        val regionStrings = selectedPayload.filter { it.startsWith("regions:") }.map { it.removePrefix("regions:") }.takeIf { it.isNotEmpty() }
         val hashtags = extractHashtags(contentText).takeIf { it.isNotEmpty() }
 
         val metas: List<PhotoMeta> = selectedUris.map { extractPhotoMeta(requireContext(), it) }
@@ -233,9 +313,9 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 sequence = idx + 1
             )
         }
-        Log.i(TAG, "⏫ createFeed 요청 준비: content='${contentNullable?.take(40)}', tags=${hashtags?.size ?: 0}, " +
-                "cat=${(sel.moods+sel.foods+sel.companions).size}, regions=${regionStrings?.size ?: 0}, photos=${photos.size}")
 
+        Log.i(TAG, "⏫ createFeed 요청 준비: content='${contentNullable?.take(40)}', tags=${hashtags?.size ?: 0}, " +
+                "cat=${(sel.moods + sel.foods + sel.companions).size}, regions=${regionStrings?.size ?: 0}, photos=${photos.size}")
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -243,41 +323,26 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                     content = contentNullable,
                     hashTags = hashtags,
                     categories = categoryReq,
-                    regions = regionStrings, // 서버로는 ":" 포함
+                    regions = regionStrings,
                     photos = photos
                 )
                 val resp = feedApi.createFeed(body)
-                Log.d(TAG, "createFeed 응답: code=${resp.code()} success=${resp.isSuccessful}")
-
                 if (resp.isSuccessful) {
-                    val respBody = resp.body()
-                    val feedId = respBody?.feedId
+                    val feedId = resp.body()?.feedId
                     val uploadUrls = resp.body()?.presignedPutUrls.orEmpty()
-                    Log.i(TAG, " createFeed OK: feedId=$feedId, presigned=${uploadUrls.size}")
-
                     if (feedId == null) {
-                        Log.e(TAG, " feedId 없음: CreateFeedResponse에 feedId 필드가 필요합니다.")
                         Toast.makeText(requireContext(), "feedId를 수신하지 못했습니다.", Toast.LENGTH_LONG).show()
                         return@launch
                     }
-                    val results = PresignedUploader.uploadAll(
-                        context = requireContext(),
-                        uris = selectedUris.toList(),
-                        urls = uploadUrls
-                    )
+                    val results = PresignedUploader.uploadAll(requireContext(), selectedUris.toList(), uploadUrls)
                     if (results.all { it }) {
                         Toast.makeText(requireContext(), "업로드 완료", Toast.LENGTH_SHORT).show()
-
                     } else {
                         Toast.makeText(requireContext(), "일부 업로드 실패", Toast.LENGTH_SHORT).show()
                     }
                     initAndSaveDefaultRoadmap(feedId)
-
-                    // ✅ 4) 로드맵 편집 화면으로 이동
                     val args = Bundle().apply { putLong("feedId", feedId) }
-                    Log.i(TAG, "로드맵 편집 화면 이동: feedId=$feedId")
                     findNavController().navigate(R.id.action_feed_to_roadmapEdit, args)
-
                 } else {
                     Toast.makeText(requireContext(), "실패: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
@@ -288,147 +353,31 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         }
     }
 
-    private fun openGalleryBottomSheet() {
-        (parentFragmentManager.findFragmentByTag("gallery") as? GalleryBottomSheet)?.let {
-            if (it.dialog?.isShowing == true) return
-            it.dismissAllowingStateLoss()
-        }
-        GalleryBottomSheet.newInstance(ArrayList(selectedUris))
-            .show(parentFragmentManager, "gallery")
-    }
-
-    // 칩 렌더링
-    private fun renderPreviewChips(root: View, payload: List<String>) {
-        val cg = root.findViewById<ChipGroup>(R.id.chipGroupCategoryPreview)
-        cg.removeAllViews()
-
-        if (payload.isEmpty()) {
-            val empty = Chip(requireContext()).apply {
-                text = "선택 없음"
-                isCheckable = false
-                setEnsureMinTouchTargetSize(false)
-                chipBackgroundColor = ColorStateList.valueOf(Color.parseColor("#EEEEEE"))
-                setTextColor(Color.parseColor("#888888"))
-                chipStrokeWidth = 0f
-            }
-            cg.addView(empty)
-            return
-        }
-
-        payload.forEach { raw ->
-            val label = when {
-                raw.startsWith("regions:") -> {
-                    val code = raw.removePrefix("regions:")
-                    if (code.contains(":")) {
-                        val (sido, sigungu) = code.split(":", limit = 2)
-                        "$sido $sigungu"
-                    } else code
-                }
-                raw.startsWith("moods:") -> raw.removePrefix("moods:")
-                raw.startsWith("foods:") -> raw.removePrefix("foods:")
-                raw.startsWith("companions:") -> raw.removePrefix("companions:")
-                else -> raw
-            }
-            val chip = Chip(requireContext()).apply {
-                text = label
-                isCheckable = false
-                isClickable = false
-                isCloseIconVisible = false
-                includeFontPadding = false
-                setEnsureMinTouchTargetSize(false)
-                chipMinHeight = root.dp(28f)
-                chipBackgroundColor = ColorStateList.valueOf(Color.parseColor("#FFE7E7"))
-                chipStrokeColor = ColorStateList.valueOf(Color.parseColor("#C64132"))
-                chipStrokeWidth = root.dp(1f)
-                setTextColor(Color.parseColor("#C64132"))
-                textSize = 12f
-            }
-            cg.addView(chip)
-        }
-        Log.d(TAG, "💡 미리보기 칩 렌더 완료: ${cg.childCount}개")
-    }
-
-
-    private fun ensureMediaPerms() {
-        val perms = when {
-            Build.VERSION.SDK_INT >= 33 ->
-                arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.ACCESS_MEDIA_LOCATION)
-            Build.VERSION.SDK_INT >= 29 ->
-                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.ACCESS_MEDIA_LOCATION)
-            else ->
-                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-        registerForActivityResult(
-            androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
-        ) { } .launch(perms)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString(STATE_CONTENT, getFeedContent())
-    }
-    override fun onDestroyView() {
-        //  누수 방지
-        hashtagWatcher?.let { binding.etContent.removeTextChangedListener(it) }
-        hashtagWatcher = null
-        _binding = null
-        super.onDestroyView()
-    }
-
-    private fun getFeedContent(): String =
-        binding.etContent.text?.toString()?.trim().orEmpty()
-
-    private fun highlightHashtags(editable: Editable) {
-        val old = editable.getSpans(0, editable.length, ForegroundColorSpan::class.java)
-        for (span in old) {
-            if (span.foregroundColor == HASHTAG_COLOR) editable.removeSpan(span)
-        }
-        val regex = Regex("""#([^\s#]+)""")
-        val text = editable.toString()
-        regex.findAll(text).forEach { m ->
-            val start = m.range.first
-            val end = m.range.last + 1
-            editable.setSpan(
-                ForegroundColorSpan(HASHTAG_COLOR),
-                start, end,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-    }
+    // ---------- 로드맵 초기화 ----------
     private suspend fun initAndSaveDefaultRoadmap(feedId: Long) {
         val roadmapApi = Network.roadmapApi(requireContext())
         Log.d(TAG, "pullOutKakao 시작: feedId=$feedId")
-
         runCatching { roadmapApi.pullOutKakao(feedId) }
             .onSuccess { res ->
-                Log.d(TAG, "pullOutKakao OK: seqSet=${res.kakaoPlaceInfor.keys}")
-
-                val defaultMap = res.kakaoPlaceInfor.mapNotNull { (seq, list) ->
-                    val first = list.firstOrNull()
-                    if (first != null) seq to first else null
-                }.toMap()
-
-                Log.d(TAG, "saveRoadMap 준비: 선택수=${defaultMap.size}")
-                val saveRes = roadmapApi.saveRoadMap(
-                    SaveRoadMapPlaceRequest(feedId = feedId, saveRoadMapPlaceInfor = defaultMap)
-                )
-                Log.i(TAG, "📝 saveRoadMap 응답: code=${saveRes.code()} success=${saveRes.isSuccessful}")
+                val defaultMap = res.kakaoPlaceInfor.mapNotNull { (seq, list) -> list.firstOrNull()?.let { seq to it } }.toMap()
+                roadmapApi.saveRoadMap(SaveRoadMapPlaceRequest(feedId = feedId, saveRoadMapPlaceInfor = defaultMap))
             }
             .onFailure { e ->
                 Log.w(TAG, "pullOutKakao 실패(자동 저장 스킵): ${e.localizedMessage}")
             }
     }
 
+    // ---------- 유틸 ----------
+    private fun openGalleryBottomSheet() {
+        (parentFragmentManager.findFragmentByTag("gallery") as? GalleryBottomSheet)?.let {
+            if (it.dialog?.isShowing == true) return
+            it.dismissAllowingStateLoss()
+        }
+        GalleryBottomSheet.newInstance(ArrayList(selectedUris)).show(parentFragmentManager, "gallery")
+    }
 
     private fun extractHashtags(text: String): List<String> =
-        Regex("""#([^\s#]+)""")
-            .findAll(text)
-            .map { it.groupValues[1] }
-            .toList()
+        Regex("""#([^\s#]+)""").findAll(text).map { it.groupValues[1] }.toList()
 
-    data class SelectedCategories(
-        val moods: List<String>,
-        val foods: List<String>,
-        val companions: List<String>
-    )
+    data class SelectedCategories(val moods: List<String>, val foods: List<String>, val companions: List<String>)
 }
