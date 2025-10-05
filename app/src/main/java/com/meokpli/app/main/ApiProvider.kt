@@ -80,7 +80,7 @@ class CategorySelectDialog : DialogFragment() {
         CatItem("로컬","LOCAL")
     )
     private val foodItems = listOf(
-        CatItem("분식","BUNSIK"), CatItem("카페/디저트","CAFEDESERT"),
+        CatItem("분식","BUNSIK"), CatItem("카페/디저트","CAFE_DESSERT"),
         CatItem("치킨","CHICKEN"), CatItem("중식","CHINESE"),
         CatItem("한식","KOREAN"), CatItem("돈까스/회","PORK_SASHIMI"),
         CatItem("패스트푸드","FASTFOOD"), CatItem("족발/보쌈","JOKBAL_BOSSAM"),

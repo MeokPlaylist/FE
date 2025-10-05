@@ -409,7 +409,7 @@ class CategoryActivity : AppCompatActivity() {
             val regionsEng = buildRegionsEng(selectedRegions)
 
             val request = CategorySetUpRequest(
-                categories = categories,               // ex) ["moods:GOODVIEW", "foods:CAFEDESERT", "companions:FRIEND"]
+                categories = categories,               // ex) ["moods:GOODVIEW", "foods:CAFE_DESSERT", "companions:FRIEND"]
                 regions = regionsEng                // ex) ["Gangwon:Samcheok-si","Gangwon:Yangyang-gun"]
             )
             Log.d("d",request.toString())
