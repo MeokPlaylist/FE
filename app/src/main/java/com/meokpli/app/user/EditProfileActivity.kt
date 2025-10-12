@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.main.Feed.PresignedUploader
@@ -30,15 +31,15 @@ class EditProfileActivity : AppCompatActivity() {
     private lateinit var api: UserApi
 
     private var selectedImageUri: Uri? = null
+    private var currentProfileUrl: String? = null // 서버에서 받은 기존 사진 URL
 
-    // 갤러리에서 이미지 선택 런처
     private val pickImage = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
-            ivAvatar.setImageURI(it)             // 미리보기
-            btnClearPhoto.visibility = View.VISIBLE // 사진 있을 때만 X 버튼 보이기
+            ivAvatar.setImageURI(it)
+            btnClearPhoto.visibility = View.VISIBLE
         }
     }
 
@@ -58,31 +59,32 @@ class EditProfileActivity : AppCompatActivity() {
         tvBioCount = findViewById(R.id.tvBioCount)
         btnSubmit = findViewById(R.id.btnSubmit)
 
-        // 초기엔 숨김
         btnClearPhoto.visibility = View.GONE
 
-        // 뒤로가기
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        // 사진 선택 (아바타, "사진 수정" 클릭 시 갤러리 오픈)
+        // 사진 선택 열기
         val openPicker = { pickImage.launch("image/*") }
         ivAvatar.setOnClickListener { openPicker() }
         tvChangePhoto.setOnClickListener { openPicker() }
 
-        // X 버튼 클릭 → 기본 이미지로 복귀
+        // X 버튼 클릭 시 초기화
         btnClearPhoto.setOnClickListener {
             selectedImageUri = null
-            ivAvatar.setImageResource(R.drawable.ic_profile_red) // 기본 이미지
+            currentProfileUrl = null
+            ivAvatar.setImageResource(R.drawable.ic_profile_red)
             btnClearPhoto.visibility = View.GONE
         }
 
-        // 글자수 카운트 (닉네임 10자, 소개 20자)
+        // 글자수 카운트
         etNickname.addTextChangedListener(counterWatcher { c -> tvNickCount.text = "$c / 10" })
         etBio.addTextChangedListener(counterWatcher { c -> tvBioCount.text = "$c / 20" })
 
-        // 저장
+        // 기존 프로필 불러오기
+        loadMyProfile()
+
         btnSubmit.setOnClickListener { submit() }
     }
 
@@ -97,7 +99,6 @@ class EditProfileActivity : AppCompatActivity() {
     private fun validate(): String? {
         val nick = etNickname.text?.toString()?.trim().orEmpty()
         val bio = etBio.text?.toString()?.trim().orEmpty()
-
         if (nick.isEmpty()) return "닉네임을 입력해 주세요."
         if (nick.length !in 1..10) return "닉네임은 1~10글자여야 합니다."
         if (bio.isEmpty()) return "소개를 입력해 주세요."
@@ -105,15 +106,30 @@ class EditProfileActivity : AppCompatActivity() {
         return null
     }
 
-    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
-        if (currentFocus != null) {
-            val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-            imm.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
-            currentFocus!!.clearFocus()
-        }
-        return super.dispatchTouchEvent(ev)
-    }
+    private fun loadMyProfile() {
+        lifecycleScope.launch {
+            try {
+                val res = api.getMyProfile()
+                etNickname.setText(res.userNickname)
+                etBio.setText(res.userIntro)
+                tvNickCount.text = "${res.userNickname.length} / 10"
+                tvBioCount.text = "${res.userIntro.length} / 20"
 
+                currentProfileUrl = res.profileUrl
+                if (!currentProfileUrl.isNullOrBlank()) {
+                    ivAvatar.load(currentProfileUrl) {
+                        crossfade(true)
+                        placeholder(R.drawable.ic_profile_red)
+                        error(R.drawable.ic_profile_red)
+                    }
+                    btnClearPhoto.visibility = View.VISIBLE
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@EditProfileActivity, "프로필 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun submit() {
@@ -131,7 +147,7 @@ class EditProfileActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // 사진이 선택된 경우 → setupProfile + presigned 업로드
+                // 새 이미지가 선택된 경우만 업로드
                 if (selectedImageUri != null) {
                     val fileName = "profile_${System.currentTimeMillis()}.jpg"
                     val setupResp = api.savePhoto(
@@ -141,17 +157,13 @@ class EditProfileActivity : AppCompatActivity() {
                     val uploaded = PresignedUploader.uploadAll(
                         this@EditProfileActivity,
                         listOf(selectedImageUri!!),
-                        listOf(setupResp.presignedPutUrls)
+                        listOf(setupResp.profilePutPresignedUrl)
                     )
 
-                    if (!uploaded.all { it }) {
-                        throw Exception("프로필 사진 업로드 실패")
-                    }
+                    if (!uploaded.all { it }) throw Exception("프로필 사진 업로드 실패")
                 }
 
-                // 항상 detail 저장
                 api.saveDetail(UserDetailRequest(nickname = nick, introduction = bio))
-
                 Toast.makeText(this@EditProfileActivity, "프로필이 저장되었습니다.", Toast.LENGTH_SHORT).show()
                 finish()
             } catch (e: Exception) {

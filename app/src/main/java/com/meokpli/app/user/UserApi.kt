@@ -40,13 +40,15 @@ interface UserApi {
     @GET("mypage")
     suspend fun  getMyPage(): MyPageResponse
 
-
+    @GET("getMyProfile")
+    suspend fun getMyProfile(): GetMyProfileResponse
     @GET("search")
     suspend fun searchUsers(
         @Query("nickname") nickname: String,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 10
     ): UserSearchResponse
+
     @GET("getCategories")
     suspend fun getCategories() : GetCategoriesResponse
 }
@@ -61,5 +63,10 @@ data class ConsentAgreeRequest(
     val isAvailable: Boolean
 )
 data class UserProfileSetupResponse(
-    val presignedPutUrls: String
+    val profilePutPresignedUrl: String
+)
+data class GetMyProfileResponse(
+    val userNickname: String,
+    val userIntro: String,
+    val profileUrl: String
 )

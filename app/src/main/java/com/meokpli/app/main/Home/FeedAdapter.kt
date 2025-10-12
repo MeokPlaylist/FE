@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -22,6 +23,7 @@ import com.meokpli.app.R
 import com.facebook.shimmer.Shimmer
 import com.facebook.shimmer.ShimmerDrawable
 import androidx.viewpager2.widget.ViewPager2
+import coil.transform.CircleCropTransformation
 
 
 class FeedAdapter(private var items: MutableList<Feed>,
@@ -44,6 +46,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
         val tvUser: TextView = v.findViewById(R.id.tvUserName)
+        val icProfileImage: ImageView = v.findViewById(R.id.icProfileImage)
         val tvDate: TextView = v.findViewById(R.id.tvDate)
         val tvPageBadge: TextView = v.findViewById(R.id.tvPageBadge)
         val tvCaption: TextView = v.findViewById(R.id.tvCaption)
@@ -104,8 +107,12 @@ class FeedAdapter(private var items: MutableList<Feed>,
             onLocationClick(item.feedId, item.nickName)
         }
 
-
-
+        h.icProfileImage.load(item.profileUrl) {
+            crossfade(true)
+            placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+            error(R.drawable.ic_profile_red) // 실패 시 표시
+            transformations(CircleCropTransformation()) // 동그랗게 자르기
+        }
 
         // 내용 + 해시태그
         val tags = item.hashTag?.filter { it.isNotBlank() }?.joinToString(" ") { "#$it" }.orEmpty()
@@ -379,6 +386,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
 data class Feed(
     val feedId: Long,
     val nickName: String,
+    val profileUrl: String,
     val content: String?,
     val hashTag: List<String>?,
     val createdAt: String,

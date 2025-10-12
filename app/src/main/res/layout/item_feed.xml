@@ -17,7 +17,7 @@
 
         <!-- 상단: 프로필, 이름, 날짜, 더보기 -->
         <ImageView
-            android:id="@+id/imgAvatar"
+            android:id="@+id/icProfileImage"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:src="@drawable/ic_profile_red"

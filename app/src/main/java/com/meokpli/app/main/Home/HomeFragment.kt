@@ -31,6 +31,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import android.app.AlertDialog
+import android.util.Log
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.meokpli.app.main.CategorySelectDialog
@@ -155,7 +156,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
         }
 
 
-        // ✅ BottomSheet에서 댓글 수 갱신 전달 받기
+        // BottomSheet에서 댓글 수 갱신 전달 받기
         childFragmentManager.setFragmentResultListener("comment_result", viewLifecycleOwner) { _, bundle ->
             val feedId = bundle.getLong("feedId")
             val newCount = bundle.getInt("count").toLong()
@@ -198,6 +199,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                     Feed(
                         feedId = dto.feedId,
                         nickName = dto.nickName,
+                        profileUrl = dto.profileUrl,
                         createdAt = formatKST(dto.createdAt),
                         content = dto.content ?: "",
                         hashTag = dto.hashTag ?: emptyList(),
@@ -212,23 +214,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                 if (hasNext) currentPage++
 
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "오류: ${e.message}", Toast.LENGTH_SHORT).show()
-            } finally {
+                Log.d( "Tag","오류: ${e.message}")
                 isLoading = false
             }
         }
     }
-    private fun preloadImages(urls: List<String>) {
-        val loader = ImageLoader(requireContext())
-        urls.forEach { url ->
-            val request = ImageRequest.Builder(requireContext())
-                .data(url)
-                .allowHardware(false)
-                .build()
-            loader.enqueue(request) // 캐시에 저장
-        }
-    }
-
     @RequiresApi(Build.VERSION_CODES.O)
     private fun formatKST(iso: String?): String {
         if (iso.isNullOrBlank()) return ""

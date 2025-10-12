@@ -150,7 +150,7 @@ class InitProfileActivity : AppCompatActivity() {
                         val uploaded = PresignedUploader.uploadAll(
                             context = this@InitProfileActivity,
                             uris = listOf(selectedImageUri!!),
-                            urls = listOf(setupResp.presignedPutUrls)
+                            urls = listOf(setupResp.profilePutPresignedUrl)
                         )
 
                         if (!uploaded.all { it }) throw Exception("프로필 업로드 실패")

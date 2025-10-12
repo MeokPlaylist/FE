@@ -55,7 +55,7 @@ class OtherProfileFragment : Fragment() {
 
     // 상단 뷰
     private lateinit var btnBack: ImageView
-    private lateinit var ivAvatar: ImageView
+    private lateinit var icProfileImage: ImageView
     private lateinit var tvTitle: TextView
     private lateinit var tvNickname: TextView
     private lateinit var tvIntro: TextView
@@ -110,7 +110,7 @@ class OtherProfileFragment : Fragment() {
     private fun bindViews(root: View) {
         // 상단
         btnBack = root.findViewById(R.id.btnBack)
-        ivAvatar = root.findViewById(R.id.imageAvatar)
+        icProfileImage = root.findViewById(R.id.icProfileImage)
         tvTitle = root.findViewById(R.id.textTitle)
         tvNickname = root.findViewById(R.id.textNickname)
         tvIntro = root.findViewById(R.id.textBio)
@@ -209,13 +209,13 @@ class OtherProfileFragment : Fragment() {
 
                 val avatarUrl = res.profileUrl
                 if (!avatarUrl.isNullOrBlank()) {
-                    ivAvatar.load(avatarUrl) {
+                    icProfileImage.load(avatarUrl) {
                         placeholder(R.drawable.ic_profile_red)
                         error(R.drawable.ic_profile_red)
                         crossfade(true)
                     }
                 } else {
-                    ivAvatar.setImageResource(R.drawable.ic_profile_red)
+                    icProfileImage.setImageResource(R.drawable.ic_profile_red)
                 }
 
                 // 3) 기본 탭 = 기간

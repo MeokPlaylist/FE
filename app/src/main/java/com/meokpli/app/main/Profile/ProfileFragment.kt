@@ -22,6 +22,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.transform.CircleCropTransformation
 import com.meokpli.app.data.remote.response.MyPageResponse
 import com.meokpli.app.main.Home.FeedDetailActivity
 import com.meokpli.app.main.MainActivity
@@ -29,7 +30,7 @@ import com.meokpli.app.main.MainActivity
 
 class ProfileFragment : Fragment() {
 
-    private lateinit var avatar: ImageView
+    private lateinit var icProfileImage: ImageView
     private lateinit var nick: TextView
     private lateinit var bio: TextView
     private lateinit var postCount: TextView
@@ -60,7 +61,7 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // -------- 뷰 바인딩 --------
-        avatar = view.findViewById(R.id.imageAvatar)
+        icProfileImage = view.findViewById(R.id.icProfileImage)
         nick = view.findViewById(R.id.textNickname)
         bio = view.findViewById(R.id.textBio)
         postCount = view.findViewById(R.id.textPostCount)
@@ -218,15 +219,13 @@ class ProfileFragment : Fragment() {
 
                 // 프로필 이미지 (없으면 기본 아이콘)
                 val url = myPage.profileUrl
-                if (!url.isNullOrBlank()) {
-                    avatar.load(url) {
-                        placeholder(R.drawable.ic_profile_red)
-                        error(R.drawable.ic_profile_red)
-                        crossfade(true)
-                    }
-                } else {
-                    avatar.setImageResource(R.drawable.ic_profile_red)
+                icProfileImage.load(url) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+                    error(R.drawable.ic_profile_red) // 실패 시 표시
+                    transformations(CircleCropTransformation()) // 동그랗게 자르기
                 }
+
                 //순서보장
                 onLoaded()
             } catch (e: HttpException) {
