@@ -62,17 +62,24 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/imgAvatar"/>
 
-            <!-- 태그 칩: 서버에서 채움 -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroup"
+            <HorizontalScrollView
+                android:id="@+id/chipScroll"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:chipSpacingHorizontal="6dp"
-                app:singleLine="true"
+                android:overScrollMode="never"
+                android:scrollbars="none"
                 app:layout_constraintTop_toBottomOf="@id/imgAvatar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    app:chipSpacingHorizontal="6dp"
+                    app:singleLine="true"/>
+            </HorizontalScrollView>
 
             <!-- 본문 이미지(슬라이더) -->
             <FrameLayout
@@ -82,7 +89,7 @@
                 android:layout_marginTop="12dp"
                 android:clipToOutline="true"
                 android:background="@drawable/bg_photo_rounded"
-                app:layout_constraintTop_toBottomOf="@id/chipGroup"
+                app:layout_constraintTop_toBottomOf="@id/chipScroll"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintDimensionRatio="16:10">

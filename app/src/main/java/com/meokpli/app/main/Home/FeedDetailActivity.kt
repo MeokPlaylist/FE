@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -54,6 +55,8 @@ class FeedDetailActivity : AppCompatActivity() {
     // 소유자 판별용
     private var myNickname: String? = null
     private var feedAuthorNickname: String? = null
+
+    private var photoUrls: List<String> = emptyList()
 
 
     // 상세에서 가져온 현재 선택(있으면 프리셋)
@@ -135,6 +138,7 @@ class FeedDetailActivity : AppCompatActivity() {
         ) { _, bundle ->
             val action = bundle.getString(FeedActionsBottomSheet.KEY_ACTION) ?: return@setFragmentResultListener
             val feedIdArg = bundle.getLong(FeedActionsBottomSheet.KEY_FEED_ID, 0L)
+            val preRegionsKo = ArrayList(currentRegions.map { CategoryLabels.regionToKorean(it) })
             if (feedIdArg == 0L) return@setFragmentResultListener
 
             when (action) {
@@ -148,14 +152,24 @@ class FeedDetailActivity : AppCompatActivity() {
                     ).show(supportFragmentManager, "cover_pick")
                 }
                 FeedActionsBottomSheet.ACTION_EDIT_CATEGORY -> {
-                    // ⬇️ 현재 다이얼로그 시그니처에 맞게 파라미터명 조정 (preComps)
+                    // 현재 지역을 한글로 변환해서 프리셋으로 넣음
+                    val preRegionsKo = ArrayList(currentRegions.map { CategoryLabels.regionToKorean(it) })
                     CategorySelectDialog.newInstance(
-                        preMoods = arrayListOf<String>(),
-                        preFoods = arrayListOf<String>(),
-                        preComps = arrayListOf<String>() // ← preCompanions 아님!
-                        // preRegions 파라미터 없음 (현 다이얼로그 버전)
-                    ).show(supportFragmentManager, "category_select_first")
+                        preMoods = ArrayList(currentCategories.filter { it in setOf(
+                            "TRADITIONAL","UNIQUE","EMOTIONAL","HEALING","GOODVIEW","ACTIVITY","LOCAL"
+                        ) }),
+                        preFoods = ArrayList(currentCategories.filter { it in setOf(
+                            "BUNSIK","CAFE_DESSERT","CHICKEN","CHINESE","KOREAN","PORK_SASHIMI",
+                            "FASTFOOD","JOKBAL_BOSSAM","PIZZA","WESTERN","MEAT","ASIAN",
+                            "DOSIRAK","LATE_NIGHT","JJIM_TANG"
+                        ) }),
+                        preComps = ArrayList(currentCategories.filter { it in setOf(
+                            "ALONE","FRIEND","COUPLE","FAMILY","GROUP","WITH_PET","ALUMNI"
+                        ) }),
+                        preRegions = preRegionsKo
+                    ).show(supportFragmentManager, "category_select")
                 }
+
                 FeedActionsBottomSheet.ACTION_EDIT_POST -> {
                     val initial = tvCaption.text?.toString().orEmpty()
                     EditContentDialog.newInstance(feedIdArg, initial)
@@ -169,46 +183,36 @@ class FeedDetailActivity : AppCompatActivity() {
         }
 
         // 카테고리 다이얼로그 최종 결과 → 서버 전송
-        supportFragmentManager.setFragmentResultListener(
-            CategorySelectDialog.REQUEST_KEY, this
-        ) { _, b ->
-            // 1) 분리 키가 있으면 우선 사용
-            val moods = b.getStringArrayList(CategorySelectDialog.KEY_MOODS) ?: arrayListOf()
-            val foods = b.getStringArrayList(CategorySelectDialog.KEY_FOODS) ?: arrayListOf()
-            val comps = b.getStringArrayList(CategorySelectDialog.KEY_COMPANIONS) ?: arrayListOf()
-            var categories = (moods + foods + comps).distinct()
+            supportFragmentManager.setFragmentResultListener(
+                CategorySelectDialog.REQUEST_KEY, this
+            ) { _, b ->
+                val payload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
 
-            // 2) 지역과(필요시) 카테고리를 payload에서 파싱 (현 다이얼로그는 payload 제공)
-            val payload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
-            if (categories.isEmpty()) {
-                categories = payload.filter {
+                // 1) 서버로 보낼 카테고리: 접두사 포함 그대로
+                val categoriesForServer = payload.filter {
                     it.startsWith("moods:") || it.startsWith("foods:") || it.startsWith("companions:")
-                }.map { it.substringAfter(':') }.distinct()
-            }
-            val regions: List<String> = payload.filter { it.startsWith("regions:") }
-                .map { it.substringAfter("regions:").replace('|', ':') } // "서울|강남구" → "서울:강남구"
+                }
 
-            lifecycleScope.launch {
-                try {
-                    val resp = Network.feedApi(this@FeedDetailActivity).modifyFeedCategory(
-                        ModifyFeedCategoryRequest(
-                            feedId = feedId,
-                            categories = categories,
-                            regions = regions // 없으면 빈 배열 전송 OK
-                        )
+                // 2) 서버로 보낼 지역: "regions:Seoul:Guro-gu" -> "Seoul:Guro-gu" 만 추출
+                val regionsForServer = payload.filter { it.startsWith("regions:") }
+                    .map { it.substringAfter("regions:") }
+
+                // 3) 요청 전송
+                lifecycleScope.launch {
+                    val req = ModifyFeedCategoryRequest(
+                        feedId = feedId,
+                        categories = categoriesForServer,
+                        regions = regionsForServer
                     )
-                    if (resp.isSuccessful) {
-                        Toast.makeText(this@FeedDetailActivity, "카테고리/지역이 저장되었습니다.", Toast.LENGTH_SHORT).show()
-                        currentRegions = ArrayList(regions)
-                        currentCategories = categories
+                    val res = Network.feedApi(this@FeedDetailActivity).modifyFeedCategory(req)
+                    if (res.isSuccessful) {
+                        Toast.makeText(this@FeedDetailActivity, "카테고리 수정 완료", Toast.LENGTH_SHORT).show()
+                        // UI 리프레시 등
                     } else {
-                        Toast.makeText(this@FeedDetailActivity, "실패: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@FeedDetailActivity, "카테고리 수정 실패", Toast.LENGTH_SHORT).show()
                     }
-                } catch (e: Exception) {
-                    Toast.makeText(this@FeedDetailActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-        }
 
         // 대표사진 선택 결과
         supportFragmentManager.setFragmentResultListener(
@@ -219,46 +223,75 @@ class FeedDetailActivity : AppCompatActivity() {
             val feedIdArg = bundle.getLong(FeedCoverPickBottomSheet.KEY_FEED_ID, 0L)
             if (newIndex < 0 || feedIdArg == 0L) return@setFragmentResultListener
 
-            lifecycleScope.launch {
-                try {
-                    val res = Network.feedApi(this@FeedDetailActivity)
-                        .modifyMainFeedPhoto(
-                            ModifyMainFeedPhotoRequest(
-                                feedId = feedIdArg,
-                                newMainFeedPhotoSequence = newIndex,
-                                oldMainFeedPhotoSequence = if (oldIndex >= 0) oldIndex else 0
+            supportFragmentManager.setFragmentResultListener(
+                FeedCoverPickBottomSheet.REQUEST_KEY, this
+            ) { _, bundle ->
+                val newIndex = bundle.getInt(FeedCoverPickBottomSheet.KEY_NEW_INDEX, -1)
+                val oldIndex = bundle.getInt(FeedCoverPickBottomSheet.KEY_OLD_INDEX, -1)
+                val feedIdArg = bundle.getLong(FeedCoverPickBottomSheet.KEY_FEED_ID, 0L)
+                if (newIndex < 0 || feedIdArg == 0L) return@setFragmentResultListener
+
+                lifecycleScope.launch {
+                    try {
+                        // 서버는 보통 1-base sequence를 받습니다. (로그상 0 보냈을 때 460)
+                        val res = Network.feedApi(this@FeedDetailActivity)
+                            .modifyMainFeedPhoto(
+                                ModifyMainFeedPhotoRequest(
+                                    feedId = feedIdArg,
+                                    newMainFeedPhotoSequence = newIndex + 1,
+                                    oldMainFeedPhotoSequence = (if (oldIndex >= 0) oldIndex else 0) + 1
+                                )
                             )
-                        )
-                    if (res.isAvailable) {
-                        viewPager.setCurrentItem(newIndex, true)
-                        Toast.makeText(this@FeedDetailActivity, "대표사진이 변경되었습니다.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@FeedDetailActivity, "대표사진 변경 실패", Toast.LENGTH_SHORT).show()
+
+                        if (res.isAvailable) {  // <- isSuccessful 로 체크
+                            viewPager.setCurrentItem(newIndex, true)
+                            Toast.makeText(this@FeedDetailActivity, "대표사진이 변경되었습니다.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@FeedDetailActivity, "대표사진 변경 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(this@FeedDetailActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
-                } catch (e: HttpException) {
-                    Toast.makeText(this@FeedDetailActivity, "오류: ${e.code()}", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(this@FeedDetailActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
+
         }
         // ACTION 처리부에 "게시글 수정" 연결
-        supportFragmentManager.setFragmentResultListener(
-            FeedActionsBottomSheet.REQUEST_KEY, this
-        ) { _, bundle ->
-            val action = bundle.getString(FeedActionsBottomSheet.KEY_ACTION) ?: return@setFragmentResultListener
-            val feedIdArg = bundle.getLong(FeedActionsBottomSheet.KEY_FEED_ID, 0L)
-            if (feedIdArg == 0L) return@setFragmentResultListener
+            supportFragmentManager.setFragmentResultListener(
+                FeedActionsBottomSheet.REQUEST_KEY, this
+            ) { _, bundle ->
+                val action = bundle.getString(FeedActionsBottomSheet.KEY_ACTION) ?: return@setFragmentResultListener
+                val id = bundle.getLong(FeedActionsBottomSheet.KEY_FEED_ID, 0L)
+                if (id == 0L) return@setFragmentResultListener
 
-            when (action) {
-                FeedActionsBottomSheet.ACTION_EDIT_POST -> {
-                    val initial = tvCaption.text?.toString().orEmpty()
-                    EditContentDialog.newInstance(feedIdArg, initial)
-                        .show(supportFragmentManager, "edit_content")
+                when (action) {
+                    FeedActionsBottomSheet.ACTION_EDIT_POST -> {
+                        val initial = tvCaption.text?.toString().orEmpty()
+                        EditContentDialog.newInstance(id, initial)
+                            .show(supportFragmentManager, "edit_content")
+                    }
+                    FeedActionsBottomSheet.ACTION_EDIT_COVER -> {
+                        // 대표사진 선택 바텀시트 열기
+                        FeedCoverPickBottomSheet.newInstance(
+                            feedId = id,
+                            images = ArrayList(/* 현재 이미지 리스트 */),
+                            currentMainIndex = viewPager.currentItem
+                        ).show(supportFragmentManager, "cover_pick")
+                    }
+                    FeedActionsBottomSheet.ACTION_EDIT_CATEGORY -> {
+                        // 카테고리/지역 선택 다이얼로그 열기 (프리셋 전달)
+                        CategorySelectDialog.newInstance(
+                            preMoods = ArrayList(/* 현재 mood 토큰들 */),
+                            preFoods = ArrayList(/* 현재 food 토큰들 */),
+                            preComps = ArrayList(/* 현재 companion 토큰들 */),
+                            preRegions = ArrayList(currentRegions)
+                        ).show(supportFragmentManager, "category_select")
+                    }
+                    FeedActionsBottomSheet.ACTION_DELETE -> {
+                        confirmDeleteInDetail(id)
+                    }
                 }
-                // …기존 ACTION_EDIT_COVER / ACTION_EDIT_CATEGORY 처리 유지…
             }
-        }
 
 // 다이얼로그 결과 수신 → 서버 호출 → UI 갱신
         supportFragmentManager.setFragmentResultListener(
@@ -304,10 +337,21 @@ class FeedDetailActivity : AppCompatActivity() {
 
                 feedAuthorNickname = resp.nickName
                 tvUserName.text = resp.nickName
-                tvDate.text = resp.createdAt
+                tvDate.text = relativeTimeKST(resp.createdAt)
                 tvCaption.text = resp.content
                 //프로필 완성되면 손봐야함
                 imgAvatar.setImageResource(R.drawable.ic_profile_red)
+
+                photoUrls = resp.feedPhotoUrl ?: emptyList()
+                val pagerAdapter = PhotoPagerAdapter(photoUrls)
+                viewPager.adapter = pagerAdapter
+
+                tvPageBadge.text = if (photoUrls.isEmpty()) "0/0" else "1/${photoUrls.size}"
+                viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                    override fun onPageSelected(position: Int) {
+                        tvPageBadge.text = "${position + 1}/${photoUrls.size}"
+                    }
+                })
 
                 isLikedByMe = resp.feedLike
                 likeCount = resp.likeCount
@@ -319,17 +363,13 @@ class FeedDetailActivity : AppCompatActivity() {
 
 
 
-                chipGroup.removeAllViews()
-                resp.hashTag.forEach { tag ->
-                    val chip = Chip(this@FeedDetailActivity).apply {
-                        text = "#$tag"; isClickable = false
-                    }
-                    chipGroup.addView(chip)
-                }
+                val displayTokens: List<String> = resp.feedCategories ?: emptyList()
 
+                currentCategories = displayTokens.filterNot { it.contains(":") }
+                currentRegions = ArrayList(displayTokens.filter { it.contains(":") })
+
+                renderCategoryChips(displayTokens)
                 val urls = resp.feedPhotoUrl
-                val pagerAdapter = PhotoPagerAdapter(urls)
-                viewPager.adapter = pagerAdapter
 
                 tvPageBadge.text = if (urls.isEmpty()) "0/0" else "1/${urls.size}"
                 viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -346,39 +386,68 @@ class FeedDetailActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
+
     /** 좋아요 토글 → 서버 전송 → UI 즉시 반영(낙관적) */
-    private fun toggleLike() {
-        val prevLiked = isLikedByMe
-        val prevCount = likeCount
-
-        // 낙관적 업데이트
-        isLikedByMe = !prevLiked
-        likeCount = if (isLikedByMe) prevCount + 1 else (prevCount - 1).coerceAtLeast(0)
-        renderLikeUi()
-
-        ivLike.isEnabled = false // ✅ 연타 방지
-        lifecycleScope.launch {
-            try {
-                val api = Network.feedApi(this@FeedDetailActivity)
-                if (isLikedByMe) {
-                    // before: val r = api.likeFeed(feedId)
-                    val r = api.feedLike(feedIdQuery(feedId))
-                    if (!r.isSuccessful) throw HttpException(r)
-                } else {
-                    // before: val r = api.unlikeFeed(feedId)
-                    val r = api.feedUnLike(feedIdQuery(feedId))
-                    if (!r.isSuccessful) throw HttpException(r)
-                }
-            } catch (t: Throwable) {
-                // 실패 시 롤백
-                isLikedByMe = prevLiked
-                likeCount   = prevCount
+    private fun toggleLike() = lifecycleScope.launch {
+        try {
+            val api = Network.feedApi(this@FeedDetailActivity)
+            val res = if (isLikedByMe) api.feedUnLike(feedId) else api.feedLike(feedId)
+            if (res.isSuccessful) {
+                isLikedByMe = !isLikedByMe
+                likeCount = (likeCount + if (isLikedByMe) 1 else -1).coerceAtLeast(0)
                 renderLikeUi()
-                Toast.makeText(this@FeedDetailActivity, "좋아요 처리 실패", Toast.LENGTH_SHORT).show()
-            } finally {
-                ivLike.isEnabled = true // ✅ 복구
+            } else {
+                Toast.makeText(this@FeedDetailActivity, "좋아요 실패: ${res.code()}", Toast.LENGTH_SHORT).show()
             }
+        } catch (e: Exception) {
+            Toast.makeText(this@FeedDetailActivity, "좋아요 실패: ${e.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+    private fun toDisplayLabel(token: String): String {
+        return if (token.contains(":")) {
+            // 지역 토큰
+            CategoryLabels.regionToKorean(token) // "Seoul:Guro-gu" -> "서울:구로구"
+        } else {
+            // 카테고리 토큰
+            CategoryLabels.toKorean(token)       // "UNIQUE" -> "이색적인" 등
+        }
+    }
+
+    private fun renderCategoryChips(list: List<String>) {
+        chipGroup.removeAllViews()
+        list.forEach { token ->
+            val chip = layoutInflater.inflate(R.layout.item_chip, chipGroup, false)
+            chip.findViewById<TextView>(R.id.chipText).apply {
+                text = toDisplayLabel(token)
+                setPadding(dp(6), dp(4), dp(12), dp(4)) // 글씨를 왼쪽으로 당김
+            }
+            chip.findViewById<ImageView>(R.id.chipClose).visibility = View.GONE
+            chipGroup.addView(chip)
+        }
+    }
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun relativeTimeKST(iso: String?): String {
+        if (iso.isNullOrBlank()) return ""
+        return try {
+            val parsed = try {
+                java.time.OffsetDateTime.parse(iso)
+                    .atZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"))
+                    .toLocalDateTime()
+            } catch (_: Throwable) {
+                java.time.LocalDateTime.parse(iso) // offset 없는 경우
+            }
+            val now = java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"))
+            val minutes = java.time.Duration.between(parsed, now).toMinutes()
+
+            when {
+                minutes < 60 -> "${minutes}분 전"
+                minutes < 60 * 24 -> "${minutes / 60}시간 전"
+                else -> parsed.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+            }
+        } catch (_: Throwable) { iso }
     }
 
     private fun renderLikeUi() {

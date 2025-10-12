@@ -7,6 +7,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
@@ -22,6 +24,8 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
+import com.meokpli.app.main.Home.CategoryLabels
+import android.graphics.Color
 
 object ApiProvider {
     fun create(tokenManager: TokenManager, api: AuthApi): OkHttpClient {
@@ -56,11 +60,13 @@ class CategorySelectDialog : DialogFragment() {
             preMoods: ArrayList<String> = arrayListOf(),
             preFoods: ArrayList<String> = arrayListOf(),
             preComps: ArrayList<String> = arrayListOf(),
+            preRegions: ArrayList<String> = arrayListOf(),
         ) = CategorySelectDialog().apply {
             arguments = bundleOf(
                 KEY_MOODS to preMoods,
                 KEY_FOODS to preFoods,
-                KEY_COMPANIONS to preComps
+                KEY_COMPANIONS to preComps,
+                STATE_REGIONS to preRegions
             )
         }
     }
@@ -115,16 +121,15 @@ class CategorySelectDialog : DialogFragment() {
         val preMoods = requireArguments().getStringArrayList(KEY_MOODS) ?: arrayListOf()
         val preFoods = requireArguments().getStringArrayList(KEY_FOODS) ?: arrayListOf()
         val preComps = requireArguments().getStringArrayList(KEY_COMPANIONS) ?: arrayListOf()
+        val preRegions = requireArguments().getStringArrayList(STATE_REGIONS) ?: arrayListOf()
 
         createChips(cgMood, moodItems, preMoods.toSet())
         createChips(cgFood, foodItems, preFoods.toSet())
         createChips(cgComp, compItems, preComps.toSet())
 
         // FeedFragment에서 전달한 지역 정보 복원
-        val preRegions = requireArguments().getStringArrayList("state_regions") ?: arrayListOf()
         if (preRegions.isNotEmpty()) {
-            // 기존 지역 목록을 덮어쓰기 (중복 방지)
-            selectedRegionCodes = ArrayList(preRegions)
+            selectedRegionCodes = ArrayList(preRegions.map { CategoryLabels.regionToKorean(it) })
             renderRegionChips(cgRegions, selectedRegionCodes)
         }
 
@@ -158,12 +163,19 @@ class CategorySelectDialog : DialogFragment() {
             val labelsF = getCheckedLabels(cgFood)
             val labelsC = getCheckedLabels(cgComp)
 
+            val regionforServer = selectedRegionCodes.map { code ->
+                val parts = code.split(":", limit = 2)
+                val sidoKo = parts.getOrNull(0).orEmpty()
+                val sggKo  = parts.getOrNull(1).orEmpty()
+                CategoryLabels.regionToServer(sidoKo, sggKo)
+            }
+
             // ⬇️ 서버 전송 포맷: "moods:CODE" / "foods:CODE" / "companions:CODE"
             val payload = arrayListOf<String>().apply {
                 addAll(getCheckedCodes(cgMood).map { "moods:$it" })
                 addAll(getCheckedCodes(cgFood).map { "foods:$it" })
                 addAll(getCheckedCodes(cgComp).map { "companions:$it" })
-                addAll(selectedRegionCodes.map { "regions:$it" })
+                addAll(regionforServer.map { "regions:$it" })
             }
             Log.d("CategorySelectDialog", "✅ btnDone 클릭, 최종 payload = $payload")
 
@@ -188,6 +200,8 @@ class CategorySelectDialog : DialogFragment() {
         super.onSaveInstanceState(outState)
         outState.putStringArrayList(STATE_REGIONS, selectedRegionCodes)
     }
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
 
 
 
@@ -228,25 +242,36 @@ class CategorySelectDialog : DialogFragment() {
 
     private fun renderRegionChips(cg: ChipGroup, codes: List<String>) {
         cg.removeAllViews()
-        codes.forEach { code ->
-            val label = code.replace(":", " ")   // ✅ ":" 통일
-            val chip = Chip(requireContext()).apply {
-                text = label
-                isCheckable = false
-                isCloseIconVisible = true   // X 버튼으로 선택 해제 가능
-                // 스타일(기존 칩과 동일한 selector 사용)
-                setChipBackgroundColorResource(R.color.selector_chip_background)
-                setTextColor(ContextCompat.getColorStateList(context, R.color.selector_chip_text))
-                setChipStrokeColorResource(R.color.selector_chip_stroke)
-                chipStrokeWidth = resources.displayMetrics.density * 0.75f
-
-                setOnCloseIconClickListener {
-                    // 개별 삭제
-                    selectedRegionCodes.remove(code)
-                    renderRegionChips(cg, selectedRegionCodes)
-                }
+        if (codes.isEmpty()) {
+            val empty = layoutInflater.inflate(R.layout.item_chip, cg, false)
+            empty.findViewById<TextView>(R.id.chipText).apply {
+                text = "선택 없음"
+                setTextColor(Color.parseColor("#888888"))
             }
-            cg.addView(chip)
+            empty.findViewById<ImageView>(R.id.chipClose).visibility = View.GONE
+            cg.addView(empty)
+            return
+        }
+
+        codes.forEach { code ->
+            val parts = code.split(":", limit = 2)
+            val sido = parts.getOrNull(0).orEmpty()
+            val sgg  = parts.getOrNull(1).orEmpty()
+
+            val v = layoutInflater.inflate(R.layout.item_chip, cg, false)
+            val tv = v.findViewById<TextView>(R.id.chipText)
+            val close = v.findViewById<ImageView>(R.id.chipClose)
+
+            tv.text = "$sido $sgg"         // ✅ 한글 표시
+            // 살짝 왼쪽으로 당기고 싶으면 start padding만 줄이세요
+            tv.setPadding(dp(6), tv.paddingTop, tv.paddingRight, tv.paddingBottom)
+
+            close.visibility = View.VISIBLE
+            close.setOnClickListener {
+                selectedRegionCodes.remove(code)
+                renderRegionChips(cg, selectedRegionCodes)
+            }
+            cg.addView(v)
         }
     }
 }

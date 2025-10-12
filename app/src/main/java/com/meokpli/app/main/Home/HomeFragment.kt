@@ -16,8 +16,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import coil.ImageLoader
-import coil.request.ImageRequest
 import com.meokpli.app.auth.Network
 import com.meokpli.app.main.MainApi
 import com.meokpli.app.main.Resettable
@@ -105,10 +103,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                         val api = Network.feedApi(requireContext())
                         if (targetLiked) {
                             // before: api.likeFeed(feedId)
-                            api.feedLike(feedIdQuery(feedId))
+                            api.feedLike(feedId)
                         } else {
                             // before: api.unlikeFeed(feedId)
-                            api.feedUnLike(feedIdQuery(feedId))
+                            api.feedUnLike(feedId)
                         }
                         done(true)
                     } catch (e: Exception) {

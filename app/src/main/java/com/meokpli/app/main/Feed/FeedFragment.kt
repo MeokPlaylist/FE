@@ -32,6 +32,14 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.Collections
 import androidx.navigation.fragment.findNavController
+import com.meokpli.app.main.Home.CategoryLabels
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class FeedFragment : Fragment(R.layout.fragment_feed) {
 
@@ -56,6 +64,28 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
     private var _binding: FragmentFeedBinding? = null
     private val binding get() = _binding!!
+
+    // --- Presigned 업로드용 클라/함수 ---
+    private val uploadClient by lazy { OkHttpClient.Builder().build() }
+
+    private suspend fun readBytesFromUri(uri: Uri): ByteArray = withContext(Dispatchers.IO) {
+        requireContext().contentResolver.openInputStream(uri).use { ins ->
+            ins?.readBytes() ?: ByteArray(0)
+        }
+    }
+
+    private suspend fun putToPresigned(url: String, bytes: ByteArray): Boolean = withContext(Dispatchers.IO) {
+        val req = Request.Builder()
+            .url(url)
+            .put(bytes.toRequestBody("image/jpeg".toMediaType()))
+            .header("Content-Type", "image/jpeg")
+            .build()
+        uploadClient.newCall(req).execute().use { resp ->
+            val ok = resp.isSuccessful
+            Log.i(TAG, "PUT presigned -> ${resp.code} (${bytes.size} bytes)")
+            ok
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
@@ -85,15 +115,12 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         setupHashtagWatcher()
         setupGalleryListener(view)
 
-        // ✅ 다이얼로그 결과 리스너
+        // ✅ 카테고리 선택 결과 리스너
         parentFragmentManager.setFragmentResultListener(
             CategorySelectDialog.REQUEST_KEY, viewLifecycleOwner
         ) { _, b ->
             val payload = b.getStringArrayList(CategorySelectDialog.KEY_PAYLOAD) ?: arrayListOf()
-
-            // ✅ 중복 방지: regions 항목은 payload 쪽 것을 우선으로 하고 distinct() 처리
             val merged = (selectedPayload + payload).distinct()
-
             selectedPayload.clear()
             selectedPayload.addAll(merged)
 
@@ -104,7 +131,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             sel = SelectedCategories(moods, foods, companions)
             renderPreviewChips(view, selectedPayload)
         }
-
 
         // ✅ 카테고리 추가 버튼
         view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
@@ -137,9 +163,11 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 ArrayList(foodLabels),
                 ArrayList(compLabels)
             )
-
             val mergedArgs = (dialog.arguments ?: Bundle()).apply {
-                putStringArrayList("state_regions", ArrayList(regions))
+                putStringArrayList(
+                    "state_regions",
+                    ArrayList(regions.map { CategoryLabels.regionToKorean(it) })
+                )
             }
             dialog.arguments = mergedArgs
             dialog.show(parentFragmentManager, "CategorySelectDialog")
@@ -319,6 +347,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                // 1) presigned URL & feedId 받기
                 val body = FeedRequestBuilder.buildBody(
                     content = contentNullable,
                     hashTags = hashtags,
@@ -327,25 +356,65 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                     photos = photos
                 )
                 val resp = feedApi.createFeed(body)
-                if (resp.isSuccessful) {
-                    val feedId = resp.body()?.feedId
-                    val uploadUrls = resp.body()?.presignedPutUrls.orEmpty()
-                    if (feedId == null) {
-                        Toast.makeText(requireContext(), "feedId를 수신하지 못했습니다.", Toast.LENGTH_LONG).show()
+                if (!resp.isSuccessful) {
+                    Toast.makeText(requireContext(), "실패: ${resp.code()}", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                val createRes = resp.body()
+                val feedId = createRes?.feedId
+                val uploadUrls = createRes?.presignedPutUrls.orEmpty()
+
+                if (feedId == null) {
+                    Toast.makeText(requireContext(), "feedId를 수신하지 못했습니다.", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                if (uploadUrls.size != selectedUris.size) {
+                    Toast.makeText(requireContext(), "업로드 개수 불일치 (${uploadUrls.size} vs ${selectedUris.size})", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+                // 2) presigned URL로 사진 PUT 업로드
+                for (i in uploadUrls.indices) {
+                    val bytes = readBytesFromUri(selectedUris[i])
+                    if (bytes.isEmpty()) {
+                        Toast.makeText(requireContext(), "사진 읽기 실패: ${i+1}/${uploadUrls.size}", Toast.LENGTH_SHORT).show()
                         return@launch
                     }
-                    val results = PresignedUploader.uploadAll(requireContext(), selectedUris.toList(), uploadUrls)
-                    if (results.all { it }) {
-                        Toast.makeText(requireContext(), "업로드 완료", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(requireContext(), "일부 업로드 실패", Toast.LENGTH_SHORT).show()
+                    val ok = putToPresigned(uploadUrls[i], bytes)
+                    if (!ok) {
+                        Toast.makeText(requireContext(), "사진 업로드 실패: ${i+1}/${uploadUrls.size}", Toast.LENGTH_SHORT).show()
+                        return@launch
                     }
-                    initAndSaveDefaultRoadmap(feedId)
-                    val args = Bundle().apply { putLong("feedId", feedId) }
-                    findNavController().navigate(R.id.action_feed_to_roadmapEdit, args)
-                } else {
-                    Toast.makeText(requireContext(), "실패: ${resp.code()}", Toast.LENGTH_SHORT).show()
                 }
+                Toast.makeText(requireContext(), "업로드 완료", Toast.LENGTH_SHORT).show()
+
+                val roadmapApi = Network.roadmapApi(requireContext())
+                var pulledOk = false
+                var attempt = 0
+                var wait = 400L
+                while (attempt < 2) {
+                    try {
+                        roadmapApi.pullOutKakao(feedId)
+                        pulledOk = true
+                        break
+                    } catch (e: retrofit2.HttpException) {
+                        if (e.code() >= 500) {
+                            delay(wait); wait *= 2; attempt++
+                        } else {
+                            throw e
+                        }
+                    }
+                }
+                if (!pulledOk) {
+                    Log.w(TAG, "pullOutKakao 실패(서버 지연) feedId=$feedId")
+                    // 실패해도 편집 화면에서 수동으로 다시 시도할 수 있음
+                }
+
+                // ✅ 4) 자동 저장에서 더 이상 pullOutKakao 재호출하지 않음(중복 제거)
+                //    바로 편집 화면으로 이동
+                val args = Bundle().apply { putLong("feedId", feedId) }
+                findNavController().navigate(R.id.action_feed_to_roadmapEdit, args)
+
             } catch (e: Exception) {
                 Log.e(TAG, "upload error", e)
                 Toast.makeText(requireContext(), "오류: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -354,18 +423,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     }
 
     // ---------- 로드맵 초기화 ----------
-    private suspend fun initAndSaveDefaultRoadmap(feedId: Long) {
-        val roadmapApi = Network.roadmapApi(requireContext())
-        Log.d(TAG, "pullOutKakao 시작: feedId=$feedId")
-        runCatching { roadmapApi.pullOutKakao(feedId) }
-            .onSuccess { res ->
-                val defaultMap = res.kakaoPlaceInfor.mapNotNull { (seq, list) -> list.firstOrNull()?.let { seq to it } }.toMap()
-                roadmapApi.saveRoadMap(SaveRoadMapPlaceRequest(feedId = feedId, saveRoadMapPlaceInfor = defaultMap))
-            }
-            .onFailure { e ->
-                Log.w(TAG, "pullOutKakao 실패(자동 저장 스킵): ${e.localizedMessage}")
-            }
-    }
 
     // ---------- 유틸 ----------
     private fun openGalleryBottomSheet() {
