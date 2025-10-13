@@ -201,9 +201,18 @@ class SearchUserFragment : Fragment(R.layout.fragment_search_user), Resettable {
                 layoutRecent.visibility = View.GONE
                 recyclerUsers.visibility = View.VISIBLE
 
-                adapter.submitList(response.content)
+                // profileUrl이 null이거나 빈 문자열이면 기본 이미지로 대체
+                val processedList = response.content.map { user ->
+                    val finalUrl = if (!user.profileUrl.isNullOrBlank()) user.profileUrl
+                    else null // Coil의 placeholder를 사용하기 위해 null 유지
+                    user.copy(profileUrl = finalUrl)
+                }
+
+                // 어댑터에 전달
+                adapter.submitList(processedList)
                 hasNext = response.hasNext
                 lastKeyword = keyword
+
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

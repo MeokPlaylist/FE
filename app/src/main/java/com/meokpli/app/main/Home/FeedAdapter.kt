@@ -10,7 +10,6 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -386,7 +385,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
 data class Feed(
     val feedId: Long,
     val nickName: String,
-    val profileUrl: String,
+    val profileUrl: String?,
     val content: String?,
     val hashTag: List<String>?,
     val createdAt: String,

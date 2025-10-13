@@ -8,10 +8,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.meokpli.app.R
 import com.meokpli.app.user.UserSearchDto
+import coil.load
+import coil.transform.CircleCropTransformation
 
 class UserAdapter(
     private val items: MutableList<UserSearchDto>,
-    private val onItemClick: (UserSearchDto) -> Unit // ✅ 클릭 콜백 추가
+    private val onItemClick: (UserSearchDto) -> Unit // 클릭 콜백 추가
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
     fun addItems(newItems: List<UserSearchDto>) {
         val start = items.size
@@ -53,8 +55,12 @@ class UserAdapter(
         fun bind(user: UserSearchDto) {
             tvNickname.text = user.nickname
             tvIntro.text = user.introduction ?: ""
-            // ivProfile.setImage... (Glide/Coil 같은 걸로 프로필 이미지 로딩)
-
+            ivProfile.load(user.profileUrl) {
+                crossfade(true)
+                placeholder(R.drawable.ic_profile_red) // 기본 이미지
+                error(R.drawable.ic_profile_red)       // 로드 실패 시
+                transformations(CircleCropTransformation())
+            }
             itemView.setOnClickListener { onItemClick(user) } // ✅ 클릭 이벤트
         }
     }

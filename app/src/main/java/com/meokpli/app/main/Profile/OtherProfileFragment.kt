@@ -32,6 +32,7 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import android.content.Intent
 import android.util.Log
+import coil.transform.CircleCropTransformation
 
 /**
  * 남의 프로필 화면 (V2 응답만 사용)
@@ -210,9 +211,10 @@ class OtherProfileFragment : Fragment() {
                 val avatarUrl = res.profileUrl
                 if (!avatarUrl.isNullOrBlank()) {
                     icProfileImage.load(avatarUrl) {
-                        placeholder(R.drawable.ic_profile_red)
-                        error(R.drawable.ic_profile_red)
                         crossfade(true)
+                        placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+                        error(R.drawable.ic_profile_red) // 실패 시 표시
+                        transformations(CircleCropTransformation()) // 동그랗게 자르기
                     }
                 } else {
                     icProfileImage.setImageResource(R.drawable.ic_profile_red)

@@ -6,5 +6,6 @@ data class UserSearchResponse(
 )
 data class UserSearchDto(
     val nickname: String,
-    val introduction: String?
+    val introduction: String?,
+    val profileUrl: String?
 )

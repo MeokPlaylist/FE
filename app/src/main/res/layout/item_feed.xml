@@ -31,8 +31,8 @@
             android:text="김수민"
             android:textStyle="bold"
             android:textSize="14sp"
-            app:layout_constraintStart_toEndOf="@id/imgAvatar"
-            app:layout_constraintTop_toTopOf="@id/imgAvatar"
+            app:layout_constraintStart_toEndOf="@id/icProfileImage"
+            app:layout_constraintTop_toTopOf="@id/icProfileImage"
             app:layout_constraintEnd_toStartOf="@id/btnMore"
             android:layout_marginStart="8dp"/>
 
@@ -53,7 +53,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_more_horiz"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/imgAvatar"/>
+            app:layout_constraintTop_toTopOf="@id/icProfileImage"/>
 
         <!-- 본문 이미지 → ViewPager2 로 교체 -->
         <FrameLayout
@@ -62,7 +62,8 @@
             android:layout_height="0dp"
             android:clipToOutline="true"
             android:background="@drawable/bg_photo_rounded"
-            app:layout_constraintTop_toBottomOf="@id/imgAvatar"
+            app:layout_constraintTop_toBottomOf="@id/icProfileImage"
+            app:layout_constraintBottom_toTopOf="@id/indicatorLayout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintDimensionRatio="16:10"
