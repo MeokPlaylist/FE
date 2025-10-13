@@ -18,8 +18,10 @@ interface MainApi {
 
     @GET("main")
     suspend fun getMainFeeds(
+        @Query("userId") userId: Int,
         @Query("page") page: Int = 0,
-        @Query("size") size: Int = 10
+        @Query("size") size: Int = 10,
+        @Query("sort") sort: String? = "id,DESC" // 서버가 정렬 필수면 기본값
     ): SlicedResponse<Feed>
 
     // 피드 상세 조회
@@ -53,18 +55,11 @@ interface MainApi {
     @POST("delete")
     suspend fun deleteFeed(@Query("feedId") feedId: Long): Response<Void>
 
-    // 좋아요 누르기
-    // ✅ 좋아요 누르기: 서버 경로와 동일하게 변경
     @POST("feedLike")
-    suspend fun feedLike(
-        @QueryMap(encoded = true) q: Map<String, String>
-    ): Response<Void>
+    suspend fun feedLike(@Query("feedId") feedId: Long): Response<Void>
 
-    // ✅ 좋아요 취소: 서버 경로와 동일하게 변경
     @POST("feedUnLike")
-    suspend fun feedUnLike(
-        @QueryMap(encoded = true) q: Map<String, String>
-    ): Response<Void>
+    suspend fun feedUnLike(@Query("feedId") feedId: Long): Response<Void>
 
 
 

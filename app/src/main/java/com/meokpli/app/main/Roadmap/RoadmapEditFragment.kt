@@ -72,42 +72,73 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
         // 초기 후보 로드
         loadInitial()
     }
+    private fun toKakaoDocFromSaved(index: Int, s: CallInRoadMapDto): KakaoDocument {
+        val tmpId = "saved-${index + 1}" // 화면용 임시 ID (저장 금지 가드가 있으므로 서버로 안 보냄)
+        return KakaoDocument(
+            id = tmpId,
+            placeName = s.name ?: "",
+            addressName = s.addressName,
+            roadAddressName = s.roadAddressName,
+            placeUrl = null,                      // 저장본에 없음
+            phone = s.phone,                      // nullable OK
+            categoryGroupCode = null,             // 저장본에 없음
+            categoryGroupName = s.kakaoCategoryName
+        )
+    }
 
     private fun loadInitial() = viewLifecycleOwner.lifecycleScope.launch {
-        Log.d(TAG, "loadInitial: getRoadmap & pullOutKakao 병행")
+        Log.d(TAG, "loadInitial: 저장본 확인 후 필요 시에만 pullOutKakao")
         val api = this@RoadmapEditFragment.api
 
-        // 1) 저장본/후보 병행 로드
+        // 1) 저장본 먼저 조회
         val saved = runCatching { api.getRoadmap(feedId) }.getOrNull()
         val savedList = saved?.callInRoadMapDtoList.orEmpty()
         Log.d(TAG, "getRoadmap: savedCount=${savedList.size}")
 
-        val candidates = runCatching { api.pullOutKakao(feedId) }.getOrNull()
-        val map = candidates?.kakaoPlaceInfor.orEmpty()
-        Log.d(TAG, "pullOutKakao: seqCount=${map.size}")
-
-        val savedKey: Set<String> = savedList.mapNotNull {
-            // 매칭 키: kakao id 가 있으면 가장 좋지만, DTO에 없으므로 우선 placeName으로 매칭
-            it.name?.trim()
-        }.toSet()
+        // 2) 저장본이 있으면 후보 추출 생략, 없으면 1회만 후보 추출
+        val candidates: Map<Int, List<KakaoDocument>> = if (savedList.isNotEmpty()) {
+            emptyMap()
+        } else {
+            runCatching { api.pullOutKakao(feedId).kakaoPlaceInfor }
+                .getOrElse {
+                    Log.e(TAG, "pullOutKakao 실패", it)
+                    emptyMap()
+                }
+        }
+        Log.d(TAG, "candidates(seqCount)=${candidates.size}")
 
         val items = mutableListOf<EditItem>()
-        map.forEach { (seq, docs) ->
-            if (docs.isEmpty()) return@forEach
-            docs.forEachIndexed { idx, doc ->
-                val checked = if (savedKey.isNotEmpty()) {
-                    // 저장본 존재: 동일 장소명 있으면 체크
-                    savedKey.contains(doc.placeName?.trim())
-                } else {
-                    // 저장본 없음: 첫 후보만 체크
-                    idx == 0
-                }
-                items += EditItem(seq = seq, doc = doc, checked = false, starred = false)
+
+        if (savedList.isNotEmpty()) {
+            // 저장본을 화면에 그대로 보여준다(편집은 가능하게 두되 '저장'은 비활성화)
+            savedList.forEachIndexed { idx, s ->
+                val doc = toKakaoDocFromSaved(idx, s)
+                items += EditItem(
+                    seq = (idx + 1),
+                    doc = doc,
+                    checked = false,
+                    starred = false
+                )
             }
+            adapter.submit(items)
+            // 저장본만 있을 땐 저장 비활성화(서버가 placeId를 내려주기 전까지)
+            view?.findViewById<View>(R.id.btnDone)?.isEnabled = false
+            Toast.makeText(requireContext(), "저장본입니다. 후보 추출 후 수정/저장 가능합니다.", Toast.LENGTH_SHORT).show()
+        } else {
+            // 후보가 있을 때만 저장 가능
+            candidates.forEach { (seq, docs) ->
+                docs.forEachIndexed { idx, doc ->
+                    val checkedDefault = (idx == 0) // 각 seq의 첫 후보만 기본 선택(필요 시 정책 조정)
+                    items += EditItem(seq = seq, doc = doc, checked = checkedDefault, starred = false)
+                }
+            }
+            adapter.submit(items)
+            view?.findViewById<View>(R.id.btnDone)?.isEnabled = items.isNotEmpty()
         }
-        adapter.submit(items)
+
         Log.i(TAG, "로드맵 편집 초기화 완료: items=${adapter.items.size}, checked=${adapter.items.count { it.checked }}")
     }
+
 
     private fun deleteChecked() {
         val before = adapter.items.size
@@ -136,42 +167,60 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     }
 
     private fun saveAndExit() = viewLifecycleOwner.lifecycleScope.launch {
-        // 체크된(포함) 항목만 seq별 대표 1개를 고르는 게 아니라,
-        // 요구사항상 '별은 찜일 뿐'이므로 **대표 개념 없이** seq마다 '체크된 항목 중 첫 번째'만 저장 대상으로 삼음.
-        val selected = adapter.items.filter { !it.checked }
-        Log.d(TAG, "saveAndExit selected.count=${selected.size}")
-        if (selected.isEmpty()) {
-            Toast.makeText(requireContext(), "선택된 장소가 없습니다.", Toast.LENGTH_SHORT).show()
+        // 체크 안 된 항목만 저장 대상
+        val toSave = adapter.items.filter { !it.checked }
+        Log.d(TAG, "saveAndExit toSave.count=${toSave.size}")
+
+        if (toSave.isEmpty()) {
+            Toast.makeText(requireContext(), "저장할 장소가 없습니다.", Toast.LENGTH_SHORT).show()
             return@launch
         }
-        val bySeq = selected.groupBy { it.seq }
+
+        // seq별 첫 번째만 저장 (백엔드가 seq->단일 장소 요구 시)
+        val bySeq = toSave.groupBy { it.seq }
         val map = mutableMapOf<Int, KakaoDocument>()
         bySeq.forEach { (seq, list) ->
-            val chosen = list.firstOrNull()
-            if (chosen != null) map[seq] = chosen.doc
+            list.firstOrNull()?.let { map[seq] = it.doc }
         }
         Log.d(TAG, "saveAndExit map.size=${map.size} feedId=$feedId")
 
         if (map.isEmpty()) {
-            Toast.makeText(requireContext(), "선택된 장소가 없습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "저장할 장소가 없습니다.", Toast.LENGTH_SHORT).show()
             return@launch
         }
 
+        val api = Network.roadmapApi(requireContext())
         runCatching {
             api.saveRoadMap(SaveRoadMapPlaceRequest(feedId = feedId, saveRoadMapPlaceInfor = map))
         }.onSuccess { res ->
             if (res.isSuccessful) {
-                Log.i(TAG, "saveRoadMap OK(${res.code()}) → navigate Home")
-                findNavController().navigate(R.id.homeFragment)
+                Log.i(TAG, "saveRoadMap OK(${res.code()})")
                 Toast.makeText(requireContext(), "로드맵이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                // 필요에 맞게 한 가지 선택
+                // findNavController().navigate(R.id.homeFragment)
+                findNavController().popBackStack()
             } else {
                 Log.w(TAG, "saveRoadMap FAIL code=${res.code()} message=${res.errorBody()?.string()}")
-                Toast.makeText(requireContext(),
-                    "저장 실패(${res.code()}): 서버 응답을 확인하세요.", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "저장 실패(${res.code()})", Toast.LENGTH_LONG).show()
             }
         }.onFailure { e ->
             Log.e(TAG, "saveRoadMap EXCEPTION", e)
             Toast.makeText(requireContext(), "저장 실패: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+        }
+    }
+    private fun removeSelected() {
+        // ✅ 체크된 아이템들만 제거
+        val before = adapter.items.size
+        val removed = adapter.items.removeAll { it.checked }
+        if (removed) {
+            adapter.notifyDataSetChanged()
+            Toast.makeText(
+                requireContext(),
+                "선택한 ${before - adapter.items.size}개 항목을 삭제했어요. 저장을 눌러 반영하세요.",
+                Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            Toast.makeText(requireContext(), "삭제할 항목을 선택해주세요.", Toast.LENGTH_SHORT).show()
         }
     }
 
