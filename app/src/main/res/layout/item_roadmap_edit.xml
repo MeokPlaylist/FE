@@ -6,8 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="100dp"
-    android:paddingTop="8dp"
     android:padding="10dp"
+    android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
     <!-- 체크박스 -->
@@ -20,7 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.5"/>
+        app:layout_constraintVertical_bias="0.5" />
 
     <!-- 왼쪽 이미지 -->
     <FrameLayout
@@ -45,12 +45,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                tools:src="@drawable/ic_launcher_foreground"/>
+                tools:src="@drawable/ic_launcher_foreground" />
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 
     <!-- 오른쪽 카드 -->
     <FrameLayout
+        android:id="@+id/frameCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -68,9 +69,7 @@
             app:cardBackgroundColor="@android:color/white"
             app:strokeColor="#40000000"
             app:strokeWidth="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginEnd="8dp">
+            android:layout_margin="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -78,6 +77,7 @@
                 android:orientation="vertical"
                 android:padding="12dp">
 
+                <!-- 장소명 -->
                 <TextView
                     android:id="@+id/tvPlaceName"
                     android:layout_width="wrap_content"
@@ -85,28 +85,38 @@
                     android:textStyle="bold"
                     android:textSize="14sp"
                     android:textColor="#000000"
-                    tools:text="맥도날드"/>
+                    tools:text="맥도날드" />
 
+                <!-- 주소 -->
                 <TextView
                     android:id="@+id/tvAddress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="12sp"
                     android:textColor="#444444"
-                    tools:text="경기도 수원시 영통구 아주로 46"/>
+                    tools:text="경기도 수원시 영통구 아주로 46" />
+
+                <!-- +N개 더보기 -->
+                <TextView
+                    android:id="@+id/tvMoreCandidates"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+3개 더보기"
+                    android:textSize="12sp"
+                    android:textColor="#888888"
+                    android:paddingTop="4dp"
+                    android:visibility="gone" />
+
+                <!-- 후보 리스트 -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvCandidates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:visibility="gone"
+                    tools:listitem="@layout/item_candidate_row" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- ⭐ 카드 우상단 별 -->
-        <ImageView
-            android:id="@+id/ivStar"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_star_unchecked"
-            android:layout_gravity="top|end"
-            android:translationY="-8.8dp"
-            android:translationX="-5dp"
-            android:contentDescription="즐겨찾기"/>
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

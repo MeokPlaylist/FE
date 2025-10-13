@@ -253,11 +253,6 @@ class FeedAdapter(private var items: MutableList<Feed>,
         h.viewPager.setOnClickListener {
             onItemClick(item.feedId)
         }
-
-
-
-
-
     }
 
 
@@ -377,8 +372,12 @@ class FeedAdapter(private var items: MutableList<Feed>,
             notifyItemChanged(idx, "comment_count")
         }
     }
-
-
+    fun clearItems() {
+        val size = items.size
+        if (size == 0) return
+        items.clear()
+        notifyItemRangeRemoved(0, size)
+    }
 
 }
 

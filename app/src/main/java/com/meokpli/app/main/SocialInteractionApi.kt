@@ -3,6 +3,7 @@ package com.meokpli.app.main
 import com.meokpli.app.data.remote.request.FeedSearchRequest
 import com.meokpli.app.data.remote.response.SearchFeedResponse
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -33,6 +34,12 @@ interface SocialInteractionApi {
         @Query("page") page: Int,
         @Query("size") size: Int
     ): Call<SearchFeedResponse>
+
+    @POST("feedLike")
+    suspend fun feedLike(@Query("feedId") feedId: Long): Response<Unit>
+
+    @POST("feedUnLike")
+    suspend fun feedUnLike(@Query("feedId") feedId: Long): Response<Unit>
 }
 
 data class RecommendRestaurantRequest (val regions: List<String>)

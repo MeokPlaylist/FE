@@ -34,7 +34,6 @@ import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.meokpli.app.main.CategorySelectDialog
 import com.meokpli.app.main.EditContentDialog
-import com.meokpli.app.main.feedIdQuery
 
 class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
@@ -47,6 +46,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
     private var currentPage = 0
     private val pageSize = 10
     private var myNickname: String? = null
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -96,11 +96,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                 findNavController().navigate(R.id.roadmapView, bundle)
             },
 
-            // ✅ 추가: 좋아요 토글 콜백 (낙관적 업데이트 성공/실패 처리)
+            // 추가: 좋아요 토글 콜백 (낙관적 업데이트 성공/실패 처리)
             onLikeToggle = { feedId, targetLiked, done ->
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
-                        val api = Network.feedApi(requireContext())
+                        val api = Network.socialApi(requireContext())
                         if (targetLiked) {
                             // before: api.likeFeed(feedId)
                             api.feedLike(feedId)
@@ -213,6 +213,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
             } catch (e: Exception) {
                 Log.d( "Tag","오류: ${e.message}")
+                isLoading = false
+            }finally{
                 isLoading = false
             }
         }

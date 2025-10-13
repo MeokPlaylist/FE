@@ -18,7 +18,6 @@ interface MainApi {
 
     @GET("main")
     suspend fun getMainFeeds(
-        @Query("userId") userId: Int,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 10,
         @Query("sort") sort: String? = "id,DESC" // 서버가 정렬 필수면 기본값
@@ -54,26 +53,14 @@ interface MainApi {
 
     @POST("delete")
     suspend fun deleteFeed(@Query("feedId") feedId: Long): Response<Void>
-
-    @POST("feedLike")
-    suspend fun feedLike(@Query("feedId") feedId: Long): Response<Void>
-
-    @POST("feedUnLike")
-    suspend fun feedUnLike(@Query("feedId") feedId: Long): Response<Void>
-
-
-
 }
+
 data class CreateFeedBody(
     val content: String?,
     val hashTag: List<String> = emptyList(),
     val categories: List<String> = emptyList(), // "moods:기분", "foods:라멘" 형식
     val regions: List<String> = emptyList(),
     val photos: List<PhotoBody> = emptyList(),
-)
-fun feedIdQuery(feedId: Long): Map<String, String> = mapOf(
-    "feedId" to feedId.toString(),
-    "/feedId" to feedId.toString()
 )
 
 data class PhotoBody(

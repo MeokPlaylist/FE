@@ -30,7 +30,6 @@ import com.meokpli.app.main.MainApi
 import com.meokpli.app.main.ModifyFeedCategoryRequest
 import com.meokpli.app.main.ModifyFeedContentRequest
 import com.meokpli.app.main.ModifyMainFeedPhotoRequest
-import com.meokpli.app.main.feedIdQuery
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -393,7 +392,7 @@ class FeedDetailActivity : AppCompatActivity() {
     /** 좋아요 토글 → 서버 전송 → UI 즉시 반영(낙관적) */
     private fun toggleLike() = lifecycleScope.launch {
         try {
-            val api = Network.feedApi(this@FeedDetailActivity)
+            val api = Network.socialApi(this@FeedDetailActivity)
             val res = if (isLikedByMe) api.feedUnLike(feedId) else api.feedLike(feedId)
             if (res.isSuccessful) {
                 isLikedByMe = !isLikedByMe

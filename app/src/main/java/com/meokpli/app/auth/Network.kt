@@ -22,6 +22,7 @@ object Network {
     private const val FEED_BASE_URL = "https://meokplaylist.store/feed/"
     private const val SOCIAL_BASE_URL = "https://meokplaylist.store/socialInteraction/"
     private const val PLACE_BASE_URL = "https://meokplaylist.store/place/"
+    private const val ROADMAP_BASE_URL = "https://meokplaylist.store/roadmap/"
     private fun retrofit(baseUrl: String, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -73,7 +74,7 @@ object Network {
             .create(PlaceApi::class.java)
 
     fun roadmapApi(context: Context): RoadmapApi =
-        retrofit(PLACE_BASE_URL, debugClient(context, withAuth = true))
+        retrofit(ROADMAP_BASE_URL, debugClient(context, withAuth = true))
             .create(RoadmapApi::class.java)
 }
 /*

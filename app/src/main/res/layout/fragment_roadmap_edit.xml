@@ -52,6 +52,24 @@
             android:textSize="15sp" />
     </FrameLayout>
 
+    <!-- 여행 제목/기간 -->
+    <EditText
+        android:id="@+id/etTripTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="12dp"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="#000000"
+        android:background="@null"
+        android:hint="여행 제목"
+        android:inputType="textCapSentences"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <!-- 툴바 아래 유틸: 삭제/전체선택 -->
     <LinearLayout
         android:id="@+id/editActions"
@@ -73,8 +91,6 @@
             android:background="@null"
             android:contentDescription="@string/edit_roadmap"
             android:scaleType="centerInside" />
-
-
 
     </LinearLayout>
 
