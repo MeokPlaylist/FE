@@ -6,6 +6,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -30,6 +31,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
                   val onMoreClick: (View, Feed) -> Unit,
                   private val onItemClick: (feedId: Long) -> Unit,
                   private val onLocationClick: (feedId: Long, nickName: String) -> Unit,
+                  private val onProfileClick: (nickName: String) -> Unit,
                   private val onLikeToggle: (feedId: Long, targetLiked: Boolean, result: (Boolean) -> Unit) -> Unit
 ) : RecyclerView.Adapter<FeedAdapter.VH>() {
 
@@ -113,6 +115,14 @@ class FeedAdapter(private var items: MutableList<Feed>,
             transformations(CircleCropTransformation()) // 동그랗게 자르기
         }
 
+        // 닉네임 및 프로필 이미지 클릭 → 다른 사람 프로필로 이동
+        h.tvUser.setOnClickListener {
+            onProfileClick(item.nickName)
+        }
+        h.icProfileImage.setOnClickListener {
+            onProfileClick(item.nickName)
+        }
+
         // 내용 + 해시태그
         val tags = item.hashTag?.filter { it.isNotBlank() }?.joinToString(" ") { "#$it" }.orEmpty()
         val fullText =
@@ -147,6 +157,7 @@ class FeedAdapter(private var items: MutableList<Feed>,
         }
         // ── 좋아요 초기 상태 세팅 (localLike 우선, 없으면 item 값 사용)
         val st = localLike.getOrPut(item.feedId) { LikeState(item.isLiked, item.likeCount) }
+        Log.d("FeedAdapter",item.isLiked.toString())
         applyLikeUi(h, st.liked, st.count)
 
         // 좋아요 클릭
@@ -372,13 +383,6 @@ class FeedAdapter(private var items: MutableList<Feed>,
             notifyItemChanged(idx, "comment_count")
         }
     }
-    fun clearItems() {
-        val size = items.size
-        if (size == 0) return
-        items.clear()
-        notifyItemRangeRemoved(0, size)
-    }
-
 }
 
 data class Feed(

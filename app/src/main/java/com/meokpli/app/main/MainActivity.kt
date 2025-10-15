@@ -102,14 +102,16 @@ class MainActivity : AppCompatActivity() {
     private fun isInSameTab(currentId: Int?, tabRootId: Int): Boolean {
         if (currentId == null) return false
         return when (tabRootId) {
-            R.id.homeFragment -> currentId == R.id.homeFragment
-            R.id.searchFragment -> currentId == R.id.searchFragment || currentId == R.id.otherProfileFragment
+            R.id.homeFragment -> currentId == R.id.homeFragment || currentId == R.id.otherProfileFragment || currentId == R.id.feedDetailFragment
+            R.id.searchFragment -> currentId == R.id.searchFragment || currentId == R.id.otherProfileFragment || currentId == R.id.feedDetailFragment
             R.id.feedFragment -> currentId == R.id.feedFragment
             R.id.starFragment -> currentId == R.id.starFragment
             R.id.profileFragment -> {
                 currentId == R.id.profileFragment ||
-                        currentId == R.id.fragmentSetting ||
-                        currentId == R.id.followListFragment
+                currentId == R.id.fragmentSetting ||
+                currentId == R.id.followListFragment ||
+                currentId == R.id.otherProfileFragment ||
+                currentId == R.id.feedDetailFragment
             }
 
             else -> false

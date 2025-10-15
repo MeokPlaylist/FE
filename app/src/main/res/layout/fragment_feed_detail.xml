@@ -10,22 +10,21 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="20dp"
         app:cardCornerRadius="0dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:layout_height="wrap_content">
 
             <!-- 상단: 프로필, 이름, 날짜, 더보기 -->
             <ImageView
                 android:id="@+id/imgAvatar"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
+                android:layout_marginStart="16dp"
                 android:src="@drawable/ic_profile_red"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"/>
@@ -34,13 +33,14 @@
                 android:id="@+id/tvUserName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="김수민"
+                android:layout_marginStart="6dp"
+                android:text=""
                 android:textStyle="bold"
                 android:textSize="14sp"
                 app:layout_constraintStart_toEndOf="@id/imgAvatar"
                 app:layout_constraintTop_toTopOf="@id/imgAvatar"
                 app:layout_constraintEnd_toStartOf="@id/btnMore"
-                android:layout_marginStart="8dp"/>
+                />
 
             <TextView
                 android:id="@+id/tvDate"
@@ -56,6 +56,7 @@
                 android:id="@+id/btnMore"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_horiz"
                 app:tint="#000000"
@@ -67,6 +68,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:overScrollMode="never"
+                android:layout_marginStart="16dp"
                 android:scrollbars="none"
                 app:layout_constraintTop_toBottomOf="@id/imgAvatar"
                 app:layout_constraintStart_toStartOf="parent"
@@ -77,7 +79,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingTop="8dp"
-                    app:chipSpacingHorizontal="6dp"
+                    app:chipSpacingHorizontal="0dp"
                     app:singleLine="true"/>
             </HorizontalScrollView>
 
@@ -87,18 +89,22 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_marginTop="12dp"
-                android:clipToOutline="true"
-                android:background="@drawable/bg_photo_rounded"
+                android:clipToOutline="false"
+                android:background="@null"
                 app:layout_constraintTop_toBottomOf="@id/chipScroll"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintDimensionRatio="16:10">
+                app:layout_constraintDimensionRatio="1:1">   <!-- ✅ 정사각형 비율로 꽉 차게 -->
 
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/viewPagerPhotos"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:clipChildren="false"
+                    android:clipToPadding="false" />
             </FrameLayout>
+
 
             <!-- 페이지 배지 -->
             <TextView
@@ -154,6 +160,7 @@
                     android:id="@+id/ivLike"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
+                    android:layout_marginStart="16dp"
                     android:src="@drawable/ic_heart_unfilled"
                     android:contentDescription="@string/empty" />
 
@@ -189,6 +196,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:layout_marginStart="16dp"
                 android:text=""
                 android:textSize="12sp"
                 android:textColor="#000000"

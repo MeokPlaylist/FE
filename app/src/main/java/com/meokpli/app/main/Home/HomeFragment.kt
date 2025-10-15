@@ -114,6 +114,13 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                         done(false)
                     }
                 }
+            },
+            onProfileClick = { nickname ->
+                // ✅ OtherProfileFragment로 이동
+                findNavController().navigate(
+                    R.id.otherProfileFragment,
+                    bundleOf("arg_nickname" to nickname)
+                )
             }
         )
         rv.adapter = adapter
@@ -203,7 +210,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                         hashTag = dto.hashTag ?: emptyList(),
                         feedPhotoUrl = dto.feedPhotoUrl ?: emptyList(),
                         likeCount = dto.likeCount,
-                        commentCount = dto.commentCount
+                        commentCount = dto.commentCount,
+                        isLiked = dto.isLiked
                     )
                 }
 

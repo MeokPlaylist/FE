@@ -21,7 +21,8 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import android.content.Intent
-import com.meokpli.app.main.Home.FeedDetailActivity
+import androidx.core.os.bundleOf
+import androidx.navigation.fragment.findNavController
 
 class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
     private var onEditClick: (() -> Unit)? = null
@@ -48,10 +49,10 @@ class FeedListFragment : Fragment(R.layout.fragment_search_feed) {
         socialInteractionApi = Network.socialApi(requireContext())
         recyclerView = view.findViewById(R.id.rvMyFeeds)
         adapter = SearchFeedAdapter(mutableListOf(), onFeedClick = { feedId ->
-            val intent = Intent(requireContext(), FeedDetailActivity::class.java).apply {
-                putExtra("feedId", feedId)
-            }
-            startActivity(intent)
+            findNavController().navigate(
+                R.id.feedDetailFragment,
+                bundleOf("feedId" to feedId)
+            )
         })
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         recyclerView.adapter = adapter

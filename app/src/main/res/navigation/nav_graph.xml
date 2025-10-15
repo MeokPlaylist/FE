@@ -107,6 +107,14 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/feedDetailFragment"
+        android:name="com.meokpli.app.main.Home.FeedDetailFragment"
+        android:label="피드 상세" >
+        <argument
+            android:name="feedId"
+            app:argType="long" />
+    </fragment>
 
     <fragment
         android:id="@+id/roadmapView"

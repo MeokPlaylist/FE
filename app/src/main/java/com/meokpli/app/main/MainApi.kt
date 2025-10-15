@@ -96,6 +96,7 @@ data class GetDetailInforResponse(
 data class GetDetailInforDto(
     val nickName: String,
     val content: String,
+    val profileUrl: String,
     val hashTag: List<String>,
     val createdAt: String,              // OffsetDateTime → String 파싱
     val feedPhotoUrl: List<String>,

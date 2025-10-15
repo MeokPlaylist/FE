@@ -24,7 +24,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.transform.CircleCropTransformation
 import com.meokpli.app.data.remote.response.MyPageResponse
-import com.meokpli.app.main.Home.FeedDetailActivity
 import com.meokpli.app.main.MainActivity
 
 
@@ -108,10 +107,10 @@ class ProfileFragment : Fragment() {
         // 서버에서 내 프로필 불러오기 (Authorization은 AuthInterceptor가 자동 첨부)
 // 어댑터 준비
         val adapter = MyFeedThumbnailAdapter(mutableListOf()) { feedId ->
-            val intent = Intent(requireContext(), FeedDetailActivity::class.java).apply {
-                putExtra("feedId", feedId)
-            }
-            startActivity(intent)
+            findNavController().navigate(
+                R.id.feedDetailFragment,
+                bundleOf("feedId" to feedId)
+            )
         }
         rvMyFeeds.layoutManager = GridLayoutManager(requireContext(), 2).apply {
             spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {

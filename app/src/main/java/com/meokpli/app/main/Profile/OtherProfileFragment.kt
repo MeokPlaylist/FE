@@ -176,9 +176,10 @@ class OtherProfileFragment : Fragment() {
         feedsAdapter = MyFeedThumbnailAdapter(
             items = mutableListOf(),
             onPhotoClick = { feedId ->
-                val i = Intent(requireContext(), com.meokpli.app.main.Home.FeedDetailActivity::class.java)
-                i.putExtra("feedId", feedId)
-                startActivity(i)
+                findNavController().navigate(
+                    R.id.feedDetailFragment,
+                    bundleOf("feedId" to feedId)
+                )
             }
         )
         rvMyFeeds.adapter = feedsAdapter
