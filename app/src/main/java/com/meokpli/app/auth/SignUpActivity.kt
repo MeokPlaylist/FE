@@ -1,12 +1,16 @@
 package com.meokpli.app.auth
 
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.MenuItem
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.meokpli.app.R
 import kotlinx.coroutines.*
 import retrofit2.Retrofit
@@ -28,11 +32,18 @@ class SignUpActivity : AppCompatActivity() {
     private var isEmailChecked = false
     private lateinit var api: AuthApi
 
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.signup)
 
-
+        // 키보드(IME) 인셋을 적용해 ScrollView가 리사이즈되도록 강제
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(0, 0, 0, imeInsets.bottom)
+            insets
+        }
 
         // View 연결
         pwEdit = findViewById(R.id.editTextPassword)

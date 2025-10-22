@@ -10,19 +10,14 @@ import retrofit2.http.Url
 
  interface RoadmapApi {
     @GET("create")
-    suspend fun createRoadmap(@Query("feedId") feedId: Long): CreateRoadMapResponse
+    suspend fun createRoadmap(@Query("feedId") feedId: Long): List<RoadMapCandidateDto>
 
     @GET("pullOutKakao")
     suspend fun pullOutKakao(@Query("feedId") feedId: Long): PullOutKakaoPlaceResponse
 
-    @POST("saveRoadMap")
+    @POST("save")
     suspend fun saveRoadMap(@Body body: SaveRoadMapPlaceRequest): Response<Unit>
 }
-
-data class CreateRoadMapResponse(
-    val roadMapId: Long,
-    val roadMapCandidateDto: List<RoadMapCandidateDto>
-)
 
  data class RoadMapCandidateDto(
      val roadMapPlaceId: Long,

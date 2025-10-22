@@ -210,6 +210,7 @@ class LoginActivity : AppCompatActivity() {
                 454 -> null // 비밀번호 오류 → 그냥 토스트만
                 455 -> InitProfileActivity::class.java
                 458 -> CategoryActivity::class.java
+                451 -> null // 존재하지 않는 회원 → 토스트만 표시
                 else -> null
             }
 
@@ -217,6 +218,9 @@ class LoginActivity : AppCompatActivity() {
                 when {
                     codeNumber == 454 -> {
                         Toast.makeText(this@LoginActivity, "잘못된 비밀번호입니다.", Toast.LENGTH_SHORT).show()
+                    }
+                    codeNumber == 451 -> {
+                        Toast.makeText(this@LoginActivity, "존재하지 않는 회원입니다.", Toast.LENGTH_SHORT).show()
                     }
                     next != null -> {
                         startActivity(Intent(this@LoginActivity, next))

@@ -52,8 +52,7 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     }
 
     private fun loadCandidates() = viewLifecycleOwner.lifecycleScope.launch {
-        val res = runCatching { api.createRoadmap(feedId) }.getOrNull()
-        val list = res?.roadMapCandidateDto.orEmpty()
+        val list = runCatching { api.createRoadmap(feedId) }.getOrNull().orEmpty()
         val items = list.map { dto ->
             EditItem(
                 roadMapPlaceId = dto.roadMapPlaceId,
@@ -66,7 +65,7 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     }
 
     private fun saveRoadMap() = viewLifecycleOwner.lifecycleScope.launch {
-        val title = etTitle.text.toString().ifBlank { "제목 없음 여행" }
+        val title = etTitle.text.toString().ifBlank { "제목 없음" }
         val map = adapter.items.associate { it.roadMapPlaceId to (it.selectedPlaceId ?: 0L) }
 
         val body = SaveRoadMapPlaceRequest(feedId, title = title, saveRoadMapPlaceInfor = map)
@@ -159,8 +158,8 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
     ) : RecyclerView.Adapter<CandidateAdapter.VH>() {
 
         inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val name = itemView.findViewById<TextView>(R.id.tvPlaceName)
-            private val addr = itemView.findViewById<TextView>(R.id.tvAddress)
+            private val name = itemView.findViewById<TextView>(R.id.tvCandidateName)
+            private val addr = itemView.findViewById<TextView>(R.id.tvCandidateAddr)
 
             fun bind(item: PlaceCandidate) {
                 name.text = item.placeName

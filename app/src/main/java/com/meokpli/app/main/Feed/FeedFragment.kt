@@ -242,16 +242,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
     private fun renderPreviewChips(root: View, payload: List<String>) {
         val cg = root.findViewById<ViewGroup>(R.id.chipGroupCategoryPreview)
         cg.removeAllViews()
-        if (payload.isEmpty()) {
-            val emptyChip = LayoutInflater.from(requireContext()).inflate(R.layout.item_chip, cg, false)
-            emptyChip.findViewById<TextView>(R.id.chipText).apply {
-                text = "선택 없음"
-                setTextColor(Color.parseColor("#888888"))
-            }
-            emptyChip.findViewById<ImageView>(R.id.chipClose).visibility = View.GONE
-            cg.addView(emptyChip)
-            return
-        }
 
         val reverseMoodMap = mapOf(
             "TRADITIONAL" to "전통적인", "UNIQUE" to "이색적인", "EMOTIONAL" to "감성적인",
@@ -270,15 +260,22 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
 
         payload.forEach { raw ->
             val label = when {
-                raw.startsWith("regions:") -> raw.removePrefix("regions:").replace(":", " ")
+                // ✅ 지역명 변환: 영어 → 한글 + 콜론(:) → 공백
+                raw.startsWith("regions:") -> {
+                    val region = raw.removePrefix("regions:")
+                    CategoryLabels.regionToKorean(region).replace(":", " ")
+                }
                 raw.startsWith("moods:") -> reverseMoodMap[raw.removePrefix("moods:")] ?: raw
                 raw.startsWith("foods:") -> reverseFoodMap[raw.removePrefix("foods:")] ?: raw
                 raw.startsWith("companions:") -> reverseCompanionMap[raw.removePrefix("companions:")] ?: raw
                 else -> raw
             }
 
-            val chipView = LayoutInflater.from(requireContext()).inflate(R.layout.item_chip, cg, false)
+            val chipView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.item_chip, cg, false)
+
             chipView.findViewById<TextView>(R.id.chipText).text = label
+
             chipView.findViewById<ImageView>(R.id.chipClose).setOnClickListener {
                 selectedPayload.remove(raw)
                 val moods = selectedPayload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
@@ -287,6 +284,7 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 sel = SelectedCategories(moods, foods, companions)
                 renderPreviewChips(root, selectedPayload)
             }
+
             cg.addView(chipView)
         }
     }
@@ -377,41 +375,17 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                 for (i in uploadUrls.indices) {
                     val bytes = readBytesFromUri(selectedUris[i])
                     if (bytes.isEmpty()) {
-                        Toast.makeText(requireContext(), "사진 읽기 실패: ${i+1}/${uploadUrls.size}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "사진 읽기 실패: ${i + 1}/${uploadUrls.size}", Toast.LENGTH_SHORT).show()
                         return@launch
                     }
                     val ok = putToPresigned(uploadUrls[i], bytes)
                     if (!ok) {
-                        Toast.makeText(requireContext(), "사진 업로드 실패: ${i+1}/${uploadUrls.size}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "사진 업로드 실패: ${i + 1}/${uploadUrls.size}", Toast.LENGTH_SHORT).show()
                         return@launch
                     }
                 }
+
                 Toast.makeText(requireContext(), "업로드 완료", Toast.LENGTH_SHORT).show()
-
-                val roadmapApi = Network.roadmapApi(requireContext())
-                var pulledOk = false
-                var attempt = 0
-                var wait = 400L
-                while (attempt < 2) {
-                    try {
-                        roadmapApi.pullOutKakao(feedId)
-                        pulledOk = true
-                        break
-                    } catch (e: retrofit2.HttpException) {
-                        if (e.code() >= 500) {
-                            delay(wait); wait *= 2; attempt++
-                        } else {
-                            throw e
-                        }
-                    }
-                }
-                if (!pulledOk) {
-                    Log.w(TAG, "pullOutKakao 실패(서버 지연) feedId=$feedId")
-                    // 실패해도 편집 화면에서 수동으로 다시 시도할 수 있음
-                }
-
-                // ✅ 4) 자동 저장에서 더 이상 pullOutKakao 재호출하지 않음(중복 제거)
-                //    바로 편집 화면으로 이동
                 val args = Bundle().apply { putLong("feedId", feedId) }
                 findNavController().navigate(R.id.action_feed_to_roadmapEdit, args)
 
@@ -421,8 +395,6 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             }
         }
     }
-
-    // ---------- 로드맵 초기화 ----------
 
     // ---------- 유틸 ----------
     private fun openGalleryBottomSheet() {

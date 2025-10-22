@@ -242,16 +242,6 @@ class CategorySelectDialog : DialogFragment() {
 
     private fun renderRegionChips(cg: ChipGroup, codes: List<String>) {
         cg.removeAllViews()
-        if (codes.isEmpty()) {
-            val empty = layoutInflater.inflate(R.layout.item_chip, cg, false)
-            empty.findViewById<TextView>(R.id.chipText).apply {
-                text = "선택 없음"
-                setTextColor(Color.parseColor("#888888"))
-            }
-            empty.findViewById<ImageView>(R.id.chipClose).visibility = View.GONE
-            cg.addView(empty)
-            return
-        }
 
         codes.forEach { code ->
             val parts = code.split(":", limit = 2)

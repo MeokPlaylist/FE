@@ -35,7 +35,8 @@
         <activity
             android:name=".auth.LoginActivity"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Meokpli">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -43,7 +44,12 @@
         </activity>
 
         <!-- 나머지 Activity 목록 -->
-        <activity android:name=".auth.SignUpActivity" />
+        <activity
+            android:name=".auth.SignUpActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".main.MainActivity"
             android:windowSoftInputMode="adjustResize|stateHidden" />
@@ -66,10 +72,6 @@
         <activity
             android:name=".user.OnboardingActivity"
             android:exported="false" />
-        <activity
-            android:name=".main.Home.FeedDetailActivity"
-            android:exported="false" />
-
 
         <!-- 사전 로딩할 폰트 설정 -->
         <meta-data

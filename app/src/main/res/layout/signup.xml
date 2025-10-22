@@ -24,25 +24,22 @@
 
 
     <!-- ✅ 스크롤 가능한 입력 영역 -->
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:fillViewport="true"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:paddingTop="40dp"
         android:background="#FFFFFF">
 
-        <LinearLayout
+
+    <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="32dp">
-
-
-
-
-
 
             <!-- 이메일 -->
             <LinearLayout
@@ -276,5 +273,5 @@
                 app:backgroundTint="@null"
                 android:background="@drawable/btn_basic" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>
