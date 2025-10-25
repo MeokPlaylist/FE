@@ -6,7 +6,7 @@
     android:background="#FFFFFF"
     android:paddingStart="45dp"
     android:paddingEnd="45dp"
-    android:paddingTop="40dp"
+    android:paddingTop="100dp"
     android:orientation="vertical"
     android:gravity="center_horizontal">
 

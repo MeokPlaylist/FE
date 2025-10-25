@@ -10,6 +10,7 @@ import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
 import com.google.android.material.chip.ChipGroup
@@ -32,6 +33,7 @@ class FeedDetailFragment : Fragment() {
     private lateinit var ivLike: ImageView
     private lateinit var tvLikeCount: TextView
     private lateinit var tvCommentCount: TextView
+    private lateinit var btnRoadmap: ImageView
 
     private var feedId: Long = 0L
 
@@ -67,6 +69,7 @@ class FeedDetailFragment : Fragment() {
         // View 바인딩
         tvUserName = view.findViewById(R.id.tvUserName)
         imgAvatar = view.findViewById(R.id.imgAvatar)
+        btnRoadmap = view.findViewById(R.id.btnLocation)
         tvDate = view.findViewById(R.id.tvDate)
         btnMore = view.findViewById(R.id.btnMore)
         chipGroup = view.findViewById(R.id.chipGroup)
@@ -96,6 +99,11 @@ class FeedDetailFragment : Fragment() {
             } else {
                 showReportPopup(v)
             }
+        }
+
+        btnRoadmap.setOnClickListener {
+            val bundle = Bundle().apply { putLong("feedId", feedId) }
+            findNavController().navigate(R.id.roadmapView, bundle)
         }
 
         // 댓글 바텀시트 열기

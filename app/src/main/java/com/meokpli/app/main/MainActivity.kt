@@ -41,6 +41,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         setContentView(R.layout.activity_main)
 
         // 1) 뷰 바인딩
@@ -111,7 +114,7 @@ class MainActivity : AppCompatActivity() {
     private fun isInSameTab(currentId: Int?, tabRootId: Int): Boolean {
         if (currentId == null) return false
         return when (tabRootId) {
-            R.id.homeFragment -> currentId == R.id.homeFragment || currentId == R.id.otherProfileFragment || currentId == R.id.feedDetailFragment
+            R.id.homeFragment -> currentId == R.id.homeFragment || currentId == R.id.otherProfileFragment || currentId == R.id.feedDetailFragment || currentId == R.id.roadmapView
             R.id.searchFragment -> currentId == R.id.searchFragment || currentId == R.id.otherProfileFragment || currentId == R.id.feedDetailFragment
             R.id.feedFragment -> currentId == R.id.feedFragment
             R.id.starFragment -> currentId == R.id.starFragment
@@ -120,7 +123,8 @@ class MainActivity : AppCompatActivity() {
                 currentId == R.id.fragmentSetting ||
                 currentId == R.id.followListFragment ||
                 currentId == R.id.otherProfileFragment ||
-                currentId == R.id.feedDetailFragment
+                currentId == R.id.feedDetailFragment ||
+                currentId == R.id.roadmapView
             }
 
             else -> false

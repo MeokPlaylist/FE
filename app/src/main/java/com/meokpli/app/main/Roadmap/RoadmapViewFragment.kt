@@ -1,168 +1,189 @@
-//package com.meokpli.app.main.Roadmap
-//
-//import android.app.AlertDialog
-//import android.graphics.drawable.ColorDrawable
-//import android.os.Bundle
-//import android.os.SystemClock
-//import android.util.Log
-//import android.view.Gravity
-//import android.view.LayoutInflater
-//import android.view.View
-//import android.view.ViewGroup
-//import android.widget.LinearLayout
-//import android.widget.PopupWindow
-//import android.widget.TextView
-//import android.widget.Toast
-//import androidx.fragment.app.Fragment
-//import androidx.lifecycle.lifecycleScope
-//import androidx.navigation.fragment.findNavController
-//import androidx.recyclerview.widget.LinearLayoutManager
-//import com.meokpli.app.R
-//import com.meokpli.app.databinding.FragmentRoadmapViewBinding
-//import com.meokpli.app.auth.Network
-//import kotlinx.coroutines.launch
-//import android.graphics.Color
-//
-//class RoadmapViewFragment : Fragment() {
-//
-//    companion object { private const val TAG = "RoadmapViewFragment" }
-//
-//    private var _binding: FragmentRoadmapViewBinding? = null
-//    private val binding get() = _binding!!
-//
-//    private val adapter by lazy { RoadmapAdapter(onPhotoClick = ::openPhoto) }
-//    private val api by lazy { Network.roadmapApi(requireContext()) }
-//
-//    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
-//        _binding = FragmentRoadmapViewBinding.inflate(inflater, container, false)
-//        Log.d(TAG, "onCreateView()")
-//        return binding.root
-//    }
-//
-//    override fun onViewCreated(v: View, s: Bundle?) {
-//        super.onViewCreated(v, s)
-//        Log.d(TAG, "onViewCreated()")
-//
-//        binding.rvRoadmap.layoutManager = LinearLayoutManager(requireContext())
-//        binding.rvRoadmap.adapter = adapter
-//
-//        val feedId = requireArguments().getLong("feedId")
-//        Log.i(TAG, "feedId=$feedId")
-//
-//        val writerNickname = requireArguments().getString("writerNickname")
-//        val isMine = requireArguments().getBoolean("isMine", false)
-//
-//        if (isMine) {
-//            binding.btnMore.setOnClickListener { anchor ->
-//                showRoadmapPopup(anchor)
-//            }
-//
-//
-//        } else {
-//            binding.btnMore.visibility = if (isMine) View.VISIBLE else View.GONE
-//
-//        }
-//        binding.btnBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
-//
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            val t0 = SystemClock.elapsedRealtime()
-//            Log.d(TAG, "getRoadmap() start")
-//            runCatching { api.getRoadmap(feedId) }         // 저장된 로드맵 조회
-//                .onSuccess { res ->
-//                    val dt = SystemClock.elapsedRealtime() - t0
-//                    val count = res.callInRoadMapDtoList.size
-//                    Log.i(TAG, "getRoadmap() ok in ${dt}ms, items=$count")
-//
-//                    adapter.items = res.callInRoadMapDtoList
-//                    adapter.notifyDataSetChanged()
-//
-//                    if (count == 0) {
-//                        Toast.makeText(requireContext(), "저장된 로드맵이 없습니다.", Toast.LENGTH_SHORT).show()
-//                    } else {
-//                        val first = res.callInRoadMapDtoList.first()
-//                        Log.v(TAG, "first item name='${first.name}', photo='${first.photoImgUrl}'")
-//                    }
-//                }
-//                .onFailure { e ->
-//                    Log.e(TAG, "getRoadmap() fail", e)
-//                    Toast.makeText(requireContext(), "로드맵 불러오기 실패: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-//                }
-//        }
-//    }
-//
-//    override fun onDestroyView() {
-//        super.onDestroyView()
-//        Log.d(TAG, "onDestroyView()")
-//        _binding = null
-//    }
-//
-//    private fun openPhoto(dto: CallInRoadMapDto) {
-//        val args = Bundle().apply {
-//            putString("title", dto.name)
-//            putString("address", dto.roadAddressName ?: dto.addressName ?: "")
-//            putString("photoUrl", dto.photoImgUrl)
-//        }
-//        findNavController().navigate(R.id.roadmapPhotoDialog, args)
-//    }
-//    private fun showRoadmapPopup(anchor: View) {
-//        val v = LayoutInflater.from(anchor.context)
-//            .inflate(R.layout.popup_roadmap_actions, null, false)
-//
-//        val popup = PopupWindow(
-//            v,
-//            LinearLayout.LayoutParams.WRAP_CONTENT,
-//            LinearLayout.LayoutParams.WRAP_CONTENT,
-//            true
-//        ).apply {
-//            isFocusable = true
-//            isOutsideTouchable = true
-//            elevation = 20f
-//            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-//        }
-//
-//        v.findViewById<TextView>(R.id.itemEditRoadmap).setOnClickListener {
-//            popup.dismiss()
-//            // 편집 화면으로 이동
-//            val args = Bundle().apply {
-//                putLong("feedId", requireArguments().getLong("feedId"))
-//                putString("writerNickname", requireArguments().getString("writerNickname"))
-//            }
-//            findNavController().navigate(R.id.roadmapEdit, args)
-//        }
-//
-//        v.findViewById<TextView>(R.id.itemDeleteRoadmap).setOnClickListener {
-//            popup.dismiss()
-//            confirmDeleteRoadmap()
-//        }
-//
-//        showPopupBelowRight(popup, anchor, v)
-//    }
-//
-//    fun showPopupBelowRight(popup: PopupWindow, anchor: View, contentView: View) {
-//        val location = IntArray(2)
-//        anchor.getLocationOnScreen(location)
-//        contentView.measure(
-//            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-//            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-//        )
-//        val popupW = contentView.measuredWidth
-//        val x = location[0] - (popupW - anchor.width)
-//        val y = location[1] + anchor.height
-//        popup.showAtLocation(anchor, Gravity.TOP or Gravity.START, x, y)
-//    }
-//
-//
-//    // ✅ 삭제 확인 (API 미정 → TODO)
-//    private fun confirmDeleteRoadmap() {
-//        AlertDialog.Builder(requireContext())
-//            .setTitle("로드맵을 삭제할까요?")
-//            .setMessage("되돌릴 수 없습니다.")
-//            .setNegativeButton("취소", null)
-//            .setPositiveButton("삭제") { d, _ ->
-//                // TODO: 로드맵 삭제 API 연동
-//                Toast.makeText(requireContext(), "삭제 기능은 추후 연동 예정입니다.", Toast.LENGTH_SHORT).show()
-//                d.dismiss()
-//            }
-//            .show()
-//    }
-//}
+package com.meokpli.app.main.Roadmap
+
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import com.google.android.material.card.MaterialCardView
+import com.meokpli.app.R
+import com.meokpli.app.auth.Network
+import com.meokpli.app.databinding.FragmentRoadmapViewBinding
+import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+
+class RoadmapViewFragment : Fragment() {
+
+    private var _binding: FragmentRoadmapViewBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var api: RoadmapApi
+    private lateinit var adapter: ViewAdapter
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
+        _binding = FragmentRoadmapViewBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onViewCreated(v: View, s: Bundle?) {
+        super.onViewCreated(v, s)
+
+        val ctx = context ?: return
+        api = Network.roadmapApi(ctx)
+        adapter = ViewAdapter()
+        binding.rvRoadmap.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvRoadmap.adapter = adapter
+
+        val feedId = requireArguments().getLong("feedId")
+
+        binding.btnBack.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
+        loadRoadMap(feedId)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun loadRoadMap(feedId: Long) = viewLifecycleOwner.lifecycleScope.launch {
+        runCatching { api.loadRoadMap(feedId) }
+            .onSuccess { res ->
+                if (!isAdded || view == null) return@onSuccess
+
+                val items = mutableListOf<ViewListItem>()
+
+                //  문자열 파싱 (예: "2025-10-25T20:44:00")
+                val baseDate = try {
+                    res.firstDayAndTime?.let { LocalDateTime.parse(it) }?.toLocalDate()
+                } catch (e: Exception) {
+                    Log.e("RoadmapViewFragment", "날짜 파싱 실패: ${e.message}")
+                    null
+                }
+
+                val formatter = DateTimeFormatter.ofPattern("yyyy. MM. dd")
+
+                val grouped = res.loadRoadMapPlacesList.orEmpty().groupBy { it.dayIndex ?: 1 }
+
+                grouped.toSortedMap().forEach { (day, places) ->
+                    val safeDay = day ?: 1
+                    val formattedDate = baseDate
+                        ?.plusDays((safeDay - 1).toLong())
+                        ?.format(formatter)
+
+                    items.add(ViewListItem.DayHeaderLabel(safeDay, formattedDate))
+                    places.sortedBy { it.orderIndex ?: 0 }.forEach { place ->
+                        items.add(ViewListItem.PlaceEntry(place))
+                    }
+                }
+
+                if (_binding != null && isAdded) {
+                    adapter.submit(items)
+                    binding.tvTripTitle.text = res.title ?: "로드맵"
+                }
+            }
+            .onFailure {
+                if (isAdded && context != null) {
+                    Toast.makeText(requireContext(), "로드맵 불러오기 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                } else {
+                    Log.w("RoadmapViewFragment", "Fragment not attached, skip Toast. cause=${it.message}")
+                }
+            }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    // ================== Adapter ==================
+    inner class ViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        private val TYPE_DAY_HEADER = 0
+        private val TYPE_PLACE = 1
+
+        val items = mutableListOf<ViewListItem>()
+
+        fun submit(newItems: List<ViewListItem>) {
+            items.clear()
+            items.addAll(newItems)
+            notifyDataSetChanged()
+        }
+
+        override fun getItemViewType(position: Int): Int = when (items[position]) {
+            is ViewListItem.DayHeaderLabel -> TYPE_DAY_HEADER
+            is ViewListItem.PlaceEntry -> TYPE_PLACE
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            return when (viewType) {
+                TYPE_DAY_HEADER -> {
+                    val v = layoutInflater.inflate(R.layout.item_day_header, parent, false)
+                    DayHeaderVH(v)
+                }
+                else -> {
+                    val v = layoutInflater.inflate(R.layout.item_roadmap_timeline, parent, false)
+                    PlaceVH(v)
+                }
+            }
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            when (val item = items[position]) {
+                is ViewListItem.DayHeaderLabel -> (holder as DayHeaderVH).bind(item)
+                is ViewListItem.PlaceEntry -> (holder as PlaceVH).bind(item.place)
+            }
+        }
+
+        override fun getItemCount() = items.size
+
+        inner class DayHeaderVH(v: View) : RecyclerView.ViewHolder(v) {
+            private val tvDay = v.findViewById<TextView>(R.id.tvDayHeader)
+            fun bind(item: ViewListItem.DayHeaderLabel) {
+                if (item.date != null)
+                    tvDay.text = "${item.day}일차 (${item.date})"
+                else
+                    tvDay.text = "${item.day}일차"
+            }
+        }
+
+        inner class PlaceVH(v: View) : RecyclerView.ViewHolder(v) {
+            private val ivPhoto = v.findViewById<ImageView>(R.id.ivPhoto)
+            private val tvName = v.findViewById<TextView>(R.id.tvPlaceName)
+            private val tvAddr = v.findViewById<TextView>(R.id.tvAddress)
+            private val tvPhone = v.findViewById<TextView>(R.id.tvPhone)
+            private val card = v.findViewById<MaterialCardView>(R.id.card)
+
+            fun bind(p: LoadRoadMapPlace) {
+                ivPhoto.load(p.presignedGetPhotoUrl)
+                tvName.text = p.name
+                tvAddr.text = p.address
+
+                // 전화번호 있으면 하단에 추가 표시
+                if (p.phone != null && p.phone.isNotBlank()) {
+                    if (tvPhone.parent == null) {
+                        (card.getChildAt(0) as ViewGroup).addView(tvPhone)
+                    }
+                    tvPhone.text = "전화번호: ${p.phone}"
+                    tvPhone.visibility = View.VISIBLE
+                } else {
+                    tvPhone.visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    sealed class ViewListItem {
+        data class DayHeaderLabel(val day: Int, val date: String?) : ViewListItem()
+        data class PlaceEntry(val place: LoadRoadMapPlace) : ViewListItem()
+    }
+}

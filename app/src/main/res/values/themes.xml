@@ -14,7 +14,7 @@
         <item name="colorSecondaryVariant">@color/black</item>
         <item name="colorOnSecondary">@color/black</item>
 
-        <!-- ✅ 상태바 다시 보이게 (딱 한 줄 추가) -->
+        <!-- 상태바 다시 보이게 (딱 한 줄 추가) -->
         <item name="android:windowFullscreen">false</item>
 
         <!-- 상태바 색상 -->

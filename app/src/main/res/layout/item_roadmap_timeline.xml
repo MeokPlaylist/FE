@@ -145,6 +145,14 @@
                     android:textSize="12sp"
                     android:textColor="#444444"
                     tools:text="경기도 수원시 영통구 아주로 46"/>
+
+                <TextView
+                    android:id="@+id/tvPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#444444"
+                    tools:text=""/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
