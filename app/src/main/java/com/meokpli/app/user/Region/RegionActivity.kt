@@ -14,6 +14,8 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.widget.addTextChangedListener
 import android.content.Context
 import android.view.View
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class RegionActivity : AppCompatActivity() {
 
@@ -65,6 +67,10 @@ class RegionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         setContentView(R.layout.activity_region)
 
         // 1) 진입 시 기존 선택 반영

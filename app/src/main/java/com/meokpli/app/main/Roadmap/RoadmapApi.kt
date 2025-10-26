@@ -26,8 +26,8 @@ import retrofit2.http.Query
 
  data class LoadRoadMapPlace(
      val placeId: Long,
-     val name: String,
-     val address: String,
+     val name: String?,
+     val address: String?,
      val phone: String?,
      val presignedGetPhotoUrl: String,
      val dayIndex: Int,

@@ -13,11 +13,6 @@ class SidoAdapter(
     private val onSidoSelected: (String) -> Unit
 ) : RecyclerView.Adapter<SidoAdapter.VH>() {
 
-    fun setSelected(value: String?) {
-        selected = value
-        notifyDataSetChanged()
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val v = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_region_sido, parent, false)

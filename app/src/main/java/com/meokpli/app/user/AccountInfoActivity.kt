@@ -7,6 +7,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
@@ -32,6 +34,10 @@ class AccountInfoActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         setContentView(R.layout.activity_account_info) // XML 매핑 (valueAccountdate/valueLoginmethod 사용)
 
         // 뒤로가기

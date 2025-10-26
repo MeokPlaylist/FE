@@ -36,6 +36,8 @@ interface UserApi {
 
     @GET("personalInfor")
     suspend fun getPersonalInfo(): PersonalInfoResponse
+    @GET("myNickname")
+    suspend fun getMyNickName(): GetMyNicknameResponse
 
     @GET("mypage")
     suspend fun  getMyPage(): MyPageResponse
@@ -53,6 +55,7 @@ interface UserApi {
     suspend fun getCategories() : GetCategoriesResponse
 }
 data class GetCategoriesResponse(val categoryNames: List<String>)
+data class GetMyNicknameResponse(val nickname: String)
 data class FindUserRequest(val name: String, val email: String)
 data class UserProfileSetupRequest(val fileName: String, val dayAndTime: String)
 data class FindUserResponse(val userId: Long)

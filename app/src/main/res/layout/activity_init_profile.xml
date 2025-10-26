@@ -51,12 +51,12 @@
                 android:id="@+id/imageProfile"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
-                android:scaleType="centerInside"
+                android:scaleType="centerCrop"
                 android:adjustViewBounds="true"
                 android:background="@drawable/circle_background"
                 android:clipToOutline="true"
-                android:contentDescription="프로필 이미지"
-                android:src="@drawable/ic_profile_camera" />
+                android:src="@drawable/ic_profile_red"
+                android:contentDescription="프로필 이미지"/>
 
             <!-- X(삭제) 버튼: 기본은 숨김 -->
             <ImageButton

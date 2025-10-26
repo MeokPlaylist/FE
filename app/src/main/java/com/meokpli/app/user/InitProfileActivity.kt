@@ -21,6 +21,11 @@ import com.meokpli.app.auth.Network
 import com.meokpli.app.main.Feed.PresignedUploader
 import kotlinx.coroutines.*
 import java.time.LocalDateTime
+import android.graphics.Bitmap
+import android.graphics.Matrix
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.exifinterface.media.ExifInterface
 
 class InitProfileActivity : AppCompatActivity() {
 
@@ -49,17 +54,18 @@ class InitProfileActivity : AppCompatActivity() {
     ) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
-            contentResolver.openInputStream(it)?.use { input ->
-                val bmp = BitmapFactory.decodeStream(input)
-                imageProfile.setImageBitmap(bmp)
-            }
-            btnClearPhoto.visibility = View.VISIBLE // 사진 있을 때만 보이기
+            imageProfile.setImageURI(it)
+            btnClearPhoto.visibility = View.VISIBLE
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         setContentView(R.layout.activity_init_profile)
 
         imageProfile = findViewById(R.id.imageProfile)
@@ -125,7 +131,8 @@ class InitProfileActivity : AppCompatActivity() {
         })
 
         // 사진 선택
-        imageProfile.setOnClickListener { pickImage.launch("image/*") }
+        val openPicker = { pickImage.launch("image/*") }
+        imageProfile.setOnClickListener { openPicker() }
 
         // X 버튼 클릭 → 기본 이미지로 복귀
         btnClearPhoto.setOnClickListener {

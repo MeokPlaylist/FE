@@ -189,8 +189,8 @@ class RoadmapViewFragment : Fragment() {
 
             fun bind(p: LoadRoadMapPlace) {
                 ivPhoto.load(p.presignedGetPhotoUrl)
-                tvName.text = p.name
-                tvAddr.text = p.address
+                tvName.text = p.name ?: "숨은 맛집"
+                tvAddr.text = p.address?: ""
 
                 //  사진 클릭 시 확대 보기
                 ivPhoto.setOnClickListener {
@@ -199,7 +199,7 @@ class RoadmapViewFragment : Fragment() {
                     overlay.animate().alpha(1f).setDuration(200).start()
 
                     ivZoom.load(p.presignedGetPhotoUrl)
-                    tvZoomName.text = p.name
+                    tvZoomName.text = p.name?: "숨은 맛집"
                     tvZoomAddr.text = p.address ?: ""
 
                     overlay.setOnClickListener {

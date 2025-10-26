@@ -6,6 +6,8 @@ import android.util.Patterns
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.meokpli.app.auth.Network
@@ -27,6 +29,10 @@ class PasswordForgotActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         // 주의: 프로젝트에 올라온 파일명 오타 그대로 사용 (actiyity_password_forgot.xml)
         setContentView(R.layout.actiyity_password_forgot) // ← xml 파일명 :contentReference[oaicite:5]{index=5}
 

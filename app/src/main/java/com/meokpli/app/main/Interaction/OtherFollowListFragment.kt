@@ -17,10 +17,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.meokpli.app.auth.Network
 import com.meokpli.app.main.SlicedResponse
 import com.meokpli.app.R
 import com.google.android.material.button.MaterialButton
+import com.meokpli.app.user.GetMyNicknameResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -127,16 +129,18 @@ class OtherFollowListFragment : Fragment() {
         // 초기 데이터/닉네임/관계 캐시 로드
         viewLifecycleOwner.lifecycleScope.launch {
             // 내 닉네임 로드 → 어댑터에 주입 (내 항목 버튼 숨김)
-            runCatching {
-                withContext(Dispatchers.IO) { Network.userApi(requireContext()).getPersonalInfo() }
-            }.onSuccess {
-                myNickname = it.name
+            runCatching<GetMyNicknameResponse> {
+                withContext(Dispatchers.IO) {
+                    Network.userApi(requireContext()).getMyNickName()
+                }
+            }.onSuccess { response: GetMyNicknameResponse ->
+                myNickname = response.nickname
                 Log.d(TAG_OFL, "myNickname=$myNickname")
                 adapter.setMyNickname(myNickname)
-            }.onFailure {
+            }.onFailure { e ->
                 myNickname = null
                 adapter.setMyNickname(null)
-                Log.w(TAG_OFL, "failed to load personal info", it)
+                Log.w(TAG_OFL, "failed to load personal info", e)
             }
 
             // 관계 캐시 1페이지 프리로드
@@ -309,10 +313,11 @@ class OtherFollowListFragment : Fragment() {
         val btnCancel = v.findViewById<MaterialButton>(R.id.btnCancel)
         val btnUnfollow = v.findViewById<MaterialButton>(R.id.btnUnfollow)
 
-        if (!avatarUrl.isNullOrBlank()) {
-            iv.load(avatarUrl)
-        } else {
-            iv.setImageResource(R.drawable.ic_profile_red)
+        iv.load(avatarUrl) {
+            crossfade(true)
+            placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+            error(R.drawable.ic_profile_red) // 실패 시 표시
+            transformations(CircleCropTransformation()) // 동그랗게 자르기
         }
 
         val dialog = AlertDialog.Builder(requireContext())
@@ -380,19 +385,18 @@ class OtherFollowListFragment : Fragment() {
             fun bind(u: UserRowUi, pos: Int) {
                 val ctx = itemView.context
 
-                if (!u.profileImgUrl.isNullOrBlank()) {
-                    avatar.load(u.profileImgUrl) {
-                        placeholder(R.drawable.ic_profile_red)
-                        error(R.drawable.ic_profile_red)
-                        crossfade(true)
-                    }
-                } else avatar.setImageResource(R.drawable.ic_profile_red)
+                avatar.load(u.profileImgUrl) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+                    error(R.drawable.ic_profile_red) // 실패 시 표시
+                    transformations(CircleCropTransformation()) // 동그랗게 자르기
+                }
 
                 name.text = u.nickname
                 subtitle.text = u.introduction.orEmpty()
 
-                val isSelf = !myNickname.isNullOrBlank() && u.nickname == myNickname
-                Log.d(TAG_OFL, "bind pos=$pos user=${u.nickname} isSelf=$isSelf following=${u.isFollowing} followsMe=${u.followsMe}")
+                val isSelf = u.nickname == myNickname
+                Log.d(TAG_OFL, "bind pos=$pos user=${u.nickname},${myNickname} isSelf=$isSelf following=${u.isFollowing} followsMe=${u.followsMe}")
 
                 if (isSelf) {
                     // 내 항목이면 버튼 숨김

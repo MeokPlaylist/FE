@@ -3,11 +3,17 @@ package com.meokpli.app.user
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.meokpli.app.auth.Network
 import com.meokpli.app.R
@@ -366,6 +372,10 @@ class CategoryActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         setContentView(R.layout.activity_category)
 
         submitButton = findViewById(R.id.submitButton)
@@ -538,31 +548,22 @@ class CategoryActivity : AppCompatActivity() {
         chipGroupRegions.removeAllViews()
 
         selectedRegions.forEach { regionCode ->
-            // 화면 표시는 "서울 강남구"처럼, 서버 전송은 원본 그대로 유지
             val label = regionCode.replace(":", " ")
 
-            val chip = Chip(this).apply {
-                text = label
-                isCheckable = false
-                isClickable = true
-                isCloseIconVisible = true         // ⨯ 표시
-                chipIcon = null
-                checkedIcon = null
+            val chipView = LayoutInflater.from(this)
+                .inflate(R.layout.item_chip, chipGroupRegions, false)
 
-                // 기존 칩들과 동일한 스타일
-                setChipBackgroundColorResource(R.color.selector_chip_background)
-                setTextColor(ContextCompat.getColorStateList(context, R.color.selector_chip_text))
-                setChipStrokeColorResource(R.color.selector_chip_stroke)
-                chipStrokeWidth = resources.displayMetrics.density * 0.75f
+            // 텍스트 설정
+            chipView.findViewById<TextView>(R.id.chipText).text = label
 
-                // 삭제 핸들러
-                setOnCloseIconClickListener {
-                    // 리스트에서 제거하고 다시 렌더
-                    selectedRegions = selectedRegions.filterNot { it == regionCode }
-                    renderSelectedRegions()
-                }
+            // 닫기 버튼
+            chipView.findViewById<ImageView>(R.id.chipClose).setOnClickListener {
+                selectedRegions = selectedRegions.filterNot { it == regionCode }
+                renderSelectedRegions()
             }
-            chipGroupRegions.addView(chip)
+
+            // chipGroupRegions에 추가
+            chipGroupRegions.addView(chipView)
         }
     }
 

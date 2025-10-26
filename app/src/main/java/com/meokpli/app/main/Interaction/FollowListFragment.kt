@@ -124,9 +124,9 @@ class FollowListFragment : Fragment() {
         // 초기 데이터 로드
         viewLifecycleOwner.lifecycleScope.launch {
             // 1) 내 닉네임 불러와서 어댑터에 주입 (내 항목 버튼 숨김)
-            runCatching { withContext(Dispatchers.IO) { Network.userApi(requireContext()).getPersonalInfo() } }
+            runCatching { withContext(Dispatchers.IO) { Network.userApi(requireContext()).getMyNickName() } }
                 .onSuccess {
-                    myNickname = it.name
+                    myNickname = it.nickname
                     adapter.setMyNickname(myNickname)
                     Log.d(TAG_FL, "myNickname=$myNickname")
                 }

@@ -11,11 +11,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import com.meokpli.app.R
 import androidx.activity.addCallback
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
-import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
@@ -124,7 +119,8 @@ class MainActivity : AppCompatActivity() {
                 currentId == R.id.followListFragment ||
                 currentId == R.id.otherProfileFragment ||
                 currentId == R.id.feedDetailFragment ||
-                currentId == R.id.roadmapView
+                currentId == R.id.roadmapView ||
+                currentId == R.id.otherFollowListFragment
             }
 
             else -> false

@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.meokpli.app.R
 import com.google.android.material.button.MaterialButton
 
@@ -61,14 +62,11 @@ class FollowUserAdapter(
             val ctx = itemView.context
 
             // 아바타
-            if (!u.avatarUrl.isNullOrBlank()) {
-                avatar.load(u.avatarUrl) {
-                    placeholder(R.drawable.ic_profile_red)
-                    error(R.drawable.ic_profile_red)
-                    crossfade(true)
-                }
-            } else {
-                avatar.setImageResource(R.drawable.ic_profile_red)
+            avatar.load(u.avatarUrl) {
+                crossfade(true)
+                placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+                error(R.drawable.ic_profile_red) // 실패 시 표시
+                transformations(CircleCropTransformation()) // 동그랗게 자르기
             }
 
             name.text = u.name

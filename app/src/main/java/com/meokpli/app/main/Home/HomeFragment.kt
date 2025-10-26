@@ -56,8 +56,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
         // 내 닉네임 1회 로드
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { Network.userApi(requireContext()).getPersonalInfo() }
-                .onSuccess { myNickname = it.name }
+            runCatching { Network.userApi(requireContext()).getMyNickName() }
+                .onSuccess { myNickname = it.nickname }
                 .onFailure { myNickname = null }
         }
 

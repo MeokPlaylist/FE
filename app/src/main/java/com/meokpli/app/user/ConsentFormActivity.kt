@@ -9,6 +9,8 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import android.content.Intent
 import androidx.activity.addCallback
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.meokpli.app.auth.Network
 import com.meokpli.app.R
@@ -27,6 +29,10 @@ class ConsentFormActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        //상태바 표시
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         setContentView(R.layout.activity_consent_form)
         //JWT가 자동으로 헤더에 실림
         userApi = Network.userApi(this)
