@@ -1,5 +1,7 @@
 package com.meokpli.app.main.Roadmap
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -180,7 +182,6 @@ class RoadmapViewFragment : Fragment() {
             private val tvName = v.findViewById<TextView>(R.id.tvPlaceName)
             private val tvAddr = v.findViewById<TextView>(R.id.tvAddress)
             private val tvPhone = v.findViewById<TextView>(R.id.tvPhone)
-            private val card = v.findViewById<MaterialCardView>(R.id.card)
             private val lineTop = v.findViewById<View>(R.id.lineTop)
             private val lineBottom = v.findViewById<View>(R.id.lineBottom)
             private val ivArrow = v.findViewById<ImageView>(R.id.ivArrow)
@@ -209,10 +210,16 @@ class RoadmapViewFragment : Fragment() {
                     }
                 }
 
-                if (!p.phone.isNullOrBlank()) {
-                    tvPhone.text = "전화번호: ${p.phone}"
-                    tvPhone.visibility = View.VISIBLE
-                } else tvPhone.visibility = View.GONE
+                tvPhone.text = p.phone ?: ""
+                p.phone?.let { phone ->
+                    if (p.phone.isNotBlank()) {
+                        tvPhone.paint.isUnderlineText = true
+                        tvPhone.setOnClickListener {
+                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                            startActivity(intent)
+                        }
+                    } else tvPhone.visibility = View.GONE
+                }
 
                 // placeId가 null이면 버튼 숨김
                 if (p.placeId == 0L) {

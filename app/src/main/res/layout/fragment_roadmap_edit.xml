@@ -16,17 +16,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="start|center_vertical"
-            android:layout_marginStart="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_arrow_left"
-            android:paddingTop="12dp"
-            app:tint="@android:color/white"
-            android:contentDescription="뒤로" />
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnBack"-->
+<!--            android:layout_width="32dp"-->
+<!--            android:layout_height="32dp"-->
+<!--            android:layout_gravity="start|center_vertical"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--            android:src="@drawable/ic_arrow_left"-->
+<!--            android:paddingTop="12dp"-->
+<!--            app:tint="@android:color/white"-->
+<!--            android:contentDescription="뒤로" />-->
 
         <TextView
             android:id="@+id/tvTitle"

@@ -131,7 +131,10 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             sel = SelectedCategories(moods, foods, companions)
             renderPreviewChips(view, selectedPayload)
         }
-
+        view.setOnTouchListener { v, event ->
+            hideKeyboard(v)
+            false
+        }
         // ✅ 카테고리 추가 버튼
         view.findViewById<TextView>(R.id.btnCategoryAdd)?.setOnClickListener {
             val moods = selectedPayload.filter { it.startsWith("moods:") }.map { it.removePrefix("moods:") }
@@ -405,6 +408,11 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
         GalleryBottomSheet.newInstance(ArrayList(selectedUris)).show(parentFragmentManager, "gallery")
     }
 
+    private fun hideKeyboard(view: View) {
+        val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
+                as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
     private fun extractHashtags(text: String): List<String> =
         Regex("""#([^\s#]+)""").findAll(text).map { it.groupValues[1] }.toList()
 

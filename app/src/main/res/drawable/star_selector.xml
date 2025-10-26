@@ -3,5 +3,5 @@
     <!-- 선택된 상태일 때 -->
     <item android:state_selected="true" android:drawable="@drawable/ic_favorite" />
     <!-- 기본 상태 -->
-    <item android:drawable="@drawable/ic_star_unchecked" />
+    <item android:drawable="@drawable/ic_unfavorite" />
 </selector>
