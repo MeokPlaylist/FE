@@ -46,6 +46,10 @@ class RoadmapViewFragment : Fragment() {
         binding.rvRoadmap.layoutManager = LinearLayoutManager(requireContext())
         binding.rvRoadmap.adapter = adapter
 
+        // 세로라인 ItemDecoration 추가 (X좌표는 화면 비율에 맞게)
+        val lineX = resources.displayMetrics.widthPixels * 0.2652f  // 사진과 카드 사이 중앙
+        binding.rvRoadmap.addItemDecoration(VerticalLineDecoration(lineX))
+
         val feedId = requireArguments().getLong("feedId")
 
         binding.btnBack.setOnClickListener {
@@ -162,21 +166,52 @@ class RoadmapViewFragment : Fragment() {
             private val tvAddr = v.findViewById<TextView>(R.id.tvAddress)
             private val tvPhone = v.findViewById<TextView>(R.id.tvPhone)
             private val card = v.findViewById<MaterialCardView>(R.id.card)
+            private val lineTop = v.findViewById<View>(R.id.lineTop)
+            private val lineBottom = v.findViewById<View>(R.id.lineBottom)
+            private val ivArrow = v.findViewById<ImageView>(R.id.ivArrow)
+            private val dot = v.findViewById<View>(R.id.dot)
 
             fun bind(p: LoadRoadMapPlace) {
                 ivPhoto.load(p.presignedGetPhotoUrl)
                 tvName.text = p.name
                 tvAddr.text = p.address
 
-                // 전화번호 있으면 하단에 추가 표시
-                if (p.phone != null && p.phone.isNotBlank()) {
-                    if (tvPhone.parent == null) {
-                        (card.getChildAt(0) as ViewGroup).addView(tvPhone)
-                    }
+                if (!p.phone.isNullOrBlank()) {
                     tvPhone.text = "전화번호: ${p.phone}"
                     tvPhone.visibility = View.VISIBLE
-                } else {
-                    tvPhone.visibility = View.GONE
+                } else tvPhone.visibility = View.GONE
+
+                val pos = bindingAdapterPosition
+                val items = adapter.items
+
+                val currentDay = (items[pos] as? ViewListItem.PlaceEntry)?.place?.dayIndex
+                val prevDay = (items.getOrNull(pos - 1) as? ViewListItem.PlaceEntry)?.place?.dayIndex
+                val nextDay = (items.getOrNull(pos + 1) as? ViewListItem.PlaceEntry)?.place?.dayIndex
+
+                lineTop.visibility = View.GONE
+                lineBottom.visibility = View.GONE
+                dot.visibility = View.GONE
+                ivArrow.visibility = View.GONE
+
+                // 첫 장소
+                if (prevDay != currentDay && nextDay == currentDay) {
+                    dot.visibility = View.VISIBLE
+                    lineBottom.visibility = View.VISIBLE
+                }
+                // 중간 장소
+                else if (prevDay == currentDay && nextDay == currentDay) {
+                    lineTop.visibility = View.VISIBLE
+                    lineBottom.visibility = View.VISIBLE
+                }
+                // 마지막 장소
+                else if (prevDay == currentDay && nextDay != currentDay) {
+                    lineTop.visibility = View.VISIBLE
+                    dot.visibility = View.VISIBLE
+                    ivArrow.visibility = View.VISIBLE
+                }
+                // 하루에 하나만 있을 때
+                else if (prevDay != currentDay && nextDay != currentDay) {
+                    dot.visibility = View.VISIBLE
                 }
             }
         }

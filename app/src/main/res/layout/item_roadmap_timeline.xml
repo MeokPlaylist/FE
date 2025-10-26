@@ -5,53 +5,38 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="100dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:minHeight="90dp"
+    android:paddingVertical="6dp">
 
-    <!-- 세로 라인 위치 -->
+    <!-- 왼쪽 사진 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/photoContainer"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:cardCornerRadius="40dp"
+        app:cardElevation="2dp"
+        app:strokeColor="#33000000"
+        app:strokeWidth="1dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="16dp">
+
+        <ImageView
+            android:id="@+id/ivPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/sample_food"/>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 사진과 카드 사이 정중앙 가이드라인 -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideTimeline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_begin="124dp"/>
-
-    <!-- 왼쪽 이미지 -->
-    <FrameLayout
-        android:id="@+id/photo_container"
-        android:layout_width="88dp"
-        android:layout_height="88dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:cardCornerRadius="44dp"
-            app:cardElevation="2dp"
-            app:strokeColor="#1A000000"
-            app:strokeWidth="1dp">
-
-            <ImageView
-                android:id="@+id/ivPhoto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                tools:src="@drawable/ic_launcher_foreground"/>
-        </com.google.android.material.card.MaterialCardView>
-    </FrameLayout>
-
-    <!-- 세로 라인 기준점 -->
-    <View
-        android:id="@+id/anchorCenter"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="@id/photo_container"
-        app:layout_constraintBottom_toBottomOf="@id/photo_container"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"/>
+        app:layout_constraintGuide_percent="0.285" />
 
     <!-- 위쪽 선 -->
     <View
@@ -59,11 +44,23 @@
         android:layout_width="1dp"
         android:layout_height="0dp"
         android:background="#33000000"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/dot"
-        tools:visibility="visible"/>
+        app:layout_constraintStart_toStartOf="@id/guideTimeline"
+        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
+        android:visibility="gone" />
+
+    <!-- 점 -->
+    <View
+        android:id="@+id/dot"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="@drawable/bg_dot_small"
+        app:layout_constraintTop_toTopOf="@id/photoContainer"
+        app:layout_constraintBottom_toBottomOf="@id/photoContainer"
+        app:layout_constraintStart_toStartOf="@id/guideTimeline"
+        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
+        android:visibility="gone" />
 
     <!-- 아래쪽 선 -->
     <View
@@ -75,109 +72,70 @@
         app:layout_constraintEnd_toEndOf="@id/guideTimeline"
         app:layout_constraintTop_toBottomOf="@id/dot"
         app:layout_constraintBottom_toBottomOf="parent"
-        tools:visibility="visible"/>
+        android:visibility="gone"/>
 
-    <!-- 시작 점 -->
-    <View
-        android:id="@+id/dot"
-        android:layout_width="6dp"
-        android:layout_height="6dp"
-        android:background="@drawable/bg_dot_small"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
-        app:layout_constraintTop_toTopOf="@id/photo_container"
-        app:layout_constraintBottom_toBottomOf="@id/photo_container"
-        tools:visibility="visible"/>
-
-    <!-- 끝 화살표 -->
+    <!-- 화살표 -->
     <ImageView
         android:id="@+id/ivArrow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
         android:src="@drawable/ic_arrow_down"
-        android:contentDescription="@null"
         app:layout_constraintStart_toStartOf="@id/guideTimeline"
         app:layout_constraintEnd_toEndOf="@id/guideTimeline"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dot"
+        android:layout_marginBottom="-3dp"
         android:visibility="gone"
-        tools:visibility="gone"/>
+        app:tint="#33000000" />
+
+
 
     <!-- 오른쪽 카드 -->
-    <FrameLayout
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toEndOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/photo_container"
-        app:layout_constraintBottom_toBottomOf="@id/photo_container">
+        android:minHeight="64dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:strokeColor="#22000000"
+        app:strokeWidth="1dp"
+        app:layout_constraintStart_toEndOf="@id/photoContainer"
+        app:layout_constraintTop_toTopOf="@id/photoContainer"
+        app:layout_constraintBottom_toBottomOf="@id/photoContainer"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- 카드 본체 -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="64dp"
-            app:cardBackgroundColor="@android:color/white"
-            app:strokeColor="#40000000"
-            app:strokeWidth="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp">
+            android:orientation="vertical"
+            android:padding="12dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tvPlaceName"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
+                android:textColor="#000"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                tools:text="맥도날드" />
 
-                <TextView
-                    android:id="@+id/tvPlaceName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:textColor="#000000"
-                    tools:text="맥도날드"/>
+            <TextView
+                android:id="@+id/tvAddress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555"
+                android:textSize="12sp"
+                tools:text="경기도 수원시 영통구 아주로 46" />
 
-                <TextView
-                    android:id="@+id/tvAddress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="#444444"
-                    tools:text="경기도 수원시 영통구 아주로 46"/>
-
-                <TextView
-                    android:id="@+id/tvPhone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="#444444"
-                    tools:text=""/>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- 카드 위에 겹치는 아이콘 -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_gravity="top|end"
-            android:translationY="-8.8dp"
-            android:translationX="-5dp">
-
-            <ImageView
-                android:id="@+id/ivPet"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_pet"/>
-
-            <ImageView
-                android:id="@+id/ivStar"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_star_unchecked"/>
+            <TextView
+                android:id="@+id/tvPhone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#555"
+                android:textSize="12sp"
+                tools:text="전화번호: 031-000-0000" />
         </LinearLayout>
-    </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
