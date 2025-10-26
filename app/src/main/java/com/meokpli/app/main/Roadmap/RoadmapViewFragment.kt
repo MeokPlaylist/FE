@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -16,9 +17,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.imageview.ShapeableImageView
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import com.meokpli.app.databinding.FragmentRoadmapViewBinding
+import com.meokpli.app.main.Favorite.PlaceApi
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
@@ -29,10 +32,21 @@ class RoadmapViewFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var api: RoadmapApi
+    private lateinit var placeApi: PlaceApi
     private lateinit var adapter: ViewAdapter
+    private lateinit var overlay: View
+    private lateinit var ivZoom: ShapeableImageView
+    private lateinit var tvZoomName: TextView
+    private lateinit var tvZoomAddr: TextView
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         _binding = FragmentRoadmapViewBinding.inflate(inflater, container, false)
+        overlay = inflater.inflate(R.layout.layout_photo_overlay, _binding!!.root as ViewGroup, false)
+        _binding!!.root.addView(overlay)
+
+        ivZoom = overlay.findViewById(R.id.ivZoom)
+        tvZoomName = overlay.findViewById(R.id.tvZoomName)
+        tvZoomAddr = overlay.findViewById(R.id.tvZoomAddr)
         return binding.root
     }
 
@@ -42,12 +56,13 @@ class RoadmapViewFragment : Fragment() {
 
         val ctx = context ?: return
         api = Network.roadmapApi(ctx)
+        placeApi = Network.placeApi(ctx)
         adapter = ViewAdapter()
         binding.rvRoadmap.layoutManager = LinearLayoutManager(requireContext())
         binding.rvRoadmap.adapter = adapter
 
         // 세로라인 ItemDecoration 추가 (X좌표는 화면 비율에 맞게)
-        val lineX = resources.displayMetrics.widthPixels * 0.2652f  // 사진과 카드 사이 중앙
+        val lineX = resources.displayMetrics.widthPixels * 0.2792f  // 사진과 카드 사이 중앙
         binding.rvRoadmap.addItemDecoration(VerticalLineDecoration(lineX))
 
         val feedId = requireArguments().getLong("feedId")
@@ -170,17 +185,75 @@ class RoadmapViewFragment : Fragment() {
             private val lineBottom = v.findViewById<View>(R.id.lineBottom)
             private val ivArrow = v.findViewById<ImageView>(R.id.ivArrow)
             private val dot = v.findViewById<View>(R.id.dot)
+            private val btnFavorite = v.findViewById<ImageButton>(R.id.btnFavorite)
 
             fun bind(p: LoadRoadMapPlace) {
                 ivPhoto.load(p.presignedGetPhotoUrl)
                 tvName.text = p.name
                 tvAddr.text = p.address
 
+                //  사진 클릭 시 확대 보기
+                ivPhoto.setOnClickListener {
+                    overlay.visibility = View.VISIBLE
+                    overlay.alpha = 0f
+                    overlay.animate().alpha(1f).setDuration(200).start()
+
+                    ivZoom.load(p.presignedGetPhotoUrl)
+                    tvZoomName.text = p.name
+                    tvZoomAddr.text = p.address ?: ""
+
+                    overlay.setOnClickListener {
+                        overlay.animate().alpha(0f).setDuration(200)
+                            .withEndAction { overlay.visibility = View.GONE }
+                            .start()
+                    }
+                }
+
                 if (!p.phone.isNullOrBlank()) {
                     tvPhone.text = "전화번호: ${p.phone}"
                     tvPhone.visibility = View.VISIBLE
                 } else tvPhone.visibility = View.GONE
 
+                // placeId가 null이면 버튼 숨김
+                if (p.placeId == 0L) {
+                    btnFavorite.visibility = View.GONE
+                } else {
+                    btnFavorite.visibility = View.VISIBLE
+                }
+                //favorite 반영
+                btnFavorite.setImageResource(
+                    if (p.isFavorite) R.drawable.ic_favorite
+                    else R.drawable.ic_unfavorite
+                )
+
+                // 클릭 시 찜 토글
+                btnFavorite.setOnClickListener {
+                    lifecycleScope.launch {
+                        val nowFavorite = p.isFavorite
+                        runCatching {
+                            if (nowFavorite) {
+                                placeApi.removeFavoriteWithPlaceId(p.placeId)
+                            } else {
+                                placeApi.saveFavoriteWithPlaceId(p.placeId)
+                            }
+                        }.onSuccess {
+                            // 상태 반전
+                            p.isFavorite = !nowFavorite
+                            btnFavorite.setImageResource(
+                                if (p.isFavorite) R.drawable.ic_favorite
+                                else R.drawable.ic_unfavorite
+                            )
+                        }.onFailure {
+                            Toast.makeText(
+                                itemView.context,
+                                "찜 처리 실패: ${it.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+
+                // ---------------- 타임라인 선/점/화살표 기존 코드 유지 ----------------
                 val pos = bindingAdapterPosition
                 val items = adapter.items
 

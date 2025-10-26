@@ -8,6 +8,7 @@ import com.meokpli.app.data.remote.response.GetFavoritePlaceResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 interface PlaceApi {
     @POST("search")
     suspend fun searchPlace(
@@ -19,6 +20,13 @@ interface PlaceApi {
 
     @POST("saveFavorite")
     suspend fun saveFavorite(@Body body: SaveFavoriteRequest)
+
+    @POST("saveFavoriteWithPlaceId")
+    suspend fun saveFavoriteWithPlaceId(@Query("placeId") placeId: Long)
+
+    @POST("removeFavoriteWithPlaceId")
+    suspend fun removeFavoriteWithPlaceId(@Query("placeId") placeId: Long)
+
 
     @POST("removeFavorite")
     suspend fun removeFavorite(@Body body: RemoveFavoriteRequest)

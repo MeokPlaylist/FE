@@ -6,8 +6,6 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
-import retrofit2.http.Url
-import java.time.LocalDateTime
 
  interface RoadmapApi {
     @GET("create")
@@ -27,13 +25,14 @@ import java.time.LocalDateTime
  )
 
  data class LoadRoadMapPlace(
-     val roadMapPlacesId: Long,
+     val placeId: Long,
      val name: String,
      val address: String,
      val phone: String?,
      val presignedGetPhotoUrl: String,
      val dayIndex: Int,
-     val orderIndex: Int
+     val orderIndex: Int,
+     var isFavorite: Boolean
  )
 
  data class RoadMapCandidateDto(

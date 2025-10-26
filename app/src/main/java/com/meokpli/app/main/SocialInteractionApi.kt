@@ -15,8 +15,6 @@ interface SocialInteractionApi {
     // 경로 대소문자 BE와 동일하게: unFollow
     @POST("unFollow")
     suspend fun unFollow(@Query("nickname") nickname: String)
-
-
     @GET("userPageDistinction")
     suspend fun getOtherUserPage(@Query("nickname") nickname: String): UserPageResponseWrapper
 

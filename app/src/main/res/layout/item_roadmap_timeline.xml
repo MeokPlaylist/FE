@@ -1,141 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="90dp"
-    android:paddingVertical="6dp">
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <!-- 왼쪽 사진 -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/photoContainer"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        app:cardCornerRadius="40dp"
-        app:cardElevation="2dp"
-        app:strokeColor="#33000000"
-        app:strokeWidth="1dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="90dp"
+        android:paddingVertical="6dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+    <!-- ✅ 왼쪽 사진 (그림자 포함) -->
+    <FrameLayout
+        android:id="@+id/photoShadowWrapper"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_marginStart="5dp"
+        android:background="@drawable/bg_circle_shadow"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginStart="16dp">
+        app:layout_constraintBottom_toBottomOf="parent">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/photoContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:cardCornerRadius="48dp"
+        app:strokeWidth="4dp"
+        app:strokeColor="@android:color/white"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardUseCompatPadding="false"
+        app:cardPreventCornerOverlap="false">
 
         <ImageView
             android:id="@+id/ivPhoto"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            tools:src="@drawable/sample_food"/>
+            android:clipToOutline="true"
+            android:outlineProvider="background"
+            tools:src="@drawable/sample_food" />
     </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 
     <!-- 사진과 카드 사이 정중앙 가이드라인 -->
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideTimeline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.285" />
+<androidx.constraintlayout.widget.Guideline
+android:id="@+id/guideTimeline"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:orientation="vertical"
+app:layout_constraintGuide_percent="0.3" />
 
-    <!-- 위쪽 선 -->
-    <View
-        android:id="@+id/lineTop"
-        android:layout_width="1dp"
-        android:layout_height="0dp"
-        android:background="#33000000"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/dot"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
-        android:visibility="gone" />
+    <!-- 선/점/화살표 -->
+<View
+android:id="@+id/lineTop"
+android:layout_width="1dp"
+android:layout_height="0dp"
+android:background="#33000000"
+app:layout_constraintTop_toTopOf="parent"
+app:layout_constraintBottom_toTopOf="@id/dot"
+app:layout_constraintStart_toStartOf="@id/guideTimeline"
+app:layout_constraintEnd_toEndOf="@id/guideTimeline"
+android:visibility="gone" />
 
-    <!-- 점 -->
-    <View
-        android:id="@+id/dot"
-        android:layout_width="8dp"
-        android:layout_height="8dp"
-        android:background="@drawable/bg_dot_small"
-        app:layout_constraintTop_toTopOf="@id/photoContainer"
-        app:layout_constraintBottom_toBottomOf="@id/photoContainer"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
-        android:visibility="gone" />
+<View
+android:id="@+id/dot"
+android:layout_width="8dp"
+android:layout_height="8dp"
+android:background="@drawable/bg_dot_small"
+app:layout_constraintTop_toTopOf="@id/photoShadowWrapper"
+app:layout_constraintBottom_toBottomOf="@id/photoShadowWrapper"
+app:layout_constraintStart_toStartOf="@id/guideTimeline"
+app:layout_constraintEnd_toEndOf="@id/guideTimeline"
+android:visibility="gone" />
 
-    <!-- 아래쪽 선 -->
-    <View
-        android:id="@+id/lineBottom"
-        android:layout_width="1dp"
-        android:layout_height="0dp"
-        android:background="#33000000"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
-        app:layout_constraintTop_toBottomOf="@id/dot"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:visibility="gone"/>
+<View
+android:id="@+id/lineBottom"
+android:layout_width="1dp"
+android:layout_height="0dp"
+android:background="#33000000"
+app:layout_constraintStart_toStartOf="@id/guideTimeline"
+app:layout_constraintEnd_toEndOf="@id/guideTimeline"
+app:layout_constraintTop_toBottomOf="@id/dot"
+app:layout_constraintBottom_toBottomOf="parent"
+android:visibility="gone"/>
 
-    <!-- 화살표 -->
-    <ImageView
-        android:id="@+id/ivArrow"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:src="@drawable/ic_arrow_down"
-        app:layout_constraintStart_toStartOf="@id/guideTimeline"
-        app:layout_constraintEnd_toEndOf="@id/guideTimeline"
-        app:layout_constraintBottom_toTopOf="@id/dot"
-        android:layout_marginBottom="-3dp"
-        android:visibility="gone"
-        app:tint="#33000000" />
-
-
+<ImageView
+android:id="@+id/ivArrow"
+android:layout_width="16dp"
+android:layout_height="16dp"
+android:src="@drawable/ic_arrow_down"
+app:layout_constraintStart_toStartOf="@id/guideTimeline"
+app:layout_constraintEnd_toEndOf="@id/guideTimeline"
+app:layout_constraintBottom_toTopOf="@id/dot"
+android:layout_marginBottom="-3dp"
+android:visibility="gone"
+app:tint="#33000000" />
 
     <!-- 오른쪽 카드 -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card"
-        android:layout_width="0dp"
+<FrameLayout
+android:layout_width="0dp"
+android:layout_height="wrap_content"
+android:clipChildren="false"
+android:clipToPadding="false"
+app:layout_constraintStart_toEndOf="@id/photoShadowWrapper"
+app:layout_constraintEnd_toEndOf="parent"
+app:layout_constraintTop_toTopOf="@id/photoShadowWrapper"
+app:layout_constraintBottom_toBottomOf="@id/photoShadowWrapper"
+android:layout_marginStart="30dp"
+android:layout_marginEnd="16dp">
+
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="64dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:strokeColor="#22000000"
+    app:strokeWidth="1dp"
+    android:layout_marginTop="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="64dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="16dp"
-        app:cardBackgroundColor="@android:color/white"
-        app:strokeColor="#22000000"
-        app:strokeWidth="1dp"
-        app:layout_constraintStart_toEndOf="@id/photoContainer"
-        app:layout_constraintTop_toTopOf="@id/photoContainer"
-        app:layout_constraintBottom_toBottomOf="@id/photoContainer"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:orientation="vertical"
+        android:padding="12dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvPlaceName"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:textColor="#000000"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="맥도날드" />
 
-            <TextView
-                android:id="@+id/tvPlaceName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#000"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                tools:text="맥도날드" />
+        <TextView
+            android:id="@+id/tvAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#444444"
+            android:textSize="12sp"
+            tools:text="경기도 수원시 영통구 아주로 46" />
 
-            <TextView
-                android:id="@+id/tvAddress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#555"
-                android:textSize="12sp"
-                tools:text="경기도 수원시 영통구 아주로 46" />
+        <TextView
+            android:id="@+id/tvPhone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#444444"
+            android:textSize="12sp"
+            tools:text="전화번호: 031-000-0000" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:id="@+id/tvPhone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#555"
-                android:textSize="12sp"
-                tools:text="전화번호: 031-000-0000" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+<ImageButton
+    android:id="@+id/btnFavorite"
+    android:layout_width="26dp"
+    android:layout_height="26dp"
+    android:background="@android:color/transparent"
+    android:padding="2dp"
+    android:src="@drawable/ic_unfavorite"
+    android:layout_gravity="top|end"
+    android:layout_marginTop="-6dp"
+    android:layout_marginEnd="-11dp"
+    android:elevation="8dp" />
+</FrameLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
