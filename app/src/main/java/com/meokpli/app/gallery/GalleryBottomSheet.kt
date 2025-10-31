@@ -1,7 +1,10 @@
     package com.meokpli.app.gallery
 
     import android.Manifest
+    import android.app.Dialog
     import android.content.ContentUris
+    import android.content.res.ColorStateList
+    import android.graphics.Color
     import android.net.Uri
     import android.os.Build
     import android.os.Bundle
@@ -20,6 +23,7 @@
     import com.google.android.material.bottomsheet.BottomSheetBehavior
     import com.google.android.material.bottomsheet.BottomSheetDialog
     import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+    import com.google.android.material.shape.CornerFamily
 
     class GalleryBottomSheet : BottomSheetDialogFragment() {
 
@@ -54,16 +58,36 @@
             }
         }
 
-        override fun onCreateDialog(savedInstanceState: Bundle?) =
-            (super.onCreateDialog(savedInstanceState) as BottomSheetDialog).apply {
-                setOnShowListener {
-                    val sheet = findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-                    val behavior = BottomSheetBehavior.from(sheet!!)
-                    behavior.state = BottomSheetBehavior.STATE_EXPANDED
-                    behavior.skipCollapsed = false
-                    behavior.isHideable = true
-                }
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+
+            dialog.setOnShowListener { dlg ->
+                val bottomSheetDialog = dlg as BottomSheetDialog
+                val sheet =
+                    bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+                        ?: return@setOnShowListener
+
+                // BottomSheet 상태 설정
+                val behavior = BottomSheetBehavior.from(sheet)
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+                behavior.skipCollapsed = false
+                behavior.isHideable = true
+
+                // 둥근 모서리 적용
+                val shape = com.google.android.material.shape.MaterialShapeDrawable(
+                    com.google.android.material.shape.ShapeAppearanceModel()
+                        .toBuilder()
+                        .setTopLeftCorner(CornerFamily.ROUNDED, 32f)
+                        .setTopRightCorner(CornerFamily.ROUNDED, 32f)
+                        .build()
+                )
+                shape.fillColor = ColorStateList.valueOf(Color.WHITE)
+                sheet.background = shape
             }
+
+            return dialog
+        }
+
 
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
             return inflater.inflate(R.layout.activity_gallery, container, false)

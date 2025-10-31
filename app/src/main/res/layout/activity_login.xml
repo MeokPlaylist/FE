@@ -74,39 +74,39 @@
         android:textSize="13sp"
         android:hint="비밀번호 입력" />
 
-    <!-- 로그인 유지 -->
-    <LinearLayout
-        android:id="@+id/keepLoginRow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="6dp"
-        android:gravity="center_vertical"
-        android:layout_gravity="start">
+<!--    &lt;!&ndash; 로그인 유지 &ndash;&gt;-->
+<!--    <LinearLayout-->
+<!--        android:id="@+id/keepLoginRow"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:layout_marginTop="6dp"-->
+<!--        android:gravity="center_vertical"-->
+<!--        android:layout_gravity="start">-->
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnKeepLogin"
-            android:layout_width="15dp"
-            android:layout_height="15dp"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            app:cornerRadius="10dp"
-            app:checkedIcon="@null"
-            app:backgroundTint="@color/selector_keep_bg"
-            app:strokeWidth="0.5dp"
-            app:strokeColor="@color/selector_keep_stroke"/>
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btnKeepLogin"-->
+<!--            android:layout_width="15dp"-->
+<!--            android:layout_height="15dp"-->
+<!--            android:insetLeft="0dp"-->
+<!--            android:insetTop="0dp"-->
+<!--            android:insetRight="0dp"-->
+<!--            android:insetBottom="0dp"-->
+<!--            app:cornerRadius="10dp"-->
+<!--            app:checkedIcon="@null"-->
+<!--            app:backgroundTint="@color/selector_keep_bg"-->
+<!--            app:strokeWidth="0.5dp"-->
+<!--            app:strokeColor="@color/selector_keep_stroke"/>-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="로그인 유지"
-            android:textSize="10sp"
-            android:textColor="#626262"
-            android:fontFamily="@font/inter_medium" />
-    </LinearLayout>
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="6dp"-->
+<!--            android:text="로그인 유지"-->
+<!--            android:textSize="10sp"-->
+<!--            android:textColor="#626262"-->
+<!--            android:fontFamily="@font/inter_medium" />-->
+<!--    </LinearLayout>-->
 
     <!-- 로그인 버튼 -->
     <com.google.android.material.button.MaterialButton

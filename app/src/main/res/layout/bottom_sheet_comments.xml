@@ -4,14 +4,22 @@
     android:orientation="vertical"
     android:paddingTop="8dp"
     android:paddingBottom="8dp"
+
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-
+    <View
+        android:id="@+id/dragHandle"
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_drag_handle"
+        android:layout_marginBottom="8dp" />
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="댓글"
+        android:textColor="@color/black"
         android:paddingHorizontal="16dp"
         android:gravity="center"
         android:paddingBottom="8dp"
@@ -35,7 +43,7 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="12dp"
         android:paddingTop="8dp"
-        android:paddingBottom="12dp"
+        android:paddingBottom="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -47,9 +55,8 @@
             android:layout_weight="1"
             android:background="@drawable/bg_comment_input"
             android:paddingStart="14dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
+            android:paddingEnd="8dp"
+            android:paddingVertical="4dp"
             android:gravity="center_vertical">
 
             <EditText
@@ -59,27 +66,27 @@
                 android:layout_weight="1"
                 android:hint="댓글을 입력하세요"
                 android:background="@android:color/transparent"
-                android:scrollbars="vertical"
+                android:scrollbars="none"
                 android:overScrollMode="ifContentScrolls"
-                android:gravity="top|start"
-                android:inputType="textCapSentences|textMultiLine"
-                android:imeOptions="flagNoEnterAction"
-                android:minHeight="40dp"
-                android:maxLines="4"
-                android:padding="0dp" />
+                android:gravity="center_vertical|start"
+                android:inputType="textCapSentences|text"
+                android:imeOptions="actionDone"
+                android:singleLine="true"
+                android:paddingVertical="0dp"
+                android:textSize="14sp"/>
 
-            <!-- 전송 버튼(원형) -->
+            <!-- 전송 버튼 -->
             <ImageButton
                 android:id="@+id/btnSend"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:background="@drawable/bg_send_round"
                 android:src="@drawable/ic_arrow_up_white"
                 android:contentDescription="@string/send"
-                android:padding="8dp"
+                android:padding="6dp"
                 app:tint="#FFFFFF"
                 android:focusable="true"
                 android:clickable="true" />
-        </LinearLayout>
+    </LinearLayout>
     </LinearLayout>
 </LinearLayout>

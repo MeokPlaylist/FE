@@ -18,7 +18,7 @@ class CoverPickAdapter(
     private var selectedIndex = initiallySelected.coerceIn(0, (images.size - 1).coerceAtLeast(0))
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
-        val img: ImageView = v.findViewById(R.id.img)
+        val img: ImageView = v.findViewById(R.id.img)   
         val ivCheck: ImageView = v.findViewById(R.id.ivCheck)
         val ratioBox: FrameLayout = v.findViewById(R.id.ratioBox)
     }

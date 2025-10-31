@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.google.android.material.chip.ChipGroup
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
@@ -192,8 +193,10 @@ class FeedDetailFragment : Fragment() {
                 tvCaption.text = resp.content
 
                 imgAvatar.load(resp.profileUrl) {
-                    placeholder(R.drawable.ic_profile_red)
-                    error(R.drawable.ic_profile_red)
+                    crossfade(true)
+                    placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+                    error(R.drawable.ic_profile_red) // 실패 시 표시
+                    transformations(CircleCropTransformation()) // 동그랗게 자르기
                 }
 
                 photoUrls = resp.feedPhotoUrl ?: emptyList()

@@ -51,7 +51,8 @@ class LoginActivity : AppCompatActivity() {
         val googleButton = findViewById<ImageView>(R.id.btnGoogle)
         val kakaoButton = findViewById<ImageView>(R.id.btnKakao)
         val findInfoButton = findViewById<TextView>(R.id.tvFindInfo)
-        val btnKeepLogin = findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnKeepLogin)
+        // 로그인 유지
+        // val btnKeepLogin = findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.btnKeepLogin)
 
         // 구글 설정 (ID 토큰 필요 시)
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -61,12 +62,12 @@ class LoginActivity : AppCompatActivity() {
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         // 로그인 유지 토글 UI 반영
-        btnKeepLogin.isSelected = tokenManager.isKeepLogin()
-        btnKeepLogin.setOnClickListener {
-            val newChecked = !btnKeepLogin.isSelected
-            btnKeepLogin.isSelected = newChecked
-            tokenManager.setKeepLogin(newChecked)
-        }
+//        btnKeepLogin.isSelected = tokenManager.isKeepLogin()
+//        btnKeepLogin.setOnClickListener {
+//            val newChecked = !btnKeepLogin.isSelected
+//            btnKeepLogin.isSelected = newChecked
+//            tokenManager.setKeepLogin(newChecked)
+//        }
 
         registerButton.setOnClickListener {
             startActivity(Intent(this, SignUpActivity::class.java))

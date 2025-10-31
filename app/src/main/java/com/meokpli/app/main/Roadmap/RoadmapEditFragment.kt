@@ -280,15 +280,24 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
                 etName.setOnFocusChangeListener { v, hasFocus ->
                     if (!hasFocus) {
                         val newText = etName.text.toString().trim()
-                        if (newText.isNotBlank()) item.customName = newText
+                        if (newText.isNotBlank() && newText != "가게 이름을 입력해주세요.") {
+                            item.customName = newText
+                        } else if (newText == "가게 이름을 입력해주세요.") {
+                            item.customName = null // placeholder는 무시
+                        }
                         hideKeyboard(v)
                         vm.editItems.value = adapter.items
                     }
                 }
+
                 etAddr.setOnFocusChangeListener { v, hasFocus ->
                     if (!hasFocus) {
                         val newText = etAddr.text.toString().trim()
-                        if (newText.isNotBlank()) item.customAddress = newText
+                        if (newText.isNotBlank() && newText != "가게 주소를 입력해주세요.") {
+                            item.customAddress = newText
+                        } else if (newText == "가게 주소를 입력해주세요.") {
+                            item.customAddress = null
+                        }
                         hideKeyboard(v)
                         vm.editItems.value = adapter.items
                     }

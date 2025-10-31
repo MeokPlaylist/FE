@@ -1,6 +1,9 @@
 package com.meokpli.app.main.Home
 
+import android.app.Dialog
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -15,10 +18,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.shape.CornerFamily
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import kotlinx.coroutines.launch
-
 class CommentsBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
@@ -77,8 +80,37 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             postComment(text)
         }
 
+        recycler.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                hideKeyboard()
+                et.clearFocus()
+            }
+            false
+        }
+
         loadComments()
     }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState)
+        dialog.setOnShowListener {
+            val sheet = dialog.findViewById<View>(
+                com.google.android.material.R.id.design_bottom_sheet
+            ) ?: return@setOnShowListener
+
+            val shape = com.google.android.material.shape.MaterialShapeDrawable(
+                com.google.android.material.shape.ShapeAppearanceModel()
+                    .toBuilder()
+                    .setTopLeftCorner(CornerFamily.ROUNDED, 32f)
+                    .setTopRightCorner(CornerFamily.ROUNDED, 32f)
+                    .build()
+            )
+            shape.fillColor = ColorStateList.valueOf(Color.WHITE)
+            sheet.background = shape
+        }
+        return dialog
+    }
+
 
     /** 댓글 목록 로드 */
     private fun loadComments() {

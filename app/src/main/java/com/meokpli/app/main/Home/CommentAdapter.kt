@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.meokpli.app.R
 import java.time.Duration
 import java.time.Instant
@@ -54,12 +55,12 @@ class CommentAdapter(
         holder.date.text = getDurationFromNowToServerTime(c.createdAt)
         holder.body.text = c.content
 
-        if (c.avatarUrl.isNullOrBlank()) {
-            Log.d(TAG, "avatar none for '${c.author}'")
-            holder.avatar.setImageResource(R.drawable.ic_profile_red)
-        } else {
-            Log.d(TAG, "avatar load url=${c.avatarUrl}")
-            holder.avatar.load(c.avatarUrl)
+        Log.d("comment","Url:${c.avatarUrl}")
+        holder.avatar.load(c.avatarUrl) {
+            crossfade(true)
+            placeholder(R.drawable.ic_profile_red) // 기본 이미지 (res/drawable/)
+            error(R.drawable.ic_profile_red) // 실패 시 표시
+            transformations(CircleCropTransformation()) // 동그랗게 자르기
         }
 
         holder.tvReplyHint.setOnClickListener { onReplyClick(c) }

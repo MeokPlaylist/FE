@@ -8,11 +8,20 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <View
+        android:id="@+id/dragHandle"
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_drag_handle"
+        android:layout_marginBottom="8dp" />
+
     <!-- 상단 바: 취소 / 완료 -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:paddingHorizontal="4dp">
+
 
         <!-- 취소 버튼 -->
         <TextView
