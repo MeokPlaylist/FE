@@ -15,7 +15,8 @@ class RestaurantAdapter(
     inner class RestaurantViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvName: TextView = view.findViewById(R.id.tv_restaurant_name)
         val tvAddress: TextView = view.findViewById(R.id.tv_restaurant_address)
-        val starBtn: ImageView = view.findViewById(R.id.iv_favorite_star)
+    //  찜기능
+    //  val starBtn: ImageView = view.findViewById(R.id.iv_favorite_star)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RestaurantViewHolder {
@@ -29,12 +30,13 @@ class RestaurantAdapter(
         holder.tvName.text = restaurant.name
         holder.tvAddress.text = restaurant.address
 
-        holder.starBtn.isSelected = restaurant.isFavorite
-
-        holder.starBtn.setOnClickListener {
-            restaurant.isFavorite = !restaurant.isFavorite
-            holder.starBtn.isSelected = restaurant.isFavorite
-        }
+        //찜 기능
+//        holder.starBtn.isSelected = restaurant.isFavorite
+//
+//        holder.starBtn.setOnClickListener {
+//            restaurant.isFavorite = !restaurant.isFavorite
+//            holder.starBtn.isSelected = restaurant.isFavorite
+//        }
     }
 
     override fun getItemCount() = restaurants.size
