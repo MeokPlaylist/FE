@@ -152,11 +152,29 @@ class FeedDetailFragment : Fragment() {
                 }
                 FeedActionsBottomSheet.ACTION_DELETE -> confirmDeleteInDetail(feedIdArg)
                 FeedActionsBottomSheet.ACTION_EDIT_CATEGORY -> {
+                    // 코드 집합
+                    val moodCodes = setOf("TRADITIONAL","UNIQUE","EMOTIONAL","HEALING","GOODVIEW","ACTIVITY","LOCAL")
+                    val foodCodes = setOf("BUNSIK","CAFE_DESSERT","CHICKEN","CHINESE","KOREAN","PORK_SASHIMI","FASTFOOD",
+                        "JOKBAL_BOSSAM","PIZZA","WESTERN","MEAT","ASIAN","DOSIRAK","LATE_NIGHT","JJIM_TANG")
+                    val compCodes = setOf("ALONE","FRIEND","COUPLE","FAMILY","GROUP","WITH_PET","ALUMNI")
+
+                    // currentCategories(코드)를 -> 라벨(한글)로
+                    val preMoods = currentCategories.filter { it in moodCodes }
+                        .map { CategoryLabels.toKorean(it) }
+                        .distinct()
+                    val preFoods = currentCategories.filter { it in foodCodes }
+                        .map { CategoryLabels.toKorean(it) }
+                        .distinct()
+                    val preComps = currentCategories.filter { it in compCodes }
+                        .map { CategoryLabels.toKorean(it) }
+                        .distinct()
+                    val preRegions = ArrayList(currentRegions) // "Province:City" 그대로 (다이얼로그가 내부 변환)
+
                     CategorySelectDialog.newInstance(
-                        preMoods = ArrayList(currentCategories),
-                        preFoods = arrayListOf(),
-                        preComps = arrayListOf(),
-                        preRegions = ArrayList(currentRegions)
+                        ArrayList(preMoods),
+                        ArrayList(preFoods),
+                        ArrayList(preComps),
+                        preRegions
                     ).show(parentFragmentManager, "category_select")
                 }
                 FeedActionsBottomSheet.ACTION_EDIT_COVER -> {
