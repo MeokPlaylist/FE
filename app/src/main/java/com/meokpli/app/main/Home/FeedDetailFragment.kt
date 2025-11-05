@@ -470,7 +470,7 @@ class FeedDetailFragment : Fragment() {
 
                 // 1) 빠른 반영(임시): 라벨 + 지역토큰으로 칩 표시
                 //    지역은 "Province:City"를 그대로 넘기면 toDisplayLabel에서 한글로 바꿔줍니다.
-                currentCategories = labelDisplay
+                currentCategories = ArrayList(categoriesSrv)
                 currentRegions = ArrayList(regionsSrv)
                 renderCategoryChips(currentCategories + currentRegions)
 
