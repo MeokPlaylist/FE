@@ -221,6 +221,8 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 if (running || s == null) return
+
+
                 running = true
                 try { highlightHashtags(s) } finally { running = false }
             }

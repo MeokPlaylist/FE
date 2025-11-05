@@ -17,7 +17,9 @@ import com.meokpli.app.R
 import java.time.Duration
 import java.time.Instant
 class CommentAdapter(
-    private val onReplyClick: (UiComment) -> Unit
+    private val onReplyClick: (UiComment) -> Unit,
+    private val onMoreClick: (View, UiComment) -> Unit,   // ⬅️ 추가
+    private var myNickname: String?
 ) : RecyclerView.Adapter<CommentAdapter.VH>() {
 
     companion object { private const val TAG = "CommentAdapter" }
@@ -32,12 +34,18 @@ class CommentAdapter(
     val currentList get() = differ.currentList
     fun submitList(list: List<UiComment>) = differ.submitList(list)
 
+    fun updateMyNickname(nick: String?) {
+        myNickname = nick
+        notifyDataSetChanged()
+    }
+
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
         val avatar: ImageView = v.findViewById(R.id.ivAvatar)
         val name: TextView = v.findViewById(R.id.tvName)
         val date: TextView = v.findViewById(R.id.tvDate)
         val body: TextView = v.findViewById(R.id.tvBody)
         val tvReplyHint: TextView = v.findViewById(R.id.tvReplyHint)
+        val btnMore: ImageView = v.findViewById(R.id.btnMore)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -64,6 +72,8 @@ class CommentAdapter(
         }
 
         holder.tvReplyHint.setOnClickListener { onReplyClick(c) }
+        holder.btnMore.visibility = View.VISIBLE
+        holder.btnMore.setOnClickListener { v -> onMoreClick(v, c) }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
