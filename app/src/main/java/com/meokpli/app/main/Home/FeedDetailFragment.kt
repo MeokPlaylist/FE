@@ -423,9 +423,12 @@ class FeedDetailFragment : Fragment() {
             }
             dialog.dismiss()
         }
-
-        dialog.show()
         dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.85).toInt(),  // 화면의 85% 폭만 사용
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.show()
     }
 
     private fun showReportPopup(anchor: View) {

@@ -2,6 +2,7 @@ package com.meokpli.app.main.Interaction
 
 import android.app.AlertDialog
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,6 +19,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.google.android.material.button.MaterialButton
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
@@ -399,11 +401,17 @@ class FollowListFragment : Fragment() {
 
         // 프로필 이미지
         if (!avatarUrl.isNullOrBlank()) {
-            iv.load(avatarUrl)
+            iv.load(avatarUrl) {
+                crossfade(true)
+                placeholder(R.drawable.ic_profile_red)
+                error(R.drawable.ic_profile_red)
+                transformations(CircleCropTransformation())
+            }
         }
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(v)
+            .setCancelable(true)
             .create()
 
         btnCancel.setOnClickListener { dialog.dismiss() }
@@ -414,8 +422,12 @@ class FollowListFragment : Fragment() {
         }
 
         dialog.show()
+
+        // 둥근 모서리와 폭 조정
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.85).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
-
-
-
 }

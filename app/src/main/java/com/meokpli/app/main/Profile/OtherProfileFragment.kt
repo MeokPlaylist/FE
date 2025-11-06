@@ -165,7 +165,6 @@ class OtherProfileFragment : Fragment() {
         }
 
         // 탭 전환
-        tabPeriod.setOnClickListener { switchToPeriodTab() }
         tabRegion.setOnClickListener { switchToRegionTab() }
 
         // 팔로우 토글
@@ -254,10 +253,13 @@ class OtherProfileFragment : Fragment() {
                 renderFollowUi()
 
             } catch (e: HttpException) {
+                val ctx = context ?: return@launch
                 val msg = if (e.code() == 401) "로그인이 필요합니다." else "프로필 로딩 실패 (${e.code()})"
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+            }
+            catch (e: Exception) {
+                val ctx = context ?: return@launch
+                Toast.makeText(ctx, "프로필을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }

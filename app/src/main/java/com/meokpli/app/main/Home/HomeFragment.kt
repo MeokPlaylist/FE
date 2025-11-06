@@ -334,11 +334,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
             .inflate(R.layout.dialog_report_confirm, null, false)
 
         val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
-        // XML에서 신고 버튼 id가 btnUnfollow로 되어 있으니 그대로 씁니다
         val btnReport = view.findViewById<MaterialButton>(R.id.btnUnfollow)
 
         val dialog = MaterialAlertDialogBuilder(ctx)
-            .setView(view)       // 커스텀 레이아웃 주입
+            .setView(view)
             .setCancelable(true)
             .create()
 
@@ -359,10 +358,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
 
         dialog.show()
 
-        // 둥근 모서리 보이게: 다이얼로그 윈도 배경 제거 + 가로폭 조정(선택)
+        // 투명 배경 + 가로폭 조정
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
+            (resources.displayMetrics.widthPixels * 0.85).toInt(),  // 화면의 85% 폭만 사용
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
     }
