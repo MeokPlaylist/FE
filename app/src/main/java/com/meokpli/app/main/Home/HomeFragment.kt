@@ -125,7 +125,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
         )
         rv.adapter = adapter
 
-        childFragmentManager.setFragmentResultListener("feed_actions_result", viewLifecycleOwner) { _, bundle ->
+        parentFragmentManager.setFragmentResultListener("feed_actions_result", viewLifecycleOwner) { _, bundle ->
             val action = bundle.getString("action")
             val feedId = bundle.getLong("feedId", 0L)
             if (feedId == 0L) return@setFragmentResultListener
@@ -155,6 +155,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
                     ).show(childFragmentManager, "category_select")
                 }
                 "delete" -> {
+                    Log.d("삭제","삭제")
                     confirmDelete(feedId)
                 }
             }
