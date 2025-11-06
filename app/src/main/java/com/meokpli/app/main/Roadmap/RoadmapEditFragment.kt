@@ -1,5 +1,7 @@
 package com.meokpli.app.main.Roadmap
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +16,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.meokpli.app.R
 import com.meokpli.app.auth.Network
 import kotlinx.coroutines.launch
@@ -73,13 +77,14 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
         }
 
         view.findViewById<View>(R.id.edit_roadmap)?.setOnClickListener {
-            val removedCount = adapter.removeSelectedItems()
-            if (removedCount > 0) {
-                Toast.makeText(requireContext(), "${removedCount}개 항목이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                vm.editItems.value = adapter.items
-            } else {
+            // 선택 여부 먼저 확인
+            val hasSelection = adapter.items.any { it is EditListItem.EditEntry && it.item.isSelected }
+            if (!hasSelection) {
                 Toast.makeText(requireContext(), "선택된 항목이 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+            // 확인 다이얼로그로 분기
+            showDeleteRoadmapConfirm()
         }
     }
 
@@ -161,6 +166,36 @@ class RoadmapEditFragment : Fragment(R.layout.fragment_roadmap_edit) {
         }.onFailure {
             Toast.makeText(requireContext(), "저장 실패: ${it.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showDeleteRoadmapConfirm() {
+        val ctx = requireContext()
+        val view = layoutInflater.inflate(R.layout.dialog_delete_reoadmap_confirm, null, false)
+
+        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnDelete = view.findViewById<MaterialButton>(R.id.btnDelete)
+
+        val dialog = MaterialAlertDialogBuilder(ctx)
+            .setView(view)
+            .setCancelable(true)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnDelete.setOnClickListener {
+            // ✅ 기존 삭제 로직 그대로 실행
+            val removedCount = adapter.removeSelectedItems()
+            if (removedCount > 0) {
+                Toast.makeText(ctx, "${removedCount}개 항목이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                vm.editItems.value = adapter.items
+            } else {
+                Toast.makeText(ctx, "선택된 항목이 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        // 둥근 모서리/커스텀 배경 보이게 기본 배경 제거
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
     }
 
 

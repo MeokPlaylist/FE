@@ -30,8 +30,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import android.app.AlertDialog
 import android.util.Log
+import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.meokpli.app.main.CategorySelectDialog
 import com.meokpli.app.main.EditContentDialog
 
@@ -326,56 +329,79 @@ class HomeFragment : Fragment(R.layout.fragment_home), Resettable {
     }
 
     private fun showReportConfirm(feedId: Long) {
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle("정말로 신고하시겠습니까?")
-            .setMessage("한번 신고한 게시물은 되돌릴 수 없습니다.")
-            .setNegativeButton("취소", null)
-            .setPositiveButton("신고") { d, _ ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        Network.feedApi(requireContext()).reportFeed(feedId)
-                        Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
-                    } catch (e: HttpException) {
-                        Toast.makeText(requireContext(), "신고 실패: ${e.code()}", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "신고 실패: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
+        val ctx = requireContext()
+        val view = LayoutInflater.from(ctx)
+            .inflate(R.layout.dialog_report_confirm, null, false)
+
+        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
+        // XML에서 신고 버튼 id가 btnUnfollow로 되어 있으니 그대로 씁니다
+        val btnReport = view.findViewById<MaterialButton>(R.id.btnUnfollow)
+
+        val dialog = MaterialAlertDialogBuilder(ctx)
+            .setView(view)       // 커스텀 레이아웃 주입
+            .setCancelable(true)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnReport.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    Network.feedApi(requireContext()).reportFeed(feedId)
+                    Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                } catch (e: HttpException) {
+                    Toast.makeText(requireContext(), "신고 실패: ${e.code()}", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "신고 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-                d.dismiss()
             }
-            .show()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        // 둥근 모서리 보이게: 다이얼로그 윈도 배경 제거 + 가로폭 조정(선택)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 
     /** 삭제 확인 다이얼로그 → 서버 호출 → 리스트에서 아이템 제거 */
     private fun confirmDelete(feedId: Long) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("게시글을 삭제할까요?")
-            .setMessage("한번 삭제한 게시물은 되돌릴 수 없습니다.")
-            .setNegativeButton("취소", null)
-            .setPositiveButton("삭제") { d, _ ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        val res = Network.feedApi(requireContext()).deleteFeed(feedId)
-                        if (res.isSuccessful) {
-                            adapter.removeItem(feedId) // ← 어댑터에 아래 메서드 추가 필요
-                            Toast.makeText(requireContext(), "삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "삭제 실패: ${res.code()}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    } catch (e: HttpException) {
-                        Toast.makeText(requireContext(), "삭제 실패: ${e.code()}", Toast.LENGTH_SHORT)
-                            .show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "삭제 실패: ${e.message}", Toast.LENGTH_SHORT)
-                            .show()
+        val ctx = requireContext()
+        val view = LayoutInflater.from(ctx).inflate(R.layout.dialog_delete_confirm, null, false)
+
+        val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+        val btnDelete = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDelete)
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+            .setView(view)
+            .setCancelable(true)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnDelete.setOnClickListener {
+            // 기존 삭제 로직 그대로 이동
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val res = Network.feedApi(requireContext()).deleteFeed(feedId)
+                    if (res.isSuccessful) {
+                        adapter.removeItem(feedId)
+                        Toast.makeText(requireContext(), "삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "삭제 실패: ${res.code()}", Toast.LENGTH_SHORT).show()
                     }
+                } catch (e: retrofit2.HttpException) {
+                    Toast.makeText(requireContext(), "삭제 실패: ${e.code()}", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "삭제 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-                d.dismiss()
             }
-            .show()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
     }
 }

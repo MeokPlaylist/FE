@@ -22,6 +22,16 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.TextView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.button.MaterialButton
 
 class FeedDetailFragment : Fragment() {
 
@@ -54,6 +64,9 @@ class FeedDetailFragment : Fragment() {
 
     private val TAG = "FeedDetail"
     private var currentMainIndex: Int = 0
+
+    private val HASHTAG_COLOR = Color.parseColor("#FF0000")
+
 
     private fun isMineNow(): Boolean =
         !myNickname.isNullOrBlank() && !feedAuthorNickname.isNullOrBlank() &&
@@ -203,7 +216,7 @@ class FeedDetailFragment : Fragment() {
                     val ok = Network.feedApi(requireContext())
                         .modifyFeedContent(ModifyFeedContentRequest(id, newContent))
                     if (ok.isSuccessful) {
-                        tvCaption.text = newContent
+                        colorizeHashtagsInto(tvCaption, newContent)
                         Toast.makeText(requireContext(), "글이 수정되었습니다.", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(requireContext(), "수정 실패: ${ok.code()}", Toast.LENGTH_SHORT).show()
@@ -265,7 +278,7 @@ class FeedDetailFragment : Fragment() {
                 feedAuthorNickname = resp.nickName
                 tvUserName.text = resp.nickName
                 tvDate.text = relativeTimeKST(resp.createdAt)
-                tvCaption.text = resp.content
+                colorizeHashtagsInto(tvCaption, resp.content)
 
                 imgAvatar.load(resp.profileUrl) {
                     crossfade(true)
@@ -316,6 +329,26 @@ class FeedDetailFragment : Fragment() {
         }
     }
 
+    private fun colorizeHashtagsInto(tv: TextView, text: String?) {
+        val raw = text.orEmpty()
+        if (raw.isBlank()) {
+            tv.text = raw
+            return
+        }
+        val ssb = SpannableStringBuilder(raw)
+        // 공백/해시가 아닌 문자들로 이어진 #토큰을 색칠
+        val regex = Regex("""#([^\s#]+)""")
+        regex.findAll(raw).forEach { m ->
+            ssb.setSpan(
+                ForegroundColorSpan(HASHTAG_COLOR),
+                m.range.first,
+                m.range.last + 1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        tv.text = ssb
+    }
+
     private fun toDisplayLabel(token: String): String {
         return if (token.contains(":"))
             CategoryLabels.regionToKorean(token).replace(":", " ")  // 콜론 → 공백
@@ -362,26 +395,37 @@ class FeedDetailFragment : Fragment() {
     }
 
     private fun confirmDeleteInDetail(feedId: Long) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("게시글을 삭제할까요?")
-            .setMessage("한번 삭제한 게시물은 되돌릴 수 없습니다.")
-            .setNegativeButton("취소", null)
-            .setPositiveButton("삭제") { d, _ ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        val res = Network.feedApi(requireContext()).deleteFeed(feedId)
-                        if (res.isSuccessful) {
-                            Toast.makeText(requireContext(), "삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                            requireActivity().onBackPressedDispatcher.onBackPressed()
-                        } else {
-                            Toast.makeText(requireContext(), "삭제 실패: ${res.code()}", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "삭제 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+        val ctx = requireContext()
+        val view = layoutInflater.inflate(R.layout.dialog_delete_confirm, null, false)
+
+        val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+        val btnDelete = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDelete)
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+            .setView(view)
+            .setCancelable(true)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnDelete.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val res = Network.feedApi(requireContext()).deleteFeed(feedId)
+                    if (res.isSuccessful) {
+                        Toast.makeText(requireContext(), "삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    } else {
+                        Toast.makeText(requireContext(), "삭제 실패: ${res.code()}", Toast.LENGTH_SHORT).show()
                     }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "삭제 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-                d.dismiss()
-            }.show()
+            }
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
     }
 
     private fun showReportPopup(anchor: View) {
@@ -411,22 +455,39 @@ class FeedDetailFragment : Fragment() {
     }
 
     private fun showReportConfirmDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("정말로 신고하시겠습니까?")
-            .setMessage("한번 신고한 게시물은 되돌릴 수 없습니다.")
-            .setNegativeButton("취소", null)
-            .setPositiveButton("신고") { d, _ ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        val api = Network.feedApi(requireContext())
-                        api.reportFeed(feedId)
-                        Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "신고 실패: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
+        val ctx = requireContext()
+        val view = layoutInflater.inflate(R.layout.dialog_report_confirm, null, false)
+
+        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
+        val btnReport = view.findViewById<MaterialButton>(R.id.btnUnfollow).apply {
+            text = "신고"
+        }
+
+        val dialog = MaterialAlertDialogBuilder(ctx)
+            .setView(view)
+            .setCancelable(true)
+            .create()
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnReport.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    Network.feedApi(requireContext()).reportFeed(feedId)
+                    Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "신고 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-                d.dismiss()
-            }.show()
+            }
+            dialog.dismiss()
+        }
+
+        dialog.show()
+        // 둥근 모서리 보이게 기본 배경 제거 + (원하면) 가로 폭 확장
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
     private suspend fun sendModifyMainPhoto(newIndex: Int) {
         val sequenceBase = 1 // 서버의 sequence가 1부터 시작한다고 가정
