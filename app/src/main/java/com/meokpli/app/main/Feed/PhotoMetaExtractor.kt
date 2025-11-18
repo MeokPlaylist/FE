@@ -70,7 +70,8 @@ fun extractPhotoMeta(context: Context, uri: Uri): PhotoMeta {
     }
 
     // 촬영 시각
-    val isoTime = exifDateTimeToIso(exif) ?: msTakenMs?.let { millisToIso(it) }
+    val isoTime = exifDateTimeToIso(exif)
+        ?: msTakenMs?.takeIf { it > 0 }?.let { millisToIso(it) }
 
     val orientationDeg = exifOrientationDegrees(exif)
 

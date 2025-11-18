@@ -83,7 +83,7 @@ class AccountInfoActivity : AppCompatActivity() {
         tvAccountDate.text = formatCreatedAt(info.createdAt)
 
         // 소셜 로그인 방식: false → "먹플리계정", true → "소셜계정"
-        val isSocial = info.OauthUser == true
+        val isSocial = info.oauthUser
         tvLoginMethod.text = if (isSocial) "소셜 계정" else "먹플리 계정"
     }
 

@@ -172,85 +172,85 @@
             </LinearLayout>
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginHorizontal="24dp"
-            android:background="#000000" />
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_marginHorizontal="24dp"-->
+<!--            android:background="#000000" />-->
 
-        <!-- 섹션: 내 먹플리 사용 방식 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="20dp"
-            android:text="내 먹플리 사용 방식"
-            android:paddingBottom="10dp"
-            android:textColor="#80000000"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+<!--        &lt;!&ndash; 섹션: 내 먹플리 사용 방식 &ndash;&gt;-->
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="24dp"-->
+<!--            android:layout_marginTop="20dp"-->
+<!--            android:text="내 먹플리 사용 방식"-->
+<!--            android:paddingBottom="10dp"-->
+<!--            android:textColor="#80000000"-->
+<!--            android:textSize="12sp"-->
+<!--            android:textStyle="bold" />-->
 
-        <!-- 좋아요 누른 게시물 -->
-        <LinearLayout
-            android:id="@+id/rowLikedPosts"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:gravity="center_vertical"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp">
+<!--        &lt;!&ndash; 좋아요 누른 게시물 &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:id="@+id/rowLikedPosts"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="56dp"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:paddingStart="24dp"-->
+<!--            android:paddingEnd="24dp">-->
 
-            <ImageView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:src="@drawable/ic_heart_unfilled"
-                android:contentDescription="@string/likes" />
+<!--            <ImageView-->
+<!--                android:layout_width="30dp"-->
+<!--                android:layout_height="30dp"-->
+<!--                android:src="@drawable/ic_heart_unfilled"-->
+<!--                android:contentDescription="@string/likes" />-->
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingStart="20dp"
-                android:text="좋아요 누른 게시물"
-                android:textColor="#000000"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:paddingStart="20dp"-->
+<!--                android:text="좋아요 누른 게시물"-->
+<!--                android:textColor="#000000"-->
+<!--                android:textSize="14sp"-->
+<!--                android:textStyle="bold" />-->
+<!--        </LinearLayout>-->
 
-        <!-- 알림 설정 -->
-        <LinearLayout
-            android:id="@+id/rowNotification"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:gravity="center_vertical"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp">
+<!--        &lt;!&ndash; 알림 설정 &ndash;&gt;-->
+<!--        <LinearLayout-->
+<!--            android:id="@+id/rowNotification"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="56dp"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:paddingStart="24dp"-->
+<!--            android:paddingEnd="24dp">-->
 
-            <ImageView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:src="@drawable/ic_bell_unimport"
-                android:contentDescription="@string/notification" />
+<!--            <ImageView-->
+<!--                android:layout_width="30dp"-->
+<!--                android:layout_height="30dp"-->
+<!--                android:src="@drawable/ic_bell_unimport"-->
+<!--                android:contentDescription="@string/notification" />-->
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingStart="20dp"
-                android:text="알림 설정"
-                android:textColor="#000000"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+<!--            <TextView-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:paddingStart="20dp"-->
+<!--                android:text="알림 설정"-->
+<!--                android:textColor="#000000"-->
+<!--                android:textSize="14sp"-->
+<!--                android:textStyle="bold" />-->
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/switchNotify"
-                android:layout_width="48dp"
-                android:layout_height="24dp"
-                android:checked="false"
-                android:showText="false"
-                android:textOn=""
-                android:textOff=""
-                app:thumbTint="@color/switch_thumb_tint"
-                app:trackTint="@color/switch_track_tint" />
-        </LinearLayout>
+<!--            <com.google.android.material.switchmaterial.SwitchMaterial-->
+<!--                android:id="@+id/switchNotify"-->
+<!--                android:layout_width="48dp"-->
+<!--                android:layout_height="24dp"-->
+<!--                android:checked="false"-->
+<!--                android:showText="false"-->
+<!--                android:textOn=""-->
+<!--                android:textOff=""-->
+<!--                app:thumbTint="@color/switch_thumb_tint"-->
+<!--                app:trackTint="@color/switch_track_tint" />-->
+<!--        </LinearLayout>-->
 
         <View
             android:layout_width="match_parent"
